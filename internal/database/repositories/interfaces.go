@@ -45,10 +45,11 @@ type ReminderRepository interface {
 	GetWithAccount(id uuid.UUID) (*models.Reminder, error)
 	GetWithAccountAndDestinations(id uuid.UUID) (*models.Reminder, error)
 	Update(reminder *models.Reminder) error
-	Delete(id uuid.UUID) error
+	Delete(id uuid.UUID, notify bool) error
 	GetDueReminders(beforeTime time.Time) ([]models.Reminder, error)
 	GetUpcomingReminders(accountID uuid.UUID, limit int) ([]models.Reminder, error)
 	GetRemindersByDateRange(accountID uuid.UUID, startDate, endDate time.Time) ([]models.Reminder, error)
+	GetNextReminders() ([]models.Reminder, error)
 }
 
 // ReminderDestinationRepository interface defines operations for reminder destination data

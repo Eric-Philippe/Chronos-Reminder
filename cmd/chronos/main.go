@@ -8,6 +8,7 @@ import (
 
 	"github.com/ericp/chronos-bot-reminder/internal/bot"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
+	"github.com/ericp/chronos-bot-reminder/internal/engine"
 )
 
 func main() {
@@ -26,11 +27,19 @@ func main() {
 	// Start Discord bot
 	bot.StartDiscordSession()
 
+	// Start scheduler service
+	engine.StartSchedulerService()
+
 	// Wait for interrupt signal
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
 	log.Println("[ALL] - 🛑 Shutting down...")
+	
+	// Stop scheduler
+	engine.StopSchedulerService()
+	
+	// Stop Discord bot
 	bot.StopDiscordSession()
 }

@@ -12,6 +12,7 @@ import (
 // Config structure for application settings
 type Config struct {
     DiscordBotToken string
+    LoggingLevel    string
     DefaultTZ       string
     APIPort         string
     DbHost          string
@@ -42,6 +43,7 @@ func Load() *Config {
 
     cfg := &Config{
         DiscordBotToken: getEnv("DISCORD_BOT_TOKEN", ""),
+        LoggingLevel:    getEnv("LOGGING_LEVEL", "INFO"),
         DefaultTZ:       getEnv("DEFAULT_TZ", "15"), // Default to UTC+1
         APIPort:         getEnv("API_PORT", "8080"),
         DbHost:          getEnv("DB_HOST", "localhost"),
@@ -62,6 +64,11 @@ func GetDatabaseConfig() *Config {
         DbPassword: os.Getenv("DB_PASSWORD"),
         DbName:     os.Getenv("DB_NAME"),
     }
+}
+
+func IsDebugMode() bool {
+    cfg := Load()
+    return cfg.LoggingLevel == "DEBUG"
 }
 
 // GetDefaultTimezoneID returns the cached default timezone ID as *uint

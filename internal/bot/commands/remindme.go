@@ -69,13 +69,13 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 		ReminderID: reminder.ID,
 		Type:       models.DestinationDiscordDM,
 		Metadata: models.JSONB{
-			"user_id": interaction.Member.User.ID,
+			"user_id": interaction.User.ID,
 		},
 	}
 
 	if err := repo.ReminderDestination.Create(destination); err != nil {
 		// If destination creation fails, we should clean up the reminder
-		repo.Reminder.Delete(reminder.ID)
+		repo.Reminder.Delete(reminder.ID, true)
 		return utils.SendError(session, interaction, "Database Error", 
 			"Failed to set up reminder destination. Please try again later.")
 	}

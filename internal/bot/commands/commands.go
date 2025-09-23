@@ -81,7 +81,16 @@ func HandleCommand(session *discordgo.Session, interaction *discordgo.Interactio
 	var err error
 	
 	if command.NeedsAccount {
-		account, err = services.EnsureDiscordUser(interaction.Member.User)
+		var user *discordgo.User
+		if interaction.Member != nil && interaction.Member.User != nil {
+			user = interaction.Member.User
+		} else if interaction.User != nil {
+			user = interaction.User
+		} else {
+			return nil // No user information available
+		}
+		
+		account, err = services.EnsureDiscordUser(user)
 		if err != nil {
 			return err
 		}
@@ -115,7 +124,16 @@ func HandleMessageComponent(s *discordgo.Session, i *discordgo.InteractionCreate
 				var err error
 				
 				if command.NeedsAccount {
-					account, err = services.EnsureDiscordUser(i.Member.User)
+					var user *discordgo.User
+					if i.Member != nil && i.Member.User != nil {
+						user = i.Member.User
+					} else if i.User != nil {
+						user = i.User
+					} else {
+						return nil // No user information available
+					}
+					
+					account, err = services.EnsureDiscordUser(user)
 					if err != nil {
 						return err
 					}
