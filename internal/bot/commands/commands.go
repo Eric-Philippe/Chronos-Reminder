@@ -23,13 +23,20 @@ type AutocompleteFunc func(session *discordgo.Session, interaction *discordgo.In
 // RunFunc represents the run function signature
 type RunFunc func(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error
 
+type MessageComponentHandler struct {
+	CustomID string
+	Handler  func(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error
+}
+
+
 // Command represents a bot command with its description, data, and handlers
 type Command struct {
-	Description  Description                        `json:"description"`
-	Data         *discordgo.ApplicationCommand      `json:"data"`
-	Autocomplete *AutocompleteFunc                  `json:"autocomplete,omitempty"`
-	NeedsAccount bool                               `json:"needsAccount"`
-	Run          RunFunc                             `json:"run"`
+	Description  Description                           `json:"description"`
+	Data         *discordgo.ApplicationCommand         `json:"data"`
+	Autocomplete *AutocompleteFunc                     `json:"autocomplete,omitempty"`
+	NeedsAccount bool                                  `json:"needsAccount"`
+	Run          RunFunc                               `json:"run"`
+	MessageComponentHandlers []MessageComponentHandler `json:"messageComponentHandlers,omitempty"`
 }
 
 // commandRegistry holds registered commands by name
@@ -96,4 +103,28 @@ func HandleAutocomplete(session *discordgo.Session, interaction *discordgo.Inter
 	}
 
 	return (*command.Autocomplete)(session, interaction)
+}
+
+func HandleMessageComponent(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	customID := i.MessageComponentData().CustomID
+	
+	for _, command := range commandRegistry {
+		for _, handler := range command.MessageComponentHandlers {
+			if handler.CustomID == customID {
+				var account *models.Account
+				var err error
+				
+				if command.NeedsAccount {
+					account, err = services.EnsureDiscordUser(i.Member.User)
+					if err != nil {
+						return err
+					}
+				}
+				
+				return handler.Handler(s, i, account)
+			}
+		}
+	}
+	
+	return nil
 }

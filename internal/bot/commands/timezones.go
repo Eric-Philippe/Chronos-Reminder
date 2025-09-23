@@ -6,6 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
+	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
@@ -113,7 +114,7 @@ func timezoneChangeHandler(session *discordgo.Session, interaction *discordgo.In
 			gmtOffsetStr = fmt.Sprintf("GMT%.1f", tz.GMTOffset)
 		}
 		
-		description := fmt.Sprintf("%s", gmtOffsetStr)
+		description := gmtOffsetStr
 		if len(description) > 100 {
 			description = description[:97] + "..."
 		}
@@ -136,11 +137,7 @@ func timezoneChangeHandler(session *discordgo.Session, interaction *discordgo.In
 		Options:     options,
 	}
 
-	embed := &discordgo.MessageEmbed{
-		Title:       "Change Timezone",
-		Description: "Please select your timezone from the dropdown menu below:",
-		Color:       0x0099ff, // Blue color
-	}
+	embed := utils.BuildInfoEmbed(session, "Change Timezone", "Select your new timezone from the dropdown menu below.")
 
 	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -170,36 +167,14 @@ func HandleTimezoneSelectMenu(session *discordgo.Session, interaction *discordgo
 	// Change the user's timezone
 	err = services.ChangeAccountTimezone(account, uint(timezoneID))
 	if err != nil {
-		embed := &discordgo.MessageEmbed{
-			Title:       "Error",
-			Description: "Failed to change your timezone. Please try again.",
-			Color:       0xff0000, // Red color
-		}
-
-		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{embed},
-			},
-		})
+		return utils.SendError(session, interaction, "Error", "Failed to change your timezone. Please try again.")
 	}
 
 	// Get the timezone name for confirmation
 	repo := database.GetRepositories()
 	timezone, err := repo.Timezone.GetByID(uint(timezoneID))
 	if err != nil || timezone == nil {
-		embed := &discordgo.MessageEmbed{
-			Title:       "Timezone Changed",
-			Description: "Your timezone has been successfully updated!",
-			Color:       0x00ff00, // Green color
-		}
-
-		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{embed},
-			},
-		})
+		return utils.SendError(session, interaction, "Error", "Failed to retrieve the selected timezone details.")
 	}
 
 	gmtOffsetStr := ""
@@ -209,18 +184,7 @@ func HandleTimezoneSelectMenu(session *discordgo.Session, interaction *discordgo
 		gmtOffsetStr = fmt.Sprintf("GMT%.1f", timezone.GMTOffset)
 	}
 
-	embed := &discordgo.MessageEmbed{
-		Title:       "Timezone Changed",
-		Description: fmt.Sprintf("Your timezone has been successfully changed to **%s** (%s)!", timezone.Name, gmtOffsetStr),
-		Color:       0x00ff00, // Green color
-	}
-
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed},
-		},
-	})
+	return utils.SendSuccess(session, interaction, "Timezone Changed", fmt.Sprintf("Your timezone has been successfully changed to **%s** (%s)!", timezone.Name, gmtOffsetStr))
 }
 
 // Register the timezone command with subcommands
@@ -253,5 +217,11 @@ func init() {
 		},
 		NeedsAccount: true,
 		Run:          timezoneHandler,
+		MessageComponentHandlers: []MessageComponentHandler{
+			{
+				CustomID: "timezone_change_select",
+				Handler:  HandleTimezoneSelectMenu,
+			},
+		},
 	})
 }
