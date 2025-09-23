@@ -59,7 +59,7 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 
 	// Save the reminder to database
 	repo := database.GetRepositories()
-	if err := repo.Reminder.Create(reminder); err != nil {
+	if err := repo.Reminder.Create(reminder, true); err != nil {
 		return utils.SendError(session, interaction, "Database Error", 
 			"Failed to save the reminder. Please try again later.")
 	}

@@ -13,7 +13,7 @@ import (
 type SchedulerService struct {
 	Scheduler          *Scheduler
 	DispatcherRegistry *DispatcherRegistry
-	NotifyingRepo      *NotifyingReminderRepository
+	ReminderRepo       repositories.ReminderRepository
 }
 
 var (
@@ -89,13 +89,13 @@ func StopSchedulerService() {
 	schedulerService = nil
 }
 
-// GetNotifyingRepository returns the notifying repository for use by other parts of the application
-func GetNotifyingRepository() *NotifyingReminderRepository {
+// GetReminderRepository returns the reminder repository for use by other parts of the application
+func GetReminderRepository() repositories.ReminderRepository {
 	service := GetSchedulerService()
 	if service == nil {
 		return nil
 	}
-	return service.NotifyingRepo
+	return service.ReminderRepo
 }
 
 // InitializeRepositoryNotifier sets up the scheduler notifier in the base repository
@@ -129,13 +129,12 @@ func initializeRepositoryNotifier(service *SchedulerService) {
 	}
 }
 
-// GetSchedulerAwareReminderRepository returns either the notifying repository if scheduler is running,
-// or the base repository if scheduler is not available
+// GetSchedulerAwareReminderRepository returns the reminder repository with scheduler notification support
 func GetSchedulerAwareReminderRepository() repositories.ReminderRepository {
-	// Try to get the notifying repository first
-	notifyingRepo := GetNotifyingRepository()
-	if notifyingRepo != nil {
-		return notifyingRepo
+	// Try to get the repository from scheduler service
+	reminderRepo := GetReminderRepository()
+	if reminderRepo != nil {
+		return reminderRepo
 	}
 
 	// Fallback to base repository
@@ -166,12 +165,14 @@ func NewSchedulerService(reminderRepo repositories.ReminderRepository) *Schedule
 	// Create scheduler
 	scheduler := NewScheduler(reminderRepo, dispatcherRegistry)
 	
-	// Create notifying repository that will update the scheduler
-	notifyingRepo := NewNotifyingReminderRepository(reminderRepo, scheduler)
+	// Set the scheduler in the repository if it supports it
+	if schedulerAwareRepo, ok := reminderRepo.(interface{ SetScheduler(repositories.SchedulerNotifier) }); ok {
+		schedulerAwareRepo.SetScheduler(scheduler)
+	}
 	
 	return &SchedulerService{
 		Scheduler:          scheduler,
 		DispatcherRegistry: dispatcherRegistry,
-		NotifyingRepo:      notifyingRepo,
+		ReminderRepo:       reminderRepo,
 	}
 }

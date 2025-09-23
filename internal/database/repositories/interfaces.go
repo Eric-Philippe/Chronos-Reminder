@@ -37,14 +37,14 @@ type IdentityRepository interface {
 
 // ReminderRepository interface defines operations for reminder data
 type ReminderRepository interface {
-	Create(reminder *models.Reminder) error
+	Create(reminder *models.Reminder, notify bool) error
 	GetByID(id uuid.UUID) (*models.Reminder, error)
 	GetByAccountID(accountID uuid.UUID) ([]models.Reminder, error)
 	GetByAccountIDWithDestinations(accountID uuid.UUID) ([]models.Reminder, error)
 	GetWithDestinations(id uuid.UUID) (*models.Reminder, error)
 	GetWithAccount(id uuid.UUID) (*models.Reminder, error)
 	GetWithAccountAndDestinations(id uuid.UUID) (*models.Reminder, error)
-	Update(reminder *models.Reminder) error
+	Update(reminder *models.Reminder, notify bool) error
 	Delete(id uuid.UUID, notify bool) error
 	GetDueReminders(beforeTime time.Time) ([]models.Reminder, error)
 	GetUpcomingReminders(accountID uuid.UUID, limit int) ([]models.Reminder, error)

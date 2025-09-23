@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
@@ -34,11 +33,10 @@ func (r *reminderRepository) SetScheduler(scheduler SchedulerNotifier) {
 }
 
 // Reminder Repository Implementation
-func (r *reminderRepository) Create(reminder *models.Reminder) error {
+func (r *reminderRepository) Create(reminder *models.Reminder, notify bool) error {
 	err := r.db.Create(reminder).Error
-	if err == nil {
+	if err == nil && notify {
 		if r.scheduler != nil {
-			log.Printf("[REPOSITORY] - Notifying scheduler of new reminder")
 			r.scheduler.NotifyReminderCreated()
 		}
 	}
@@ -105,11 +103,10 @@ func (r *reminderRepository) GetWithAccountAndDestinations(id uuid.UUID) (*model
 	return &reminder, nil
 }
 
-func (r *reminderRepository) Update(reminder *models.Reminder) error {
+func (r *reminderRepository) Update(reminder *models.Reminder, notify bool) error {
 	err := r.db.Save(reminder).Error
-	if err == nil {
+	if err == nil && notify {
 		if r.scheduler != nil {
-			log.Printf("[REPOSITORY] - Notifying scheduler of reminder update")
 			r.scheduler.NotifyReminderUpdated()
 		}
 	}
