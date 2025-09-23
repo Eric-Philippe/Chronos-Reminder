@@ -53,12 +53,19 @@ func Initialize() error {
 }
 
 // runMigrations performs automatic database migrations
-func runMigrations() error {	
+func runMigrations() error {
+	// Create custom enum types first
+	if err := createEnumTypes(); err != nil {
+		return err
+	}
+	
 	// AutoMigrate will create tables, missing columns and missing indexes
 	err := DB.AutoMigrate(
 		&models.Timezone{},
 		&models.Account{},
 		&models.Identity{},
+		&models.Reminder{},
+		&models.ReminderDestination{},
 	)
 	
 	if err != nil {
@@ -71,6 +78,33 @@ func runMigrations() error {
 		ON identities(provider, external_id)
 	`).Error; err != nil {
 		return err
+	}
+	
+	return nil
+}
+
+// createEnumTypes creates custom PostgreSQL enum types
+func createEnumTypes() error {
+	// Create provider_type enum if it doesn't exist
+	if err := DB.Exec(`
+		DO $$ BEGIN
+			CREATE TYPE provider_type AS ENUM ('discord', 'app');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create provider_type enum: %w", err)
+	}
+	
+	// Create destination_type enum if it doesn't exist
+	if err := DB.Exec(`
+		DO $$ BEGIN
+			CREATE TYPE destination_type AS ENUM ('discord_dm', 'discord_channel', 'webhook');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create destination_type enum: %w", err)
 	}
 	
 	return nil

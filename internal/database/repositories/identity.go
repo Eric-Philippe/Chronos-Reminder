@@ -35,7 +35,7 @@ func (r *identityRepository) GetByID(id uuid.UUID) (*models.Identity, error) {
 	return &identity, nil
 }
 
-func (r *identityRepository) GetByProviderAndExternalID(provider, externalID string) (*models.Identity, error) {
+func (r *identityRepository) GetByProviderAndExternalID(provider models.ProviderType, externalID string) (*models.Identity, error) {
 	var identity models.Identity
 	err := r.db.Where("provider = ? AND external_id = ?", provider, externalID).First(&identity).Error
 	if err != nil {

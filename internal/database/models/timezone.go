@@ -2,7 +2,7 @@ package models
 
 // TableName methods to ensure proper table naming
 func (Timezone) TableName() string {
-	return "timezone"
+	return "timezones"
 }
 
 // Timezone represents the timezone table

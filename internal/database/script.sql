@@ -1,7 +1,7 @@
 -- =========================
 -- Timezones table
 -- =========================
-CREATE TABLE timezone (
+CREATE TABLE timezones (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     gmt_offset DECIMAL(4,2) NOT NULL
@@ -20,10 +20,12 @@ CREATE TABLE accounts (
 -- =========================
 -- Identities table
 -- =========================
+CREATE TYPE provider_type AS ENUM ('discord', 'app');
+
 CREATE TABLE identities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    provider TEXT NOT NULL,                 -- e.g., 'discord' or 'app'
+    provider provider_type NOT NULL,       -- e.g., 'discord' or 'app'
     external_id TEXT NOT NULL,              -- e.g., discord_id or app email
     username TEXT,                          -- snapshot for display purposes
     avatar TEXT,                            -- optional, snapshot of Discord avatar
@@ -32,6 +34,37 @@ CREATE TABLE identities (
 
     UNIQUE(provider, external_id)           -- ensures no duplicate external IDs per provider
 );
+
+-- =========================
+-- Reminder table
+-- =========================
+CREATE TABLE reminders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    remind_at_utc TIMESTAMP NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    recurrence SMALLINT NOT NULL DEFAULT 0
+);
+
+-- =========================
+-- Reminder Destinations table
+-- =========================
+CREATE TYPE destination_type AS ENUM ('discord_dm', 'discord_channel', 'webhook');
+
+CREATE TABLE reminder_destinations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reminder_id UUID NOT NULL REFERENCES reminders(id) ON DELETE CASCADE,
+    type destination_type NOT NULL,
+    metadata JSONB NOT NULL,
+    
+    CHECK (
+        (type = 'discord_dm' AND metadata ? 'user_id') OR
+        (type = 'discord_channel' AND metadata ?& ARRAY['guild_id','channel_id']) OR
+        (type = 'webhook' AND metadata ? 'url')
+    )
+);
+
 
 -- =========================
 -- Insert predefined timezones
