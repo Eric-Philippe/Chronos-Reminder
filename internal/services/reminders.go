@@ -1,0 +1,199 @@
+package services
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// parseReminderTime parses various time formats and returns a time.Time
+func ParseReminderTime(timeStr string) (time.Time, error) {
+	timeStr = strings.TrimSpace(timeStr)
+	now := time.Now()
+
+	// Try parsing as time only first (for today)
+	if timeOnlyResult, err := parseTimeOnlyForToday(timeStr, now); err == nil {
+		return timeOnlyResult, nil
+	}
+
+	// Try parsing as absolute datetime formats
+	formats := []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04",
+		"2006-01-02T15:04:05",
+		"2006-01-02T15:04",
+		"01/02/2006 15:04",
+		"01/02/2006 3:04 PM",
+		"2006-01-02 3:04 PM",
+		"January 2, 2006 3:04 PM",
+		"Jan 2, 2006 3:04 PM",
+		"2 Jan 2006 15:04",
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, timeStr); err == nil {
+			// If no year specified and parsed time is in the past, assume next year
+			if t.Year() == 0 {
+				t = t.AddDate(now.Year(), 0, 0)
+			}
+			if t.Before(now) && !strings.Contains(timeStr, strconv.Itoa(now.Year())) {
+				t = t.AddDate(1, 0, 0)
+			}
+			return t, nil
+		}
+	}
+
+	// Try parsing relative time (e.g., "1h 30m", "2d", "30 minutes")
+	if relativeTime, err := parseRelativeTime(timeStr); err == nil {
+		return now.Add(relativeTime), nil
+	}
+
+	// Try parsing simple words (tomorrow, today, etc.)
+	if simpleTime, err := parseSimpleTime(timeStr); err == nil {
+		return simpleTime, nil
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse time format: %s", timeStr)
+}
+
+// parseTimeOnlyForToday parses time-only formats (like "10:30", "10h30", "3pm") and applies them to today's date
+func parseTimeOnlyForToday(timeStr string, now time.Time) (time.Time, error) {
+	// Normalize the input - replace 'h' with ':'
+	normalizedTime := strings.ReplaceAll(timeStr, "h", ":")
+	
+	// Time formats to try for time-only input
+	timeOnlyFormats := []string{
+		"15:04",     // 24-hour format like "14:30"
+		"3:04 PM",   // 12-hour format with space like "2:30 PM"
+		"3:04PM",    // 12-hour format without space like "2:30PM"
+		"3PM",       // Hour only with PM like "3PM"
+		"3pm",       // Hour only with pm like "3pm"
+		"15",        // 24-hour format hour only like "14"
+	}
+
+	for _, format := range timeOnlyFormats {
+		if t, err := time.Parse(format, normalizedTime); err == nil {
+			// Apply the parsed time to today's date
+			todayWithTime := time.Date(now.Year(), now.Month(), now.Day(), 
+				t.Hour(), t.Minute(), t.Second(), 0, now.Location())
+			
+			// If the time is in the past today, schedule it for tomorrow
+			if todayWithTime.Before(now) {
+				todayWithTime = todayWithTime.AddDate(0, 0, 1)
+			}
+			
+			return todayWithTime, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse time-only format: %s", timeStr)
+}
+
+// parseRelativeTime parses relative time expressions like "1h 30m", "2 days", etc.
+func parseRelativeTime(timeStr string) (time.Duration, error) {
+	var totalDuration time.Duration
+
+	// Replace common words with abbreviations
+	timeStr = strings.ReplaceAll(timeStr, " minutes", "m")
+	timeStr = strings.ReplaceAll(timeStr, " minute", "m")
+	timeStr = strings.ReplaceAll(timeStr, " hours", "h")
+	timeStr = strings.ReplaceAll(timeStr, " hour", "h")
+	timeStr = strings.ReplaceAll(timeStr, " days", "d")
+	timeStr = strings.ReplaceAll(timeStr, " day", "d")
+	timeStr = strings.ReplaceAll(timeStr, " weeks", "w")
+	timeStr = strings.ReplaceAll(timeStr, " week", "w")
+
+	// Split by spaces and try to parse each part
+	parts := strings.Fields(timeStr)
+	for _, part := range parts {
+		// Try parsing as standard duration first
+		if d, err := time.ParseDuration(part); err == nil {
+			totalDuration += d
+			continue
+		}
+
+		// Try parsing custom formats like "2d", "1w"
+		if len(part) >= 2 {
+			numStr := part[:len(part)-1]
+			unit := part[len(part)-1:]
+
+			if num, err := strconv.Atoi(numStr); err == nil {
+				switch unit {
+				case "d":
+					totalDuration += time.Duration(num) * 24 * time.Hour
+				case "w":
+					totalDuration += time.Duration(num) * 7 * 24 * time.Hour
+				}
+			}
+		}
+	}
+
+	if totalDuration == 0 {
+		return 0, fmt.Errorf("no valid duration found")
+	}
+
+	return totalDuration, nil
+}
+
+// parseSimpleTime parses simple time expressions like "tomorrow", "today", etc.
+func parseSimpleTime(timeStr string) (time.Time, error) {
+	now := time.Now()
+	lower := strings.ToLower(strings.TrimSpace(timeStr))
+
+	switch lower {
+	case "now":
+		return now, nil
+	case "today":
+		return time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location()), nil
+	case "tomorrow":
+		tomorrow := now.AddDate(0, 0, 1)
+		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, now.Location()), nil
+	case "next week":
+		nextWeek := now.AddDate(0, 0, 7)
+		return time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 12, 0, 0, 0, now.Location()), nil
+	case "next month":
+		nextMonth := now.AddDate(0, 1, 0)
+		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 12, 0, 0, 0, now.Location()), nil
+	}
+
+	// Check for "tomorrow at 3pm" style formats
+	if strings.HasPrefix(lower, "tomorrow at ") {
+		timepart := strings.TrimPrefix(lower, "tomorrow at ")
+		if parsedTime, err := parseTimeOfDay(timepart); err == nil {
+			tomorrow := now.AddDate(0, 0, 1)
+			return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 
+				parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location()), nil
+		}
+	}
+
+	if strings.HasPrefix(lower, "today at ") {
+		timepart := strings.TrimPrefix(lower, "today at ")
+		if parsedTime, err := parseTimeOfDay(timepart); err == nil {
+			return time.Date(now.Year(), now.Month(), now.Day(), 
+				parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location()), nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse simple time: %s", timeStr)
+}
+
+// parseTimeOfDay parses time expressions like "3pm", "15:30", "9:30am"
+func parseTimeOfDay(timeStr string) (time.Time, error) {
+	timeFormats := []string{
+		"15:04",
+		"3:04 PM",
+		"3:04PM",
+		"3PM",
+		"3pm",
+		"15",
+	}
+
+	for _, format := range timeFormats {
+		if t, err := time.Parse(format, timeStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse time of day: %s", timeStr)
+}
