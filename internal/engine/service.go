@@ -77,7 +77,6 @@ func StopSchedulerService() {
 
 	if schedulerService != nil && schedulerService.Scheduler.IsRunning() {
 		schedulerService.Scheduler.Stop()
-		log.Println("[ENGINE] - ✅ Scheduler stopped")
 	}
 
 	if schedulerCancel != nil {

@@ -2,6 +2,36 @@ package utils
 
 import "github.com/bwmarrin/discordgo"
 
+func BuildEmbed(session *discordgo.Session, title, description string, footerText *string) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       title,
+		Description: description,
+		Color:       ColorInfo,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: ClockLogo,
+		},
+	}
+
+	if footerText != nil {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text: *footerText,
+		}
+	}
+
+	return embed
+}
+
+func SendEmbed(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string) error {
+	embed := BuildEmbed(session, title, description, footerText)
+
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		},
+	})
+}
+
 func BuildInfoEmbed(session *discordgo.Session, title, description string) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
 		Title:       title,
@@ -27,21 +57,29 @@ func SendInfo(session *discordgo.Session, interaction *discordgo.InteractionCrea
 }
 
 // BuildSuccessEmbed builds a success embed message
-func BuildSuccessEmbed(session *discordgo.Session, title, description string) *discordgo.MessageEmbed {
-	return &discordgo.MessageEmbed{
+func BuildSuccessEmbed(session *discordgo.Session, title, description string, footerText *string) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
 		Title:       title,
 		Description: "✅ - " + description,
 		Color:       ColorSuccess,
-		Footer: &discordgo.MessageEmbedFooter{
+		Author: &discordgo.MessageEmbedAuthor{
 			IconURL: session.State.User.AvatarURL(""),
-			Text:    "Chronos Bot Reminder",
+			Name:    "Chronos Bot Reminder",
 		},
 	}
+
+	if footerText != nil {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text:    *footerText,
+		}
+	}
+
+	return embed
 }
 
 // SendSuccess sends a success message as an interaction response
-func SendSuccess(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string) error {
-	embed := BuildSuccessEmbed(session, title, description)
+func SendSuccess(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string) error {
+	embed := BuildSuccessEmbed(session, title, description, footerText)
 
 	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

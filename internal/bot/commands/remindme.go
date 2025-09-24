@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 
@@ -18,7 +17,8 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 	options := interaction.ApplicationCommandData().Options
 
 	var message string
-	var reminderTime string
+	var dateStr string
+	var timeStr string
 	var recurrenceType string = "ONCE" // Default to ONCE
 
 	// Parse command options
@@ -26,8 +26,10 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 		switch option.Name {
 		case "message":
 			message = option.StringValue()
+		case "date":
+			dateStr = option.StringValue()
 		case "time":
-			reminderTime = option.StringValue()
+			timeStr = option.StringValue()
 		case "recurrence":
 			if option.StringValue() != "" {
 				recurrenceType = option.StringValue()
@@ -35,11 +37,11 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 		}
 	}
 
-	// Parse the reminder time
-	parsedTime, err := services.ParseReminderTime(reminderTime)
+	// Parse the reminder date and time
+	parsedTime, err := services.ParseReminderDateTime(dateStr, timeStr)
 	if err != nil {
-		return utils.SendError(session, interaction, "Invalid Time Format", 
-			fmt.Sprintf("Could not parse the time '%s'. Please use a format like '15:30', 'tomorrow 3pm', '1h 30m', or '2023-12-25 15:30'.", reminderTime))
+		return utils.SendError(session, interaction, "Invalid Date/Time Format", 
+			fmt.Sprintf("Could not parse the date '%s' and time '%s'. Please check your date and time formats.", dateStr, timeStr))
 	}
 
 	// Get recurrence type value
@@ -92,34 +94,74 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 	accountWithTimezone, err := repo.Account.GetWithTimezone(account.ID)
 	var displayTime string
 	if err == nil && accountWithTimezone != nil && accountWithTimezone.Timezone != nil {
-		// Convert to user's timezone for display
-		userTZ, err := time.LoadLocation(accountWithTimezone.Timezone.Name)
-		if err == nil {
-			displayTime = parsedTime.In(userTZ).Format("Monday, January 2, 2006 at 3:04 PM MST")
-		} else {
-			displayTime = parsedTime.UTC().Format("Monday, January 2, 2006 at 3:04 PM UTC")
-		}
+		// Display the local time as entered by the user
+		displayTime = parsedTime.Format("Monday, January 2, 2006 at 15:04")
 	} else {
-		displayTime = parsedTime.UTC().Format("Monday, January 2, 2006 at 3:04 PM UTC")
+		// Display in the same timezone as the parsed time was created
+		displayTime = parsedTime.Format("Monday, January 2, 2006 at 15:04")
 	}
 
-	description := fmt.Sprintf("**Message:** %s\n**Remind Time:** %s\n**Recurrence:** %s\n\n%s", 
-		message, displayTime, recurrenceType, recurrenceText)
+	description := fmt.Sprintf("**Content:** %s\n**Remind Time:** %s", 
+		message, displayTime)
 
-	return utils.SendSuccess(session, interaction, "Reminder Created! ⏰", description)
+	return utils.SendEmbed(session, interaction, "Reminder Created! ⏰", description, &recurrenceText)
+}
+
+// dateAutocompleteHandler handles autocomplete for the date field
+func dateAutocompleteHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	data := interaction.ApplicationCommandData()
+	var currentInput string
+
+	// Find the date option that's being typed
+	for _, option := range data.Options {
+		if option.Name == "date" && option.Focused {
+			currentInput = strings.ToLower(strings.TrimSpace(option.StringValue()))
+			break
+		}
+	}
+
+	// Predefined suggestions
+	suggestions := []*discordgo.ApplicationCommandOptionChoice{
+		{Name: "Today", Value: "today"},
+		{Name: "Tomorrow", Value: "tomorrow"},
+		{Name: "Next Week", Value: "next week"},
+		{Name: "Next Month", Value: "next month"},
+	}
+
+	// Filter suggestions based on current input
+	var filteredSuggestions []*discordgo.ApplicationCommandOptionChoice
+	for _, suggestion := range suggestions {
+		if currentInput == "" || strings.Contains(strings.ToLower(suggestion.Name), currentInput) {
+			filteredSuggestions = append(filteredSuggestions, suggestion)
+		}
+	}
+
+	// Limit to 25 suggestions (Discord's limit)
+	if len(filteredSuggestions) > 25 {
+		filteredSuggestions = filteredSuggestions[:25]
+	}
+
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: filteredSuggestions,
+		},
+	})
 }
 
 // Register the reminder command
 func init() {
+	autocompleteFunc := AutocompleteFunc(dateAutocompleteHandler)
+	
 	RegisterCommand(&Command{
 		Description: Description{
 			Name:             "remindme",
 			Emoji:            "⏰",
 			CategoryName:     "Reminders",
 			ShortDescription: "Create a new reminder",
-			FullDescription:  "Create a new reminder that will be sent to you via direct message at the specified time",
-			Usage:            "/remindme message:<text> time:<when> [recurrence:<type>]",
-			Example:          "/remindme message:\"Take medicine\" time:\"15:30\" recurrence:daily",
+			FullDescription:  "Create a new reminder that will be sent to you via direct message at the specified date and time",
+			Usage:            "/remindme message:<text> date:<date> time:<time> [recurrence:<type>]",
+			Example:          "/remindme message:\"Take medicine\" date:\"25/12/2024\" time:\"15:30\" recurrence:daily",
 		},
 		Data: &discordgo.ApplicationCommand{
 			Name:        "remindme",
@@ -133,8 +175,15 @@ func init() {
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "date",
+					Description: "The date for the reminder (e.g., 'today', 'tomorrow', '25/12/2024', '2024-12-25')",
+					Required:    true,
+					Autocomplete: true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "time",
-					Description: "When to remind you (e.g., '15:30', 'tomorrow 3pm', '1h 30m', '2023-12-25 15:30')",
+					Description: "The time for the reminder (e.g., '15:30', '3pm', '9:30am')",
 					Required:    true,
 				},
 				{
@@ -181,5 +230,6 @@ func init() {
 		},
 		NeedsAccount: true,
 		Run:          reminderHandler,
+		Autocomplete: &autocompleteFunc,
 	})
 }

@@ -57,6 +57,32 @@ func ParseReminderTime(timeStr string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unable to parse time format: %s", timeStr)
 }
 
+// ParseReminderDateTime combines separate date and time strings into a time.Time
+func ParseReminderDateTime(dateStr, timeStr string) (time.Time, error) {
+	now := time.Now()
+	
+	// Parse the date component
+	parsedDate, err := parseDateOnly(dateStr, now)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid date: %w", err)
+	}
+	
+	// Parse the time component
+	parsedTime, err := parseTimeOfDay(timeStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid time: %w", err)
+	}
+	
+	// Combine date and time
+	result := time.Date(
+		parsedDate.Year(), parsedDate.Month(), parsedDate.Day(),
+		parsedTime.Hour(), parsedTime.Minute(), parsedTime.Second(),
+		0, now.Location(),
+	)
+	
+	return result, nil
+}
+
 // parseTimeOnlyForToday parses time-only formats (like "10:30", "10h30", "3pm") and applies them to today's date
 func parseTimeOnlyForToday(timeStr string, now time.Time) (time.Time, error) {
 	// Normalize the input - replace 'h' with ':'
@@ -157,43 +183,127 @@ func parseSimpleTime(timeStr string) (time.Time, error) {
 		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 12, 0, 0, 0, now.Location()), nil
 	}
 
-	// Check for "tomorrow at 3pm" style formats
-	if strings.HasPrefix(lower, "tomorrow at ") {
-		timepart := strings.TrimPrefix(lower, "tomorrow at ")
-		if parsedTime, err := parseTimeOfDay(timepart); err == nil {
-			tomorrow := now.AddDate(0, 0, 1)
-			return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 
-				parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location()), nil
-		}
-	}
-
-	if strings.HasPrefix(lower, "today at ") {
-		timepart := strings.TrimPrefix(lower, "today at ")
-		if parsedTime, err := parseTimeOfDay(timepart); err == nil {
-			return time.Date(now.Year(), now.Month(), now.Day(), 
-				parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location()), nil
-		}
-	}
-
 	return time.Time{}, fmt.Errorf("unable to parse simple time: %s", timeStr)
 }
 
 // parseTimeOfDay parses time expressions like "3pm", "15:30", "9:30am"
 func parseTimeOfDay(timeStr string) (time.Time, error) {
+	// Normalize the input - replace 'h' with ':'
+	normalizedTime := strings.ReplaceAll(timeStr, "h", ":")
+	
 	timeFormats := []string{
-		"15:04",
-		"3:04 PM",
-		"3:04PM",
-		"3PM",
-		"3pm",
-		"15",
+		"15:04",     // 24-hour format like "14:30"
+		"3:04 PM",   // 12-hour format with space like "2:30 PM"
+		"3:04PM",    // 12-hour format without space like "2:30PM"
+		"3:04 pm",   // 12-hour format with lowercase pm
+		"3:04am",    // 12-hour format with lowercase am
+		"3:04 am",   // 12-hour format with lowercase am and space
+		"3PM",       // Hour only with PM like "3PM"
+		"3pm",       // Hour only with pm like "3pm"
+		"3AM",       // Hour only with AM like "3AM"
+		"3am",       // Hour only with am like "3am"
+		"15",        // 24-hour format hour only like "14"
 	}
 
 	for _, format := range timeFormats {
-		if t, err := time.Parse(format, timeStr); err == nil {
+		if t, err := time.Parse(format, normalizedTime); err == nil {
 			return t, nil
 		}
 	}
 
 	return time.Time{}, fmt.Errorf("unable to parse time of day: %s", timeStr)
+}
+
+// parseDateOnly parses date strings and returns a time.Time with date only
+func parseDateOnly(dateStr string, now time.Time) (time.Time, error) {
+	dateStr = strings.TrimSpace(strings.ToLower(dateStr))
+	
+	// Handle simple date expressions
+	switch dateStr {
+	case "today":
+		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), nil
+	case "tomorrow":
+		tomorrow := now.AddDate(0, 0, 1)
+		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, now.Location()), nil
+	case "next week":
+		nextWeek := now.AddDate(0, 0, 7)
+		return time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 0, 0, 0, 0, now.Location()), nil
+	case "next month":
+		nextMonth := now.AddDate(0, 1, 0)
+		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 0, 0, 0, 0, now.Location()), nil
+	}
+	
+	// Date formats to try
+	dateFormats := []string{
+		"2006-01-02",      // YYYY-MM-DD
+		"2006/01/02",      // YYYY/MM/DD
+		"01/02/2006",      // MM/DD/YYYY (US format)
+		"02/01/2006",      // DD/MM/YYYY (European format)
+		"01-02-2006",      // MM-DD-YYYY
+		"02-01-2006",      // DD-MM-YYYY
+		"01/02",           // MM/DD (current year)
+		"02/01",           // DD/MM (current year) 
+		"01-02",           // MM-DD (current year)
+		"02-01",           // DD-MM (current year)
+		"02",              // DD (current month/year)
+		"January 2, 2006", // Full month name
+		"Jan 2, 2006",     // Short month name
+		"2 Jan 2006",      // Day month year
+		"January 2",       // Month day (current year)
+		"Jan 2",           // Short month day (current year)
+		"2",               // Day only (current month/year)
+	}
+	
+	for _, format := range dateFormats {
+		if parsedTime, err := time.Parse(format, dateStr); err == nil {
+			// Handle cases where year is missing
+			if parsedTime.Year() == 0 || parsedTime.Year() == 1 {
+				parsedTime = parsedTime.AddDate(now.Year()-1, 0, 0)
+			}
+			
+			// Handle cases where month is missing (day only)
+			if parsedTime.Month() == 1 && parsedTime.Day() != 1 && !strings.Contains(dateStr, "jan") {
+				parsedTime = time.Date(now.Year(), now.Month(), parsedTime.Day(), 0, 0, 0, 0, now.Location())
+			}
+			
+			// Special handling for ambiguous DD/MM vs MM/DD formats
+			// If we have something like "25/12", it's clearly DD/MM (day > 12)
+			// If we have "12/25", it's clearly MM/DD (month > 12)
+			if strings.Contains(dateStr, "/") || strings.Contains(dateStr, "-") {
+				parts := strings.FieldsFunc(dateStr, func(c rune) bool { return c == '/' || c == '-' })
+				if len(parts) >= 2 {
+					if first, err1 := strconv.Atoi(parts[0]); err1 == nil {
+						if second, err2 := strconv.Atoi(parts[1]); err2 == nil {
+							// If first number > 12, it must be DD/MM format
+							if first > 12 && format == "01/02/2006" {
+								// Try DD/MM format instead
+								if ddmmTime, err := time.Parse("02/01/2006", dateStr); err == nil {
+									parsedTime = ddmmTime
+								}
+							}
+							// If second number > 12, it must be MM/DD format
+							if second > 12 && format == "02/01/2006" {
+								// Try MM/DD format instead
+								if mmddTime, err := time.Parse("01/02/2006", dateStr); err == nil {
+									parsedTime = mmddTime
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			// If date is in the past and no year was specified, assume next year
+			if parsedTime.Before(now) && !strings.Contains(dateStr, strconv.Itoa(now.Year())) {
+				if strings.Contains(format, "2006") && !strings.Contains(dateStr, strconv.Itoa(now.Year())) {
+					// Full date format but year in past, move to next year
+					parsedTime = parsedTime.AddDate(1, 0, 0)
+				}
+			}
+			
+			return time.Date(parsedTime.Year(), parsedTime.Month(), parsedTime.Day(), 0, 0, 0, 0, now.Location()), nil
+		}
+	}
+	
+	return time.Time{}, fmt.Errorf("unable to parse date format: %s", dateStr)
 }

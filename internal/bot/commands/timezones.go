@@ -184,7 +184,7 @@ func HandleTimezoneSelectMenu(session *discordgo.Session, interaction *discordgo
 		gmtOffsetStr = fmt.Sprintf("GMT%.1f", timezone.GMTOffset)
 	}
 
-	return utils.SendSuccess(session, interaction, "Timezone Changed", fmt.Sprintf("Your timezone has been successfully changed to **%s** (%s)!", timezone.Name, gmtOffsetStr))
+	return utils.SendSuccess(session, interaction, "Timezone Changed", fmt.Sprintf("Your timezone has been successfully changed to **%s** (%s)!", timezone.Name, gmtOffsetStr), nil)
 }
 
 // Register the timezone command with subcommands

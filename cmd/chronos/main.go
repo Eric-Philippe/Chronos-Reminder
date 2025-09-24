@@ -35,7 +35,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	log.Println("[ALL] - 🛑 Shutting down...")
+	log.Println("[ALL] - 🛑 Gracefully shutting down...")
 	
 	// Stop scheduler
 	engine.StopSchedulerService()

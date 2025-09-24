@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
 )
@@ -125,12 +126,12 @@ func (s *Scheduler) scheduleLoop(ctx context.Context) {
 			s.running = false
 			return
 		case <-s.stopChan:
-			log.Println("[ENGINE] - Stop signal received")
 			s.running = false
 			return
 		case <-s.updateChan:
-			// Reminder was created/updated/deleted, reschedule
-			log.Println("[ENGINE] - Received update event, rescheduling...")
+			if config.IsDebugMode() {
+				log.Println("[ENGINE] - Received update event, rescheduling...")
+			}
 			s.scheduleNext()
 		case <-s.getTimerChan():
 			// Timer fired, process due reminders
@@ -225,7 +226,9 @@ func (s *Scheduler) checkAndProcessReminders() {
 		return
 	}
 
-	log.Printf("[ENGINE] - Found %d due reminders", len(dueReminders))
+	if (config.IsDebugMode()) {
+		log.Printf("[ENGINE] - Found %d due reminders", len(dueReminders))
+	}
 
 	// Process each due reminder
 	for _, reminder := range dueReminders {
