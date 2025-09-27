@@ -161,13 +161,15 @@ func (r *reminderRepository) GetNextReminders() ([]models.Reminder, error) {
 
 	// Find the next reminder(s) to process in a single query
 	// Priority: past due reminders first, then earliest future reminders
+	// Exclude paused reminders (those with the pause bit set in recurrence_state)
 	var reminders []models.Reminder
 	now := time.Now().UTC()
+	pauseBit := 128 // PauseBit from recurrence.go
 	
 	err = r.db.Preload("Account").
 		Preload("Account.Timezone").
 		Preload("Destinations").
-		Where("remind_at_utc <= ? OR remind_at_utc = (SELECT MIN(remind_at_utc) FROM reminders WHERE remind_at_utc > ?)", now, now).
+		Where("(remind_at_utc <= ? OR remind_at_utc = (SELECT MIN(remind_at_utc) FROM reminders WHERE remind_at_utc > ? AND (recurrence & ?) = 0)) AND (recurrence & ?) = 0", now, now, pauseBit, pauseBit).
 		Order("remind_at_utc ASC").
 		Find(&reminders).Error
 
@@ -198,4 +200,15 @@ func (r *reminderRepository) GetNextReminders() ([]models.Reminder, error) {
 
 	// No reminders found
 	return []models.Reminder{}, nil
+}
+
+// Reschedule, used for snoozing and recurrence
+func (r *reminderRepository) Reschedule(id uuid.UUID, newTime time.Time, notify bool) error {
+	err := r.db.Model(&models.Reminder{}).Where("id = ?", id).Update("remind_at_utc", newTime).Error
+	if err == nil && notify {
+		if r.scheduler != nil {
+			r.scheduler.NotifyReminderUpdated()
+		}
+	}
+	return err
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
+	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
 
 // SchedulerEvent represents different types of events that can trigger a reschedule
@@ -108,7 +109,9 @@ func (s *Scheduler) NotifyReminderDeleted() {
 	
 	select {
 	case s.updateChan <- SchedulerEvent{Type: "deleted"}:
-		log.Println("[ENGINE] - Notified of reminder deletion")
+		if config.IsDebugMode() {
+			log.Println("[ENGINE] - Notified of reminder deletion")
+		}
 	default:
 		log.Println("[ENGINE] - Update channel full, skipping deletion notification")
 	}
@@ -192,7 +195,10 @@ func (s *Scheduler) scheduleNext() {
 		return
 	}
 
-	log.Printf("[ENGINE] - Next reminder in %v (at %v)", duration, nextTime)
+	if config.IsDebugMode() {
+		log.Printf("[ENGINE] - Next reminder at %v (in %v)", nextTime, duration)
+	}
+	
 	s.currentTimer = time.NewTimer(duration)
 }
 
@@ -245,15 +251,14 @@ func (s *Scheduler) processReminder(reminder *models.Reminder) {
 		return
 	}
 
-	// Handle recurrence if needed
-	s.handleRecurrence(reminder)
-
 	// If it's a one-time reminder, delete it
 	if reminder.Recurrence == 0 {
 		err := s.reminderRepo.Delete(reminder.ID, false)
 		if err != nil {
 			log.Printf("[ENGINE] - Error deleting completed reminder %s: %v", reminder.ID, err)
 		}
+	} else {
+		s.handleRecurrence(reminder)
 	}
 }
 
@@ -263,11 +268,15 @@ func (s *Scheduler) handleRecurrence(reminder *models.Reminder) {
 		return // No recurrence
 	}
 
-	// TODO: Implement recurrence logic based on the recurrence value
-	// For now, we'll just log that recurrence handling is needed
-	log.Printf("[ENGINE] - TODO: Handle recurrence for reminder %s (recurrence: %d)", reminder.ID, reminder.Recurrence)
-	
-	// Placeholder: For now, just delete recurring reminders too
-	// In the future, this should calculate the next occurrence and update the reminder
+	newTime, err := services.GetNextOccurrence(reminder.RemindAtUTC, int(reminder.Recurrence))
+	if err != nil {
+		log.Printf("[ENGINE] - Error getting next occurrence for reminder %s: %v", reminder.ID, err)
+		return
+	}
+
+	err = s.reminderRepo.Reschedule(reminder.ID, newTime, false)
+	if err != nil {
+		log.Printf("[ENGINE] - Error rescheduling recurring reminder %s: %v", reminder.ID, err)
+	}
 }
 

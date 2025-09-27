@@ -91,6 +91,7 @@ func parseTimeOnlyForToday(timeStr string, now time.Time) (time.Time, error) {
 	// Time formats to try for time-only input
 	timeOnlyFormats := []string{
 		"15:04",     // 24-hour format like "14:30"
+		"15:",		// 24-hour format with trailing colon like "14:"
 		"3:04 PM",   // 12-hour format with space like "2:30 PM"
 		"3:04PM",    // 12-hour format without space like "2:30PM"
 		"3PM",       // Hour only with PM like "3PM"
@@ -193,6 +194,7 @@ func parseTimeOfDay(timeStr string) (time.Time, error) {
 	
 	timeFormats := []string{
 		"15:04",     // 24-hour format like "14:30"
+		"15:",		// 24-hour format hour only like "14:"
 		"3:04 PM",   // 12-hour format with space like "2:30 PM"
 		"3:04PM",    // 12-hour format without space like "2:30PM"
 		"3:04 pm",   // 12-hour format with lowercase pm

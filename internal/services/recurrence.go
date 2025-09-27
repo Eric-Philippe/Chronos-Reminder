@@ -1,5 +1,11 @@
 package services
 
+import (
+	"fmt"
+	"log"
+	"time"
+)
+
 // Recurrence type constants
 const (
 	RecurrenceOnce     = 0
@@ -38,6 +44,24 @@ var RecurrenceTypeMap = map[string]int{
 	"WEEKEND":  RecurrenceWeekend,
 }
 
+// GetRecurrenceTypeName
+func GetRecurrenceTypeName(recurrenceType int) string {
+	typeNames := map[int]string{
+		RecurrenceOnce:     "ONCE",
+		RecurrenceYearly:   "YEARLY",
+		RecurrenceMonthly:  "MONTHLY",
+		RecurrenceWeekly:   "WEEKLY",
+		RecurrenceDaily:    "DAILY",
+		RecurrenceHourly:   "HOURLY",
+		RecurrenceWorkdays: "WORKDAYS",
+		RecurrenceWeekend:  "WEEKEND",
+	}
+	if name, exists := typeNames[recurrenceType]; exists {
+		return name
+	}
+	return "UNKNOWN"
+}
+
 // BuildRecurrenceState builds a state value from recurrence type and pause status
 func BuildRecurrenceState(recurrenceType int, isPaused bool) int {
 	state := recurrenceType
@@ -65,17 +89,17 @@ func SetPauseState(state int, isPaused bool) int {
 	return state &^ PauseBit
 }
 
-// GetRecurrenceTypeName returns the string name for a recurrence type
-func GetRecurrenceTypeName(recurrenceType int) string {
+// GetRecurrenceTypeLabel returns the string name for a recurrence type
+func GetRecurrenceTypeLabel(recurrenceType int) string {
 	typeNames := map[int]string{
-		RecurrenceOnce:     "ONCE",
-		RecurrenceYearly:   "YEARLY",
-		RecurrenceMonthly:  "MONTHLY",
-		RecurrenceWeekly:   "WEEKLY",
-		RecurrenceDaily:    "DAILY",
-		RecurrenceHourly:   "HOURLY",
-		RecurrenceWorkdays: "WORKDAYS",
-		RecurrenceWeekend:  "WEEKEND",
+		RecurrenceOnce:     "Once",
+		RecurrenceYearly:   "Yearly",
+		RecurrenceMonthly:  "Monthly",
+		RecurrenceWeekly:   "Weekly",
+		RecurrenceDaily:    "Daily",
+		RecurrenceHourly:   "Hourly",
+		RecurrenceWorkdays: "Workdays",
+		RecurrenceWeekend:  "Weekend",
 	}
 	if name, exists := typeNames[recurrenceType]; exists {
 		return name
@@ -170,4 +194,84 @@ func (r WeekendRecurrence) NextOccurrence(from int64, interval int) int64 {
 	}
 
 	return from + totalSeconds
+}
+
+// GetNextOccurrence calculates the next occurrence timestamp based on recurrence state (with bits) and interval
+func GetNextOccurrence(from time.Time, recurrenceState int) (time.Time, error) {
+	// Extract the actual recurrence type from the bit-encoded state
+	recurrenceType := GetRecurrenceType(recurrenceState)
+	isPaused := IsPaused(recurrenceState)
+	
+	// If the recurrence is paused, return the same time
+	if isPaused {
+		return from, nil
+	}
+	
+	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
+	if recurrence == nil {
+		return time.Time{}, fmt.Errorf("invalid recurrence type: %d (extracted from state: %d)", recurrenceType, recurrenceState)
+	}
+
+	nextTimestamp := recurrence.NextOccurrence(from.Unix(), 1)
+	return time.Unix(nextTimestamp, 0), nil
+}
+
+// RecalculateNextOccurrence is a helper to recalculate the next occurrence for a reminder that has been paused and then unpaused
+func RecalculateNextOccurrence(from time.Time, recurrenceState int) (time.Time, error) {
+	// Extract the actual recurrence type from the bit-encoded state
+	recurrenceType := GetRecurrenceType(recurrenceState)
+	isPaused := IsPaused(recurrenceState)
+
+	// If the recurrence is still paused, return the same time
+	if isPaused {
+		return from, nil
+	}
+
+	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
+	if recurrence == nil {
+		return time.Time{}, fmt.Errorf("invalid recurrence type: %d (extracted from state: %d)", recurrenceType, recurrenceState)
+	}
+
+	// Calculate the next occurrence from now instead of catching up from the paused time
+	now := time.Now()
+	
+	// For special recurrence types (workdays, weekend), we need to ensure we land on the correct day type
+	switch recurrenceType {
+	case RecurrenceWorkdays:
+		// Find the next workday (Monday-Friday)
+		for {
+			weekday := now.Weekday()
+			if weekday >= time.Monday && weekday <= time.Friday {
+				break
+			}
+			now = now.AddDate(0, 0, 1)
+		}
+	case RecurrenceWeekend:
+		// Find the next weekend day (Saturday-Sunday)
+		for {
+			weekday := now.Weekday()
+			if weekday == time.Saturday || weekday == time.Sunday {
+				break
+			}
+			now = now.AddDate(0, 0, 1)
+		}
+	}
+	
+	// Use the original reminder time for hour/minute/second precision
+	nextTime := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
+		from.Location(),
+	)
+	
+	// If the calculated time is in the past (same day but earlier time), move to next occurrence
+	if nextTime.Before(now) {
+		nextTimestamp := recurrence.NextOccurrence(nextTime.Unix(), 1)
+		nextTime = time.Unix(nextTimestamp, 0).In(from.Location())
+	}
+	
+	log.Printf("[RECURRENCE] - Recalculated next occurrence from %v to %v for recurrence type %s", 
+		from, nextTime, GetRecurrenceTypeName(recurrenceType))
+	
+	return nextTime, nil
 }

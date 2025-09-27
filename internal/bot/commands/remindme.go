@@ -6,6 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
+	"github.com/ericp/chronos-bot-reminder/internal/bot/handlers"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
@@ -66,12 +67,20 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 			"Failed to save the reminder. Please try again later.")
 	}
 
+	// userId is either the interaction user ID or the member user ID
+	var userID string
+	if interaction.Member != nil && interaction.Member.User != nil {
+		userID = interaction.Member.User.ID
+	} else if interaction.User != nil {
+		userID = interaction.User.ID
+	}
+
 	// Create the discord_dm destination
 	destination := &models.ReminderDestination{
 		ReminderID: reminder.ID,
 		Type:       models.DestinationDiscordDM,
 		Metadata: models.JSONB{
-			"user_id": interaction.User.ID,
+			"user_id": userID,
 		},
 	}
 
@@ -107,51 +116,9 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 	return utils.SendEmbed(session, interaction, "Reminder Created! ⏰", description, &recurrenceText)
 }
 
-// dateAutocompleteHandler handles autocomplete for the date field
-func dateAutocompleteHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	data := interaction.ApplicationCommandData()
-	var currentInput string
-
-	// Find the date option that's being typed
-	for _, option := range data.Options {
-		if option.Name == "date" && option.Focused {
-			currentInput = strings.ToLower(strings.TrimSpace(option.StringValue()))
-			break
-		}
-	}
-
-	// Predefined suggestions
-	suggestions := []*discordgo.ApplicationCommandOptionChoice{
-		{Name: "Today", Value: "today"},
-		{Name: "Tomorrow", Value: "tomorrow"},
-		{Name: "Next Week", Value: "next week"},
-		{Name: "Next Month", Value: "next month"},
-	}
-
-	// Filter suggestions based on current input
-	var filteredSuggestions []*discordgo.ApplicationCommandOptionChoice
-	for _, suggestion := range suggestions {
-		if currentInput == "" || strings.Contains(strings.ToLower(suggestion.Name), currentInput) {
-			filteredSuggestions = append(filteredSuggestions, suggestion)
-		}
-	}
-
-	// Limit to 25 suggestions (Discord's limit)
-	if len(filteredSuggestions) > 25 {
-		filteredSuggestions = filteredSuggestions[:25]
-	}
-
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-		Data: &discordgo.InteractionResponseData{
-			Choices: filteredSuggestions,
-		},
-	})
-}
-
 // Register the reminder command
 func init() {
-	autocompleteFunc := AutocompleteFunc(dateAutocompleteHandler)
+	autocompleteFunc := AutocompleteFunc(handlers.DateAutocompleteHandler)
 	
 	RegisterCommand(&Command{
 		Description: Description{

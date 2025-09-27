@@ -50,6 +50,7 @@ type ReminderRepository interface {
 	GetUpcomingReminders(accountID uuid.UUID, limit int) ([]models.Reminder, error)
 	GetRemindersByDateRange(accountID uuid.UUID, startDate, endDate time.Time) ([]models.Reminder, error)
 	GetNextReminders() ([]models.Reminder, error)
+	Reschedule(id uuid.UUID, newTime time.Time, notify bool) error
 }
 
 // ReminderDestinationRepository interface defines operations for reminder destination data

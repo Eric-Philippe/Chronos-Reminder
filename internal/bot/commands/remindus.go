@@ -6,11 +6,16 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
+	"github.com/ericp/chronos-bot-reminder/internal/bot/handlers"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
+
+func hasPerm(perms int64, perm int64) bool {
+    return perms&perm == perm
+}
 
 // remindUsHandler handles the remind us command
 func remindUsHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error {
@@ -97,17 +102,19 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 	}
 
 	// Verify the user has manage channel permissions, administrator permissions, or is the server owner
-	perms, err := session.UserChannelPermissions(userID, channelID)
+	channelPerms, err := session.UserChannelPermissions(userID, channelID)
 	if err != nil {
 		return utils.SendError(session, interaction, "Permission Check Failed", 
 			"Could not verify your permissions for the selected channel.")
 	}
 
+	userPerms := interaction.Member.Permissions
+
 	// Check if user is server owner
 	guild, err := session.Guild(interaction.GuildID)
-	isOwner := err == nil && guild.OwnerID == userID
+	isAllowed := err == nil && (guild.OwnerID == userID || hasPerm(userPerms, discordgo.PermissionAdministrator)|| hasPerm(userPerms, discordgo.PermissionManageChannels) || hasPerm(channelPerms, discordgo.PermissionManageChannels))
 
-	if !isOwner && perms&discordgo.PermissionManageChannels == 0 && perms&discordgo.PermissionAdministrator == 0 {
+	if !isAllowed {
 		return utils.SendError(session, interaction, "Insufficient Permissions", 
 			"You need 'Manage Channel', 'Administrator' permission, or be the server owner to create reminders in the selected channel.")
 	}
@@ -168,7 +175,7 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 		}
 
 		// Check if user has permission to manage the specified role (unless they're owner/admin)
-		if !isOwner && perms&discordgo.PermissionAdministrator == 0 {
+		if isAllowed {
 			// Get the role to check hierarchy
 			role, err := session.State.Role(interaction.GuildID, roleID)
 			if err != nil {
@@ -192,7 +199,7 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 			}
 
 			// Check if user has manage roles permission
-			if perms&discordgo.PermissionManageRoles == 0 {
+			if !hasPerm(userPerms, discordgo.PermissionManageRoles) {
 				return utils.SendError(session, interaction, "Role Permission Required", 
 					"You need 'Manage Roles' permission to mention roles in reminders.")
 			}
@@ -302,56 +309,8 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 	return utils.SendEmbed(session, interaction, "Channel Reminder Created! 📢", description, &recurrenceText)
 }
 
-// remindUsAutocompleteHandler handles autocomplete for the remindus command
-func remindUsAutocompleteHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	data := interaction.ApplicationCommandData()
-	
-	// Find which option is being focused
-	for _, option := range data.Options {
-		if option.Focused && option.Name == "date" {
-			// Handle date autocomplete inline
-			currentInput := strings.ToLower(strings.TrimSpace(option.StringValue()))
-
-			// Predefined suggestions
-			suggestions := []*discordgo.ApplicationCommandOptionChoice{
-				{Name: "Today", Value: "today"},
-				{Name: "Tomorrow", Value: "tomorrow"},
-				{Name: "Next Week", Value: "next week"},
-				{Name: "Next Month", Value: "next month"},
-			}
-
-			// Filter suggestions based on current input
-			var filteredSuggestions []*discordgo.ApplicationCommandOptionChoice
-			for _, suggestion := range suggestions {
-				if currentInput == "" || strings.Contains(strings.ToLower(suggestion.Name), currentInput) {
-					filteredSuggestions = append(filteredSuggestions, suggestion)
-				}
-			}
-
-			// Limit to 25 suggestions (Discord's limit)
-			if len(filteredSuggestions) > 25 {
-				filteredSuggestions = filteredSuggestions[:25]
-			}
-
-			return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-				Data: &discordgo.InteractionResponseData{
-					Choices: filteredSuggestions,
-				},
-			})
-		}
-	}
-	
-	// Return empty choices if no focused option found
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-		Data: &discordgo.InteractionResponseData{
-			Choices: []*discordgo.ApplicationCommandOptionChoice{},
-		},
-	})
-}
 func init() {
-	autocompleteFunc := AutocompleteFunc(remindUsAutocompleteHandler)
+	autocompleteFunc := AutocompleteFunc(handlers.DateAutocompleteHandler)
 
 	RegisterCommand(&Command{
 		Description: Description{
@@ -427,6 +386,14 @@ func init() {
 						{
 							Name:  "Yearly",
 							Value: "YEARLY",
+						},
+						{
+							Name:  "Workdays (Mon-Fri)",
+							Value: "WORKDAYS",
+						},
+						{
+							Name:  "Weekends (Sat-Sun)",
+							Value: "WEEKEND",
 						},
 					},
 				},

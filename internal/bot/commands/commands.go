@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"strings"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
@@ -119,7 +121,8 @@ func HandleMessageComponent(s *discordgo.Session, i *discordgo.InteractionCreate
 	
 	for _, command := range commandRegistry {
 		for _, handler := range command.MessageComponentHandlers {
-			if handler.CustomID == customID {
+			// Check for exact match or prefix match (for dynamic IDs)
+			if handler.CustomID == customID || strings.HasPrefix(customID, handler.CustomID) {
 				var account *models.Account
 				var err error
 				
