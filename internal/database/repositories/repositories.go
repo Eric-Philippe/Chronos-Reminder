@@ -9,6 +9,7 @@ type Repositories struct {
 	Identity            IdentityRepository
 	Reminder            ReminderRepository
 	ReminderDestination ReminderDestinationRepository
+	ReminderError       ReminderErrorRepository
 }
 
 // NewRepositories creates new repository instances
@@ -19,5 +20,6 @@ func NewRepositories(db *gorm.DB) *Repositories {
 		Identity:            NewIdentityRepository(db),
 		Reminder:            NewReminderRepository(db),
 		ReminderDestination: NewReminderDestinationRepository(db),
+		ReminderError:       NewReminderErrorRepository(db),
 	}
 }

@@ -66,3 +66,17 @@ type ReminderDestinationRepository interface {
 	CreateMultiple(destinations []models.ReminderDestination) error
 	GetByMetadataField(field string, value interface{}) ([]models.ReminderDestination, error)
 }
+
+// ReminderErrorRepository interface defines operations for reminder error data
+type ReminderErrorRepository interface {
+	Create(reminderError *models.ReminderError) error
+	GetByID(id uuid.UUID) (*models.ReminderError, error)
+	GetByReminderID(reminderID uuid.UUID) ([]models.ReminderError, error)
+	GetByReminderDestinationID(reminderDestinationID uuid.UUID) ([]models.ReminderError, error)
+	GetByDateRange(startDate, endDate time.Time) ([]models.ReminderError, error)
+	Delete(id uuid.UUID) error
+	GetUnfixedByReminderID(reminderID uuid.UUID) ([]models.ReminderError, error)
+	GetUnfixedByReminderDestinationID(reminderDestinationID uuid.UUID) ([]models.ReminderError, error)
+	MarkAsFixed(id uuid.UUID) error
+	MarkMultipleAsFixed(ids []uuid.UUID) error
+}

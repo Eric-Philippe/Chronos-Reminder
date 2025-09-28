@@ -66,6 +66,7 @@ func runMigrations() error {
 		&models.Identity{},
 		&models.Reminder{},
 		&models.ReminderDestination{},
+		&models.ReminderError{},
 	)
 	
 	if err != nil {

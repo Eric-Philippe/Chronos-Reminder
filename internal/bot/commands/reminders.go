@@ -18,7 +18,7 @@ func remindersHandler(session *discordgo.Session, interaction *discordgo.Interac
 	subcommand := options[0]
 	switch subcommand.Name {
 	case "list":
-		return utils.SendInfo(session, interaction, "Feature Not Implemented", "The list command is currently to implement.")
+		return handlers.HandleListReminders(session, interaction, account, subcommand.Options)
 	case "show":
 		return handlers.HandleShowReminder(session, interaction, account, subcommand.Options)
 	case "pause":
@@ -124,6 +124,14 @@ func init() {
 			{
 				CustomID: "cancel_delete_",
 				Handler:  handlers.HandleCancelDelete,
+			},
+			{
+				CustomID: "show_reminder_",
+				Handler:  handlers.HandleShowReminderFromList,
+			},
+			{
+				CustomID: "back_to_list",
+				Handler:  handlers.HandleBackToList,
 			},
 		},
 	})

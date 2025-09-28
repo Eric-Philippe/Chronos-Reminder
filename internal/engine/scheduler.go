@@ -19,6 +19,7 @@ type SchedulerEvent struct {
 // Scheduler manages the timing and dispatching of reminders
 type Scheduler struct {
 	reminderRepo       repositories.ReminderRepository
+	reminderErrorRepo  repositories.ReminderErrorRepository
 	dispatcherRegistry *DispatcherRegistry
 	stopChan           chan struct{}
 	updateChan         chan SchedulerEvent
@@ -27,9 +28,10 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler instance
-func NewScheduler(reminderRepo repositories.ReminderRepository, dispatcherRegistry *DispatcherRegistry) *Scheduler {
+func NewScheduler(reminderRepo repositories.ReminderRepository, reminderErrorRepo repositories.ReminderErrorRepository, dispatcherRegistry *DispatcherRegistry) *Scheduler {
 	return &Scheduler{
 		reminderRepo:       reminderRepo,
+		reminderErrorRepo:  reminderErrorRepo,
 		dispatcherRegistry: dispatcherRegistry,
 		stopChan:           make(chan struct{}),
 		updateChan:         make(chan SchedulerEvent, 100), // Buffered channel for updates
@@ -248,8 +250,20 @@ func (s *Scheduler) checkAndProcessReminders() {
 
 // processReminder handles the dispatching of a single reminder
 func (s *Scheduler) processReminder(reminder *models.Reminder) {
+	// Check for unfixed errors before dispatching
+	unfixedErrors, err := s.reminderErrorRepo.GetUnfixedByReminderID(reminder.ID)
+	if err != nil {
+		log.Printf("[ENGINE] - Error checking unfixed errors for reminder %s: %v", reminder.ID, err)
+		// Continue with dispatch attempt despite error checking failure
+	} else if len(unfixedErrors) > 0 {
+		if config.IsDebugMode() {
+			log.Printf("[ENGINE] - Skipping reminder %s due to %d unfixed errors", reminder.ID, len(unfixedErrors))
+		}
+		return
+	}
+
 	// Dispatch the reminder to all its destinations
-	err := s.dispatcherRegistry.DispatchReminder(reminder)
+	err = s.dispatcherRegistry.DispatchReminder(reminder)
 	if err != nil {
 		log.Printf("[ENGINE] - Error dispatching reminder %s: %v", reminder.ID, err)
 		return

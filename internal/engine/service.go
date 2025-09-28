@@ -34,7 +34,7 @@ func GetSchedulerService() *SchedulerService {
 			log.Fatalf("[ENGINE] - ❌ Cannot get repositories")
 		}
 
-		schedulerService = NewSchedulerService(repos.Reminder)
+		schedulerService = NewSchedulerService(repos.Reminder, repos.ReminderError)
 	}
 
 	return schedulerService
@@ -51,7 +51,7 @@ func StartSchedulerService() {
 			log.Fatalf("[ENGINE] - ❌ Cannot get repositories")
 		}
 
-		schedulerService = NewSchedulerService(repos.Reminder)
+		schedulerService = NewSchedulerService(repos.Reminder, repos.ReminderError)
 	}
 
 	if schedulerService.Scheduler.IsRunning() {
@@ -152,9 +152,9 @@ func IsSchedulerNotificationEnabled() bool {
 }
 
 // NewSchedulerService creates a new complete scheduler service with all dispatchers registered
-func NewSchedulerService(reminderRepo repositories.ReminderRepository) *SchedulerService {
+func NewSchedulerService(reminderRepo repositories.ReminderRepository, reminderErrorRepo repositories.ReminderErrorRepository) *SchedulerService {
 	// Create dispatcher registry
-	dispatcherRegistry := NewDispatcherRegistry()
+	dispatcherRegistry := NewDispatcherRegistry(reminderErrorRepo)
 	
 	// Register all dispatchers
 	dispatcherRegistry.RegisterDispatcher(NewDiscordDMDispatcher())
@@ -162,7 +162,7 @@ func NewSchedulerService(reminderRepo repositories.ReminderRepository) *Schedule
 	dispatcherRegistry.RegisterDispatcher(NewDiscordChannelDispatcher())
 	
 	// Create scheduler
-	scheduler := NewScheduler(reminderRepo, dispatcherRegistry)
+	scheduler := NewScheduler(reminderRepo, reminderErrorRepo, dispatcherRegistry)
 	
 	// Set the scheduler in the repository if it supports it
 	if schedulerAwareRepo, ok := reminderRepo.(interface{ SetScheduler(repositories.SchedulerNotifier) }); ok {

@@ -3,9 +3,13 @@ package engine
 import (
 	"fmt"
 	"log"
+	"runtime/debug"
+	"time"
 
 	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
+	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
+	"github.com/google/uuid"
 )
 
 // Dispatcher interface defines how reminders are sent to different destinations
@@ -16,13 +20,15 @@ type Dispatcher interface {
 
 // DispatcherRegistry manages all available dispatchers
 type DispatcherRegistry struct {
-	dispatchers map[models.DestinationType]Dispatcher
+	dispatchers       map[models.DestinationType]Dispatcher
+	reminderErrorRepo repositories.ReminderErrorRepository
 }
 
 // NewDispatcherRegistry creates a new dispatcher registry
-func NewDispatcherRegistry() *DispatcherRegistry {
+func NewDispatcherRegistry(reminderErrorRepo repositories.ReminderErrorRepository) *DispatcherRegistry {
 	return &DispatcherRegistry{
-		dispatchers: make(map[models.DestinationType]Dispatcher),
+		dispatchers:       make(map[models.DestinationType]Dispatcher),
+		reminderErrorRepo: reminderErrorRepo,
 	}
 }
 
@@ -38,17 +44,24 @@ func (dr *DispatcherRegistry) DispatchReminder(reminder *models.Reminder) error 
 	}
 
 	var errors []error
-
 	for _, destination := range reminder.Destinations {
 		dispatcher, exists := dr.dispatchers[destination.Type]
 		if !exists {
 			log.Printf("[DISPATCHER] - No dispatcher found for type %s, skipping", destination.Type)
+			
+			// Create error record for missing dispatcher
+			dr.createErrorRecord(reminder.ID, destination.ID, fmt.Sprintf("No dispatcher found for type %s", destination.Type))
 			continue
 		}
 
 		if err := dispatcher.Dispatch(reminder, &destination, reminder.Account); err != nil {
 			log.Printf("[DISPATCHER] - Error dispatching to %s: %v", destination.Type, err)
 			errors = append(errors, err)
+			
+			// Create error record for dispatch failure
+			stackTrace := fmt.Sprintf("Dispatch error: %v\nStack trace:\n%s", err, string(debug.Stack()))
+			dr.createErrorRecord(reminder.ID, destination.ID, stackTrace)
+			
 			continue
 		}
 
@@ -68,4 +81,26 @@ func (dr *DispatcherRegistry) DispatchReminder(reminder *models.Reminder) error 
 func (dr *DispatcherRegistry) GetDispatcher(destinationType models.DestinationType) (Dispatcher, bool) {
 	dispatcher, exists := dr.dispatchers[destinationType]
 	return dispatcher, exists
+}
+
+// createErrorRecord creates a reminder error record
+func (dr *DispatcherRegistry) createErrorRecord(reminderID, destinationID uuid.UUID, stacktrace string) {
+	if dr.reminderErrorRepo == nil {
+		log.Printf("[DISPATCHER] - Warning: Cannot create error record - reminder error repository is nil")
+		return
+	}
+
+	reminderError := &models.ReminderError{
+		ReminderID:            reminderID,
+		ReminderDestinationID: destinationID,
+		Timestamp:             time.Now(),
+		Stacktrace:            stacktrace,
+		Fixed:                 false,
+	}
+
+	if err := dr.reminderErrorRepo.Create(reminderError); err != nil {
+		log.Printf("[DISPATCHER] - Error creating reminder error record: %v", err)
+	} else if config.IsDebugMode() {
+		log.Printf("[DISPATCHER] - [DEBUG] Created error record for reminder %s, destination %s", reminderID, destinationID)
+	}
 }
