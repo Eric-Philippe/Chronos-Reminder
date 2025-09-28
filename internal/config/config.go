@@ -20,6 +20,12 @@ type Config struct {
     DbUser          string
     DbPassword      string
     DbName          string
+
+	// Redis configuration
+	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
+	RedisPort     string `env:"REDIS_PORT" envDefault:"6379"`
+	RedisPassword string `env:"REDIS_PASSWORD" envDefault:""`
+	RedisDB       string `env:"REDIS_DB" envDefault:"0"`
 }
 
 var (
@@ -51,6 +57,11 @@ func Load() *Config {
         DbUser:          getEnv("DB_USER", "user"),
         DbPassword:      getEnv("DB_PASSWORD", "password"),
         DbName:          getEnv("DB_NAME", "ChronosReminder"),
+
+		RedisHost:     getEnv("REDIS_HOST", "localhost"),
+		RedisPort:     getEnv("REDIS_PORT", "6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		RedisDB:       getEnv("REDIS_DB", "0"),
     }
 
     return cfg

@@ -36,6 +36,11 @@ func Initialize() error {
 
 	log.Println("[DATABASE] - ✅ Connection established")
 
+	// Initialize Redis connection
+	if err := InitializeRedis(); err != nil {
+		return fmt.Errorf("failed to initialize Redis: %w", err)
+	}
+
 	// Run auto migrations
 	if err := runMigrations(); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
