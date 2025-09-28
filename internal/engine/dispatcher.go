@@ -10,7 +10,7 @@ import (
 
 // Dispatcher interface defines how reminders are sent to different destinations
 type Dispatcher interface {
-	Dispatch(reminder *models.Reminder, destination *models.ReminderDestination) error
+	Dispatch(reminder *models.Reminder, destination *models.ReminderDestination, account *models.Account) error
 	GetSupportedType() models.DestinationType
 }
 
@@ -46,7 +46,7 @@ func (dr *DispatcherRegistry) DispatchReminder(reminder *models.Reminder) error 
 			continue
 		}
 
-		if err := dispatcher.Dispatch(reminder, &destination); err != nil {
+		if err := dispatcher.Dispatch(reminder, &destination, reminder.Account); err != nil {
 			log.Printf("[DISPATCHER] - Error dispatching to %s: %v", destination.Type, err)
 			errors = append(errors, err)
 			continue

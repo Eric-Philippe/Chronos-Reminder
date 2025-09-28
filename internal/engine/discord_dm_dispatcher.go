@@ -26,7 +26,7 @@ func (d *DiscordDMDispatcher) GetSupportedType() models.DestinationType {
 }
 
 // Dispatch sends a reminder message via Discord DM
-func (d *DiscordDMDispatcher) Dispatch(reminder *models.Reminder, destination *models.ReminderDestination) error {
+func (d *DiscordDMDispatcher) Dispatch(reminder *models.Reminder, destination *models.ReminderDestination, account *models.Account) error {
 	// Validate destination type
 	if destination.Type != models.DestinationDiscordDM {
 		return fmt.Errorf("invalid destination type for Discord DM dispatcher: %s", destination.Type)
@@ -49,22 +49,7 @@ func (d *DiscordDMDispatcher) Dispatch(reminder *models.Reminder, destination *m
 		return fmt.Errorf("failed to create DM channel with user %s: %w", userIDStr, err)
 	}
 
-	// Create the reminder message
-	embed := &discordgo.MessageEmbed{
-		Title:       "⏰ Reminder",
-		Description: reminder.Message,
-		Color:       0x00ff00, // Green color
-		Timestamp:   reminder.RemindAtUTC.Format("2006-01-02T15:04:05Z"),
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: "Chronos Reminder",
-		},
-	}
-
-	// Send the message
-	_, err = d.session.ChannelMessageSendEmbed(dmChannel.ID, embed)
-	if err != nil {
-		return fmt.Errorf("failed to send DM to user %s: %w", userIDStr, err)
-	}
+	DiscordSend(d.session, reminder, dmChannel.ID, account)
 
 	return nil
 }

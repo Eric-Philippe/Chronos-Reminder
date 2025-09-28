@@ -7,6 +7,22 @@ import (
 	"time"
 )
 
+// ConvertToUserTimezone converts a UTC time to the user's account timezone
+func ConvertToUserTimezone(utcTime time.Time, timezoneStr string) (time.Time, error) {
+	if timezoneStr == "" {
+		return utcTime, nil // Return UTC time if no timezone specified
+	}
+	
+	// Load the timezone location
+	loc, err := time.LoadLocation(timezoneStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", timezoneStr, err)
+	}
+	
+	// Convert UTC time to the user's timezone
+	return utcTime.In(loc), nil
+}
+
 // parseReminderTime parses various time formats and returns a time.Time
 func ParseReminderTime(timeStr string) (time.Time, error) {
 	timeStr = strings.TrimSpace(timeStr)

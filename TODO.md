@@ -10,7 +10,7 @@
 
 - [x] `/remindme` command -> Quickly set {DISCORD_DM}Reminders type
 - [x] `/remindus` command -> Set {DISCORD_CHANNEL}Reminders type, (MUST BE ENTERED IN A SERVER, NOT IN A DM), the channel field is an autocomplete that gives the user channels select where the user has the manage channel permission
-- [ ] Draw the discord reminder with a prettier display (image...)
+- [x] Draw the discord reminder with a prettier display (image...)
 - [ ] `/profile` command -> View user profile information and their integrations and buttons to manage them
 - [ ] `/reminders delete|list|show|pause|unpause` commands -> Manage reminders
 - - [ ] `list` subcommand -> Give a first embed with all the list, and a second embed with a paginated list of one reminders that the user can scroll through, show the remaining time before the next reminder

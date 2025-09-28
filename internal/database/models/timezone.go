@@ -7,9 +7,10 @@ func (Timezone) TableName() string {
 
 // Timezone represents the timezone table
 type Timezone struct {
-	ID        uint    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string  `gorm:"not null;size:100" json:"name"`
-	GMTOffset float64 `gorm:"not null;type:decimal(4,2)" json:"gmt_offset"`
+	ID           uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name         string  `gorm:"not null;size:100" json:"name"`
+	GMTOffset    float64 `gorm:"not null;type:decimal(4,2)" json:"gmt_offset"`
+	IANALocation string  `gorm:"not null;size:50" json:"iana_location"` // IANA timezone identifier
 	
 	// Relationships
 	Accounts []Account `gorm:"foreignKey:TimezoneID" json:"accounts,omitempty"`

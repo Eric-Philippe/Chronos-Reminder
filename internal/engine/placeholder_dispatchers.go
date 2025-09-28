@@ -20,7 +20,7 @@ func (d *WebhookDispatcher) GetSupportedType() models.DestinationType {
 }
 
 // Dispatch is a placeholder for webhook dispatching
-func (d *WebhookDispatcher) Dispatch(reminder *models.Reminder, destination *models.ReminderDestination) error {
+func (d *WebhookDispatcher) Dispatch(reminder *models.Reminder, destination *models.ReminderDestination, account *models.Account) error {
 	log.Printf("[WEBHOOK_DISPATCHER] - Placeholder: would send reminder %s via webhook", reminder.ID)
 	// TODO: Implement webhook dispatching
 	return nil

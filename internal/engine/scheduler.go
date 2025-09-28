@@ -81,7 +81,9 @@ func (s *Scheduler) NotifyReminderCreated() {
 	
 	select {
 	case s.updateChan <- SchedulerEvent{Type: "created"}:
-		log.Println("[ENGINE] - Notified of reminder creation")
+		if config.IsDebugMode() {
+			log.Println("[ENGINE] - Notified of reminder creation")
+		}
 	default:
 		log.Println("[ENGINE] - Update channel full, skipping creation notification")
 	}
@@ -95,7 +97,9 @@ func (s *Scheduler) NotifyReminderUpdated() {
 	
 	select {
 	case s.updateChan <- SchedulerEvent{Type: "updated"}:
-		log.Println("[ENGINE] - Notified of reminder update")
+		if config.IsDebugMode() {
+			log.Println("[ENGINE] - Notified of reminder update")
+		}
 	default:
 		log.Println("[ENGINE] - Update channel full, skipping update notification")
 	}
