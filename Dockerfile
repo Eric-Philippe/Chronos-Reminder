@@ -19,6 +19,9 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o chronos-reminder
 # Final stage
 FROM alpine:latest
 
+# Install timezone data
+RUN apk add --no-cache tzdata
+
 WORKDIR /root/
 
 # Copy the built binary from the builder stage
