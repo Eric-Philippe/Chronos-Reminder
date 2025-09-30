@@ -1,17 +1,13 @@
 package services
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"gorm.io/gorm"
-)
-
-var (
-	ErrUnknownTimezone = errors.New("unknown timezone ID")
 )
 
 // ChangeAccountTimezone changes the timezone of an account by timezone ID and saves it to the database
@@ -24,7 +20,7 @@ func ChangeAccountTimezone(account *models.Account, timezoneID uint) error {
 		return err
 	}
 	if timezone == nil {
-		return ErrUnknownTimezone
+		return fmt.Errorf("unknown timezone: %d", timezoneID)
 	}
 
 	account.TimezoneID = &timezoneID
