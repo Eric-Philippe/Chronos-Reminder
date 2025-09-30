@@ -225,15 +225,13 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 		}
 	}
 
-	// Parse the reminder date and time
-	parsedTime, err := services.ParseReminderDateTime(dateStr, timeStr)
+
+	// Parse the reminder date and time in user's timezone
+	parsedTime, err := services.ParseReminderDateTimeInTimezone(dateStr, timeStr, account.Timezone.IANALocation)
 	if err != nil {
 		return utils.SendError(session, interaction, "Invalid Date/Time Format", 
 			fmt.Sprintf("Could not parse the date '%s' and time '%s'. Please check your date and time formats.", dateStr, timeStr))
 	}
-
-	// Convert parsed time to account's timezone
-	parsedTime, _ = services.ConvertToUTC(parsedTime, account.Timezone.IANALocation)
 
 	// Get recurrence type value
 	recurrenceTypeValue, exists := services.RecurrenceTypeMap[strings.ToUpper(recurrenceType)]
@@ -242,7 +240,7 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 			fmt.Sprintf("Invalid recurrence type '%s'. Valid options are: ONCE, YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, WORKDAYS, WEEKEND.", recurrenceType))
 	}
 
-	// Create the reminder
+	// Create the reminder with UTC time
 	reminder := &models.Reminder{
 		AccountID:   account.ID,
 		RemindAtUTC: parsedTime.UTC(),
@@ -250,8 +248,9 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 		Recurrence:  int16(services.BuildRecurrenceState(recurrenceTypeValue, false)),
 	}
 
-	// Save the reminder to database
 	repo := database.GetRepositories()
+
+	// Save the reminder to database
 	if err := repo.Reminder.Create(reminder, true); err != nil {
 		return utils.SendError(session, interaction, "Database Error", 
 			"Failed to save the reminder. Please try again later.")
@@ -290,9 +289,8 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 	}
 
 	// Load account timezone for display
-	accountWithTimezone, err := repo.Account.GetWithTimezone(account.ID)
 	var displayTime string
-	if err == nil && accountWithTimezone != nil && accountWithTimezone.Timezone != nil {
+	if account != nil && account.Timezone != nil {
 		// Display the local time as entered by the user
 		displayTime = parsedTime.Format("Monday, January 2, 2006 at 15:04")
 	} else {

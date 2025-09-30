@@ -115,6 +115,15 @@ func createFromDiscordUser(discordUser *discordgo.User) (*models.Account, error)
 		return nil, err
 	}
 
+	// Preload the timezone and identities for the new account
+	err = database.GetDB().
+		Preload("Timezone").
+		Preload("Identities").
+		First(account, account.ID).Error
+	if err != nil {
+		return nil, err
+	}
+
 	return account, nil
 }
 

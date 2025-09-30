@@ -99,6 +99,29 @@ func ParseReminderDateTime(dateStr, timeStr string) (time.Time, error) {
 	return result, nil
 }
 
+// ParseReminderDateTimeInTimezone parses a date and time string in the specified timezone
+func ParseReminderDateTimeInTimezone(dateStr, timeStr, ianaLocation string) (time.Time, error) {
+	// Load the timezone location
+	loc, err := time.LoadLocation(ianaLocation)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// Parse the date and time strings (reuse your existing parsing logic)
+	// This should parse in the specified timezone instead of local time
+	parsedTime, err := ParseReminderDateTime(dateStr, timeStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// Re-interpret the parsed time in the user's timezone
+	// This creates a new time with the same clock reading but in the user's timezone
+	year, month, day := parsedTime.Date()
+	hour, min, sec := parsedTime.Clock()
+	
+	return time.Date(year, month, day, hour, min, sec, 0, loc), nil
+}
+
 // parseTimeOnlyForToday parses time-only formats (like "10:30", "10h30", "3pm") and applies them to today's date
 func parseTimeOnlyForToday(timeStr string, now time.Time) (time.Time, error) {
 	// Normalize the input - replace 'h' with ':'
@@ -324,27 +347,4 @@ func parseDateOnly(dateStr string, now time.Time) (time.Time, error) {
 	}
 	
 	return time.Time{}, fmt.Errorf("unable to parse date format: %s", dateStr)
-}
-
-// ConvertToUTC converts a time in a given timezone to UTC
-func ConvertToUTC(localTime time.Time, timezoneStr string) (time.Time, error) {
-	if timezoneStr == "" {
-		return localTime.UTC(), nil // Assume input is already in UTC if no timezone specified
-	}
-	
-	// Load the timezone location
-	loc, err := time.LoadLocation(timezoneStr)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", timezoneStr, err)
-	}
-	
-	// Convert local time to the specified timezone
-	timeInLoc := time.Date(
-		localTime.Year(), localTime.Month(), localTime.Day(),
-		localTime.Hour(), localTime.Minute(), localTime.Second(),
-		localTime.Nanosecond(), loc,
-	)
-	
-	// Convert to UTC
-	return timeInLoc.UTC(), nil
 }
