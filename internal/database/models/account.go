@@ -21,6 +21,7 @@ type Account struct {
 	// Relationships
 	Timezone   *Timezone  `gorm:"foreignKey:TimezoneID" json:"timezone,omitempty"`
 	Identities []Identity `gorm:"foreignKey:AccountID;constraint:OnDelete:CASCADE" json:"identities,omitempty"`
+	Reminders  []Reminder `gorm:"foreignKey:AccountID;constraint:OnDelete:CASCADE" json:"reminders,omitempty"`
 }
 
 // BeforeCreate hooks for setting timestamps and UUIDs

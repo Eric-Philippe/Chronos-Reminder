@@ -4,12 +4,8 @@ services:
   postgres:
     image: postgres:16
     container_name: chronos-postgres
-    environment:
-      POSTGRES_HOST: ${DB_HOST}
-      POSTGRES_PORT: ${DB_PORT}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+    env_file:
+      - .env
     ports:
       - "${DB_PORT}:5432"
     volumes:
@@ -31,8 +27,12 @@ services:
     container_name: chronos-reminder
     env_file:
       - .env
+    environment:
+      - ENVIRONMENT=PROD
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
     ports:
-      - "5000:8080"
+      - "8080:8080"
     depends_on:
       - postgres
       - redis

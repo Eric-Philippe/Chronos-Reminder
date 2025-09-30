@@ -3,24 +3,23 @@ package bot
 import (
 	"errors"
 	"log"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/commands"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/events"
-	"github.com/ericp/chronos-bot-reminder/internal/config"
 )
 
 var ErrMissingToken = errors.New("[DISCORD_BOT] - missing Discord bot token")
 
 var (
 	discord *discordgo.Session
-	cfg     = config.Load()
 )
 
 // GetDiscordSession return a singleton ready Discord session
 func GetDiscordSession() *discordgo.Session {
 	if discord == nil {
-		session, err := newDiscordSession(cfg.DiscordBotToken)
+		session, err := newDiscordSession(os.Getenv("DISCORD_BOT_TOKEN"))
 		if err != nil {
 			log.Fatalf("[DISCORD_BOT] - ❌ Cannot create Discord session: %v", err)
 		}

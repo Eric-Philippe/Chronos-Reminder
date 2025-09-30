@@ -37,11 +37,30 @@ func ChangeAccountTimezone(account *models.Account, timezoneID uint) error {
 	return nil
 }
 
+func GetAccountFromDiscordUser(discordUser *discordgo.User) (*models.Account, error) {
+	var identity models.Identity
+	err := database.GetDB().
+		Preload("Account").
+		Where("provider = ? AND external_id = ?", models.ProviderDiscord, discordUser.ID).
+		First(&identity).Error
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return identity.Account, nil
+}
+
 // EnsureDiscordUser ensures a Discord user identity linked to an account exists, returns Account or error TODO: May be clever to store the result in a cache
 func EnsureDiscordUser(discordUser *discordgo.User) (*models.Account, error) {
 	var identity models.Identity
 	err := database.GetDB().
 		Preload("Account").
+		// Preload the user's reminders
+		Preload("Account.Reminders").
+		// Preload the timezone for the account
+		Preload("Account.Timezone").
+		// Preload the identities for the account
 		Where("provider = ? AND external_id = ?", models.ProviderDiscord, discordUser.ID).
 		First(&identity).Error
 	
@@ -97,4 +116,13 @@ func createFromDiscordUser(discordUser *discordgo.User) (*models.Account, error)
 	}
 
 	return account, nil
+}
+
+func DiscordUserUsesApp(account *models.Account) bool {
+	for _, identity := range account.Identities {
+		if identity.Provider == models.ProviderApp {
+			return true
+		}
+	}
+	return false
 }

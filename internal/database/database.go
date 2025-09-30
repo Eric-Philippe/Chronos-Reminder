@@ -3,8 +3,8 @@ package database
 import (
 	"fmt"
 	"log"
+	"os"
 
-	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
 	"gorm.io/driver/postgres"
@@ -14,14 +14,13 @@ import (
 
 var DB *gorm.DB
 var repos *repositories.Repositories
-var cfg = config.Load()
 
 // Initialize sets up the database connection and runs migrations
 func Initialize() error {
 	var err error
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbName, cfg.DbPassword)
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
 	
 	// Configure GORM
 	config := &gorm.Config{

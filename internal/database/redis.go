@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
-	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,16 +17,14 @@ var redisCtx = context.Background()
 
 // InitializeRedis sets up the Redis connection
 func InitializeRedis() error {
-	cfg := config.Load()
-
-	db, err := strconv.Atoi(cfg.RedisDB)
+	db, err := strconv.Atoi(os.Getenv("REDIS_DB"))
 	if err != nil {
 		return fmt.Errorf("[REDIS] - Invalid Redis DB number: %w", err)
 	}
 
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
-		Password: cfg.RedisPassword,
+		Addr:     fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+		Password: os.Getenv("REDIS_PASSWORD"),
 		DB:       db,
 	})
 

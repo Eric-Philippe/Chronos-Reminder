@@ -7,14 +7,17 @@ import (
 	"syscall"
 
 	"github.com/ericp/chronos-bot-reminder/internal/bot"
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/engine"
 )
 
 func main() {
-	// Initialize database
 	log.Println("[ALL] - ⏳ Initializing Chronos Reminder")
 	
+	config.Load()
+
+	// Initialize database
 	if err := database.Initialize(); err != nil {
 		log.Fatalf("[DATABASE] - ❌ Failed to initialize database: %v", err)
 	}
