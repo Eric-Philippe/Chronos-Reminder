@@ -31,7 +31,8 @@ func profileHandler(session *discordgo.Session, interaction *discordgo.Interacti
 		targetAccount, err = services.GetAccountFromDiscordUser(targetUser)
 		// If error or no account, display a message saying that user has no account
 		if err != nil || targetAccount == nil {
-			return utils.SendError(session, interaction, "No Account", fmt.Sprintf("User %s does not have an account yet !", targetUser.Username))
+			msg := "They can create one by setting a reminder or calling that command !"
+			return utils.SendErrorDetailed(session, interaction, "No Account", fmt.Sprintf("User %s does not have an account yet !", targetUser.Username), &msg)
 		}
 	} else {
 		// Use the command invoker's account

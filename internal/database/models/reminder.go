@@ -19,6 +19,7 @@ type Reminder struct {
 	Message      string    `gorm:"not null" json:"message"`
 	CreatedAt    time.Time `gorm:"not null;default:now()" json:"created_at"`
 	Recurrence   int16     `gorm:"not null;default:0" json:"recurrence"`
+	SnoozedUntilUTC *time.Time  `gorm:"" json:"snoozed_until_utc,omitempty"`
 	
 	// Relationships
 	Account      *Account               `gorm:"foreignKey:AccountID;constraint:OnDelete:CASCADE" json:"account,omitempty"`

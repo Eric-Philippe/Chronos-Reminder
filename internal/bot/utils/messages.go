@@ -90,8 +90,8 @@ func SendSuccess(session *discordgo.Session, interaction *discordgo.InteractionC
 }
 		
 // BuildErrorEmbed builds an error embed message
-func BuildErrorEmbed(session *discordgo.Session, title, description string) *discordgo.MessageEmbed {
-	return &discordgo.MessageEmbed{
+func BuildErrorEmbed(session *discordgo.Session, title, description string, footerText *string) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
 		Title:       title,
 		Description: "❌ - " + description,
 		Color:       ColorError,
@@ -100,11 +100,24 @@ func BuildErrorEmbed(session *discordgo.Session, title, description string) *dis
 			Text:    "Chronos Bot Reminder",
 		},
 	}
+
+	if footerText != nil {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text:    *footerText,
+		}
+	}
+
+	return embed
+}
+
+// SendError without the footer
+func SendError(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string) error {
+	return SendErrorDetailed(session, interaction, title, description, nil)
 }
 
 // SendError sends an error message as an interaction response
-func SendError(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string) error {
-	embed := BuildErrorEmbed(session, title, description)
+func SendErrorDetailed(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string) error {
+	embed := BuildErrorEmbed(session, title, description, footerText)
 
 	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

@@ -47,9 +47,29 @@ func DiscordSend(session *discordgo.Session, reminder *models.Reminder, channelI
 	if err := png.Encode(&buf, img); err != nil {
 		return fmt.Errorf("failed to encode reminder image: %w", err)
 	}
-	_, err = session.ChannelFileSend(channelID, "reminder.png", &buf)
+
+		// Add a button to the message
+	button := discordgo.Button{
+		Label:   "Snooze",
+		Style:   discordgo.SecondaryButton,
+		CustomID: "reminder_snooze_" + fmt.Sprint(reminder.ID),
+	}
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{button},
+		},
+	}
+	msg := &discordgo.MessageSend{
+		File: &discordgo.File{
+			Name:        "reminder.png",
+			ContentType: "image/png",
+			Reader:      &buf,
+		},
+		Components: components,
+	}
+	_, err = session.ChannelMessageSendComplex(channelID, msg)
 	if err != nil {
-		return fmt.Errorf("failed to send reminder image: %w", err)
+		return fmt.Errorf("failed to send reminder: %w", err)
 	}
 
 	return nil
