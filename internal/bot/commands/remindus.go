@@ -232,6 +232,9 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 			fmt.Sprintf("Could not parse the date '%s' and time '%s'. Please check your date and time formats.", dateStr, timeStr))
 	}
 
+	// Convert parsed time to account's timezone
+	parsedTime, _ = services.ConvertToUTC(parsedTime, account.Timezone.IANALocation)
+
 	// Get recurrence type value
 	recurrenceTypeValue, exists := services.RecurrenceTypeMap[strings.ToUpper(recurrenceType)]
 	if !exists {

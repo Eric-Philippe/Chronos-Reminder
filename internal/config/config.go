@@ -43,9 +43,7 @@ func SetDefaultTimezoneID(id uint) {
 // Load reads configuration from environment variables or .env file
 func Load() *Config {
     // Load .env file, ignore error if file not found
-    if err := godotenv.Load(); err != nil {
-        log.Println("[ALL] - ⚠️ No .env file found, relying on environment variables")
-    }
+    godotenv.Load()
 
     cfg := &Config{
         DiscordBotToken: getEnv("DISCORD_BOT_TOKEN", ""),

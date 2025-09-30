@@ -325,3 +325,26 @@ func parseDateOnly(dateStr string, now time.Time) (time.Time, error) {
 	
 	return time.Time{}, fmt.Errorf("unable to parse date format: %s", dateStr)
 }
+
+// ConvertToUTC converts a time in a given timezone to UTC
+func ConvertToUTC(localTime time.Time, timezoneStr string) (time.Time, error) {
+	if timezoneStr == "" {
+		return localTime.UTC(), nil // Assume input is already in UTC if no timezone specified
+	}
+	
+	// Load the timezone location
+	loc, err := time.LoadLocation(timezoneStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", timezoneStr, err)
+	}
+	
+	// Convert local time to the specified timezone
+	timeInLoc := time.Date(
+		localTime.Year(), localTime.Month(), localTime.Day(),
+		localTime.Hour(), localTime.Minute(), localTime.Second(),
+		localTime.Nanosecond(), loc,
+	)
+	
+	// Convert to UTC
+	return timeInLoc.UTC(), nil
+}
