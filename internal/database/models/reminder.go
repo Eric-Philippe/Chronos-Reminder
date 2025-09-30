@@ -16,10 +16,11 @@ type Reminder struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	AccountID    uuid.UUID `gorm:"type:uuid;not null;index" json:"account_id"`
 	RemindAtUTC  time.Time `gorm:"not null" json:"remind_at_utc"`
+	SnoozedAtUTC *time.Time `gorm:"default:null" json:"snoozed_at_utc,omitempty"`
+	NextFireUTC  *time.Time `gorm:"default:null" json:"next_fire_utc,omitempty"`
 	Message      string    `gorm:"not null" json:"message"`
 	CreatedAt    time.Time `gorm:"not null;default:now()" json:"created_at"`
 	Recurrence   int16     `gorm:"not null;default:0" json:"recurrence"`
-	SnoozedUntilUTC *time.Time  `gorm:"" json:"snoozed_until_utc,omitempty"`
 	
 	// Relationships
 	Account      *Account               `gorm:"foreignKey:AccountID;constraint:OnDelete:CASCADE" json:"account,omitempty"`
@@ -32,5 +33,6 @@ func (r *Reminder) BeforeCreate(tx *gorm.DB) error {
 		r.ID = uuid.New()
 	}
 	r.CreatedAt = time.Now()
+	r.NextFireUTC = &r.RemindAtUTC
 	return nil
 }

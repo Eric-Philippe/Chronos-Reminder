@@ -1,4 +1,4 @@
-package handlers
+package logic
 
 import (
 	"fmt"
@@ -119,6 +119,7 @@ func HandleConfirmDelete(session *discordgo.Session, interaction *discordgo.Inte
 		},
 	})
 }
+
 
 // HandleCancelDelete handles the cancel button click
 func HandleCancelDelete(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error {

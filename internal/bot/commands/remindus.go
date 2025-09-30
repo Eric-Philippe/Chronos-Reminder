@@ -6,7 +6,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/ericp/chronos-bot-reminder/internal/bot/handlers"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
@@ -310,7 +309,7 @@ func remindUsHandler(session *discordgo.Session, interaction *discordgo.Interact
 }
 
 func init() {
-	autocompleteFunc := AutocompleteFunc(handlers.DateAutocompleteHandler)
+	autocompleteFunc := AutocompleteFunc(DateAutocompleteHandler)
 
 	RegisterCommand(&Command{
 		Description: Description{

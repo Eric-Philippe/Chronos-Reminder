@@ -9,11 +9,13 @@ import (
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
+	"github.com/google/uuid"
 )
 
-// SchedulerEvent represents different types of events that can trigger a reschedule
-type SchedulerEvent struct {
-	Type string // "created", "updated", "deleted"
+// QueueEvent represents different types of events that can trigger a reschedule
+type QueueEvent struct {
+	Type       string    // "created", "updated", "deleted"
+	ReminderID uuid.UUID // ID of the affected reminder (for updated/deleted events)
 }
 
 // Scheduler manages the timing and dispatching of reminders
@@ -21,20 +23,22 @@ type Scheduler struct {
 	reminderRepo       repositories.ReminderRepository
 	reminderErrorRepo  repositories.ReminderErrorRepository
 	dispatcherRegistry *DispatcherRegistry
+	garbageCollector   *GarbageCollector
 	stopChan           chan struct{}
-	updateChan         chan SchedulerEvent
+	updateChan         chan QueueEvent
 	running            bool
 	currentTimer       *time.Timer
 }
 
 // NewScheduler creates a new scheduler instance
-func NewScheduler(reminderRepo repositories.ReminderRepository, reminderErrorRepo repositories.ReminderErrorRepository, dispatcherRegistry *DispatcherRegistry) *Scheduler {
+func NewScheduler(reminderRepo repositories.ReminderRepository, reminderErrorRepo repositories.ReminderErrorRepository, dispatcherRegistry *DispatcherRegistry, garbageCollector *GarbageCollector) *Scheduler {
 	return &Scheduler{
 		reminderRepo:       reminderRepo,
 		reminderErrorRepo:  reminderErrorRepo,
 		dispatcherRegistry: dispatcherRegistry,
+		garbageCollector:   garbageCollector,
 		stopChan:           make(chan struct{}),
-		updateChan:         make(chan SchedulerEvent, 100), // Buffered channel for updates
+		updateChan:         make(chan QueueEvent, 100), // Buffered channel for updates
 		running:            false,
 		currentTimer:       nil,
 	}
@@ -76,13 +80,13 @@ func (s *Scheduler) IsRunning() bool {
 }
 
 // NotifyReminderCreated notifies the scheduler that a new reminder was created
-func (s *Scheduler) NotifyReminderCreated() {
+func (s *Scheduler) NotifyReminderCreated(reminderID uuid.UUID) {
 	if !s.running {
 		return
 	}
 	
 	select {
-	case s.updateChan <- SchedulerEvent{Type: "created"}:
+	case s.updateChan <- QueueEvent{Type: "created"}:
 		if config.IsDebugMode() {
 			log.Println("[ENGINE] - Notified of reminder creation")
 		}
@@ -92,15 +96,19 @@ func (s *Scheduler) NotifyReminderCreated() {
 }
 
 // NotifyReminderUpdated notifies the scheduler that a reminder was updated
-func (s *Scheduler) NotifyReminderUpdated() {
+func (s *Scheduler) NotifyReminderUpdated(reminderID uuid.UUID) {
 	if !s.running {
 		return
 	}
 	
 	select {
-	case s.updateChan <- SchedulerEvent{Type: "updated"}:
+	case s.updateChan <- QueueEvent{Type: "updated", ReminderID: reminderID}:
 		if config.IsDebugMode() {
-			log.Println("[ENGINE] - Notified of reminder update")
+			log.Printf("[ENGINE] - Notified of reminder update: %s", reminderID)
+		}
+		// Notify garbage collector to cancel any pending deletion
+		if s.garbageCollector != nil {
+			s.garbageCollector.NotifyReminderUpdated(reminderID)
 		}
 	default:
 		log.Println("[ENGINE] - Update channel full, skipping update notification")
@@ -108,15 +116,19 @@ func (s *Scheduler) NotifyReminderUpdated() {
 }
 
 // NotifyReminderDeleted notifies the scheduler that a reminder was deleted
-func (s *Scheduler) NotifyReminderDeleted() {
+func (s *Scheduler) NotifyReminderDeleted(reminderID uuid.UUID) {
 	if !s.running {
 		return
 	}
 	
 	select {
-	case s.updateChan <- SchedulerEvent{Type: "deleted"}:
+	case s.updateChan <- QueueEvent{Type: "deleted", ReminderID: reminderID}:
 		if config.IsDebugMode() {
-			log.Println("[ENGINE] - Notified of reminder deletion")
+			log.Printf("[ENGINE] - Notified of reminder deletion: %s", reminderID)
+		}
+		// Notify garbage collector to cancel any pending deletion
+		if s.garbageCollector != nil {
+			s.garbageCollector.NotifyReminderUpdated(reminderID)
 		}
 	default:
 		log.Println("[ENGINE] - Update channel full, skipping deletion notification")
@@ -175,13 +187,13 @@ func (s *Scheduler) scheduleNext() {
 		return
 	}
 
-	if len(nextReminders) == 0 {
+	if len(nextReminders) == 0 && config.IsDebugMode() {
 		log.Println("[ENGINE] - No upcoming reminders, waiting for updates...")
 		return
 	}
 
 	// Calculate time until next reminder
-	nextTime := nextReminders[0].RemindAtUTC
+	nextTime := nextReminders[0].NextFireUTC
 	now := time.Now().UTC()
 	duration := nextTime.Sub(now)
 
@@ -228,7 +240,7 @@ func (s *Scheduler) checkAndProcessReminders() {
 
 	var dueReminders []models.Reminder
 	for _, reminder := range nextReminders {
-		if reminder.RemindAtUTC.Before(now.Add(tolerance)) {
+		if reminder.NextFireUTC.Before(now.Add(tolerance)) {
 			dueReminders = append(dueReminders, reminder)
 		}
 	}
@@ -269,14 +281,37 @@ func (s *Scheduler) processReminder(reminder *models.Reminder) {
 		return
 	}
 
-	// If it's a one-time reminder, delete it
-	if reminder.Recurrence == 0 {
-		err := s.reminderRepo.Delete(reminder.ID, false)
+	// isFromSnooze returns if the reminder was sent due to snooze expiration (so a snooze time earlier than the original remind time)
+	isFromSnooze := reminder.SnoozedAtUTC != nil && reminder.SnoozedAtUTC.Equal(*reminder.NextFireUTC)
+	log.Printf("[ENGINE] - Reminder %s dispatched (from snooze: %v)", reminder.ID, isFromSnooze)
+
+	// If it's from a snooze we don't want to touch the reminder more than necessary
+	if isFromSnooze {
+		reminder.SnoozedAtUTC = nil
+		err = s.reminderRepo.Update(reminder, true) // notify the scheduler since the snooze time changed
 		if err != nil {
-			log.Printf("[ENGINE] - Error deleting completed reminder %s: %v", reminder.ID, err)
+			log.Printf("[ENGINE] - Error updating reminder %s after snooze dispatch: %v", reminder.ID, err)
 		}
-	} else {
+
+		// If it's a one-time reminder from snooze, add to garbage collector
+		if reminder.Recurrence == 0 && s.garbageCollector != nil {
+			s.garbageCollector.NotifyReminderDispatched(reminder.ID)
+		}
+
+		return
+	}
+
+	if reminder.Recurrence != 0 {
+		// Handle recurrence only if not from snooze
 		s.handleRecurrence(reminder)
+	} else {
+		// One-time reminder dispatched, add to garbage collector queue
+		reminder.NextFireUTC = nil
+		s.reminderRepo.Update(reminder, false)
+
+		if s.garbageCollector != nil {
+			s.garbageCollector.NotifyReminderDispatched(reminder.ID)
+		}
 	}
 }
 
@@ -292,7 +327,8 @@ func (s *Scheduler) handleRecurrence(reminder *models.Reminder) {
 		return
 	}
 
-	err = s.reminderRepo.Reschedule(reminder.ID, newTime, false)
+	// Update the reminder with the new time
+	err = s.reminderRepo.RescheduleReminder(reminder, newTime, false)
 	if err != nil {
 		log.Printf("[ENGINE] - Error rescheduling recurring reminder %s: %v", reminder.ID, err)
 	}

@@ -1,4 +1,4 @@
-package handlers
+package logic
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
+
 
 const RemindersPerPage = 10
 
@@ -45,7 +46,7 @@ func HandleListReminders(session *discordgo.Session, interaction *discordgo.Inte
 	}
 
 	// Build the reminders list embed
-	embed := buildRemindersListEmbed(remindersPointers, 1, len(reminders))
+	embed := BuildRemindersListEmbed(remindersPointers, 1, len(reminders))
 
 	// Create components with "Show First Reminder" button
 	components := []discordgo.MessageComponent{
@@ -69,6 +70,52 @@ func HandleListReminders(session *discordgo.Session, interaction *discordgo.Inte
 			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
+}
+
+// buildRemindersListEmbed creates an embed with a list of reminders
+func BuildRemindersListEmbed(reminders []*models.Reminder, page, total int) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title: "📝 Your Reminders",
+		Color: 0x3498db,
+	}
+
+	if total == 0 {
+		embed.Description = "You don't have any reminders yet."
+		return embed
+	}
+
+	var description strings.Builder
+	description.WriteString(fmt.Sprintf("You have **%d** reminder", total))
+	if total != 1 {
+		description.WriteString("s")
+	}
+	description.WriteString(":\n\n")
+
+	for i, reminder := range reminders {
+		// Status emoji
+		statusEmoji := "✅"
+
+		// Truncate message if too long
+		message := reminder.Message
+		if len(message) > 50 {
+			message = message[:47] + "..."
+		}
+
+		description.WriteString(fmt.Sprintf("%s **%d.** %s\n", statusEmoji, i+1, message))
+		
+		// Add schedule info - adjust field name based on actual model
+		// For now, assume it's a one-time reminder
+		description.WriteString("    🕐 One-time reminder\n")
+		
+		description.WriteString("\n")
+	}
+
+	embed.Description = description.String()
+	embed.Footer = &discordgo.MessageEmbedFooter{
+		Text: fmt.Sprintf("Page %d - Use the buttons to navigate", page),
+	}
+
+	return embed
 }
 
 // HandleShowReminderFromList handles showing a specific reminder from the list with navigation
@@ -193,7 +240,7 @@ func HandleBackToList(session *discordgo.Session, interaction *discordgo.Interac
 	}
 
 	// Build the reminders list embed
-	embed := buildRemindersListEmbed(remindersPointers, 1, len(reminders))
+	embed := BuildRemindersListEmbed(remindersPointers, 1, len(reminders))
 
 	// Create components with "Show First Reminder" button
 	components := []discordgo.MessageComponent{
@@ -216,54 +263,4 @@ func HandleBackToList(session *discordgo.Session, interaction *discordgo.Interac
 			Components: components,
 		},
 	})
-}
-
-// buildRemindersListEmbed creates an embed with a list of reminders
-func buildRemindersListEmbed(reminders []*models.Reminder, page, total int) *discordgo.MessageEmbed {
-	embed := &discordgo.MessageEmbed{
-		Title: "📝 Your Reminders",
-		Color: 0x3498db,
-	}
-
-	if total == 0 {
-		embed.Description = "You don't have any reminders yet."
-		return embed
-	}
-
-	var description strings.Builder
-	description.WriteString(fmt.Sprintf("You have **%d** reminder", total))
-	if total != 1 {
-		description.WriteString("s")
-	}
-	description.WriteString(":\n\n")
-
-	for i, reminder := range reminders {
-		// Status emoji
-		statusEmoji := "✅"
-		// Note: Assuming the field exists - adjust based on actual model
-		// if reminder.Paused {
-		// 	statusEmoji = "⏸️"
-		// }
-
-		// Truncate message if too long
-		message := reminder.Message
-		if len(message) > 50 {
-			message = message[:47] + "..."
-		}
-
-		description.WriteString(fmt.Sprintf("%s **%d.** %s\n", statusEmoji, i+1, message))
-		
-		// Add schedule info - adjust field name based on actual model
-		// For now, assume it's a one-time reminder
-		description.WriteString("    🕐 One-time reminder\n")
-		
-		description.WriteString("\n")
-	}
-
-	embed.Description = description.String()
-	embed.Footer = &discordgo.MessageEmbedFooter{
-		Text: fmt.Sprintf("Page %d - Use the buttons to navigate", page),
-	}
-
-	return embed
 }

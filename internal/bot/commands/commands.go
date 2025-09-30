@@ -1,9 +1,11 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
@@ -25,12 +27,6 @@ type AutocompleteFunc func(session *discordgo.Session, interaction *discordgo.In
 // RunFunc represents the run function signature
 type RunFunc func(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error
 
-type MessageComponentHandler struct {
-	CustomID string
-	Handler  func(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error
-}
-
-
 // Command represents a bot command with its description, data, and handlers
 type Command struct {
 	Description  Description                           `json:"description"`
@@ -38,7 +34,6 @@ type Command struct {
 	Autocomplete *AutocompleteFunc                     `json:"autocomplete,omitempty"`
 	NeedsAccount bool                                  `json:"needsAccount"`
 	Run          RunFunc                               `json:"run"`
-	MessageComponentHandlers []MessageComponentHandler `json:"messageComponentHandlers,omitempty"`
 }
 
 // commandRegistry holds registered commands by name
@@ -116,36 +111,212 @@ func HandleAutocomplete(session *discordgo.Session, interaction *discordgo.Inter
 	return (*command.Autocomplete)(session, interaction)
 }
 
-func HandleMessageComponent(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	customID := i.MessageComponentData().CustomID
-	
-	for _, command := range commandRegistry {
-		for _, handler := range command.MessageComponentHandlers {
-			// Check for exact match or prefix match (for dynamic IDs)
-			if handler.CustomID == customID || strings.HasPrefix(customID, handler.CustomID) {
-				var account *models.Account
-				var err error
-				
-				if command.NeedsAccount {
-					var user *discordgo.User
-					if i.Member != nil && i.Member.User != nil {
-						user = i.Member.User
-					} else if i.User != nil {
-						user = i.User
-					} else {
-						return nil // No user information available
-					}
-					
-					account, err = services.EnsureDiscordUser(user)
-					if err != nil {
-						return err
+// dateAutocompleteHandler handles autocomplete for the date field
+func DateAutocompleteHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	data := interaction.ApplicationCommandData()
+	var currentInput string
+
+	// Find the date option that's being typed
+	for _, option := range data.Options {
+		if option.Name == "date" && option.Focused {
+			currentInput = strings.ToLower(strings.TrimSpace(option.StringValue()))
+			break
+		}
+	}
+
+	// Predefined suggestions
+	suggestions := []*discordgo.ApplicationCommandOptionChoice{
+		{Name: "Today", Value: "today"},
+		{Name: "Tomorrow", Value: "tomorrow"},
+		{Name: "Next Week", Value: "next week"},
+		{Name: "Next Month", Value: "next month"},
+	}
+
+	// Filter suggestions based on current input
+	var filteredSuggestions []*discordgo.ApplicationCommandOptionChoice
+	for _, suggestion := range suggestions {
+		if currentInput == "" || strings.Contains(strings.ToLower(suggestion.Name), currentInput) {
+			filteredSuggestions = append(filteredSuggestions, suggestion)
+		}
+	}
+
+	// Limit to 25 suggestions (Discord's limit)
+	if len(filteredSuggestions) > 25 {
+		filteredSuggestions = filteredSuggestions[:25]
+	}
+
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: filteredSuggestions,
+		},
+	})
+}
+
+// RemindersAutocompleteHandler handles autocomplete for the reminder selection
+func RemindersAutocompleteHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	data := interaction.ApplicationCommandData()
+	var currentInput string
+	var subcommandName string
+
+	// Find the focused option within the subcommand
+	for _, option := range data.Options {
+		if option.Type == discordgo.ApplicationCommandOptionSubCommand {
+			subcommandName = option.Name
+			for _, subOption := range option.Options {
+				if subOption.Focused {
+					currentInput = strings.ToLower(strings.TrimSpace(subOption.StringValue()))
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// Only provide autocomplete for delete, show, pause, and unpause subcommands
+	if subcommandName != "delete" && subcommandName != "show" && subcommandName != "pause" && subcommandName != "unpause" {
+		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{
+				Choices: []*discordgo.ApplicationCommandOptionChoice{},
+			},
+		})
+	}
+
+	// Get user account
+	var user *discordgo.User
+	if interaction.Member != nil && interaction.Member.User != nil {
+		user = interaction.Member.User
+	} else if interaction.User != nil {
+		user = interaction.User
+	} else {
+		return nil
+	}
+
+	// Get user account from database
+	repo := database.GetRepositories()
+	identity, err := repo.Identity.GetByProviderAndExternalID(models.ProviderDiscord, user.ID)
+	if err != nil || identity == nil {
+		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{
+				Choices: []*discordgo.ApplicationCommandOptionChoice{},
+			},
+		})
+	}
+
+	account, err := repo.Account.GetByID(identity.AccountID)
+	if err != nil || account == nil {
+		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{
+				Choices: []*discordgo.ApplicationCommandOptionChoice{},
+			},
+		})
+	}
+
+	// Get reminders based on permissions
+	var allReminders []models.Reminder
+	var err2 error
+
+	// Get user's own reminders
+	userReminders, err2 := repo.Reminder.GetByAccountIDWithDestinations(account.ID)
+	if err2 == nil {
+		allReminders = append(allReminders, userReminders...)
+	}
+
+	// If in a server and user is admin, get server reminders
+	if interaction.GuildID != "" && interaction.Member != nil {
+		permissions := interaction.Member.Permissions
+		isAdmin := (permissions & discordgo.PermissionAdministrator) == discordgo.PermissionAdministrator
+		
+		if isAdmin {
+			// Get all reminders that have a destination for this server
+			serverDestinations, err3 := repo.ReminderDestination.GetByMetadataField("guild_id", interaction.GuildID)
+			if err3 == nil {
+				for _, dest := range serverDestinations {
+					if dest.Type == models.DestinationDiscordChannel {
+						serverReminder, err4 := repo.Reminder.GetWithAccountAndDestinations(dest.ReminderID)
+						if err4 == nil && serverReminder != nil {
+							// Check if not already in the list (avoid duplicates)
+							found := false
+							for _, existing := range allReminders {
+								if existing.ID == serverReminder.ID {
+									found = true
+									break
+								}
+							}
+							if !found {
+								allReminders = append(allReminders, *serverReminder)
+							}
+						}
 					}
 				}
-				
-				return handler.Handler(s, i, account)
 			}
 		}
 	}
-	
-	return nil
+
+	// Filter reminders based on input and create choices
+	var choices []*discordgo.ApplicationCommandOptionChoice
+	for _, reminder := range allReminders {
+		// For pause/unpause commands, filter out one-time reminders
+		if (subcommandName == "pause" || subcommandName == "unpause") {
+			recurrenceType := services.GetRecurrenceType(int(reminder.Recurrence))
+			if recurrenceType == services.RecurrenceOnce {
+				continue // Skip one-time reminders
+			}
+		}
+
+		// Additional filtering for pause/unpause based on current state
+		if subcommandName == "pause" {
+			// For pause: only show active (non-paused) reminders
+			if services.IsPaused(int(reminder.Recurrence)) {
+				continue // Skip already paused reminders
+			}
+		} else if subcommandName == "unpause" {
+			// For unpause: only show paused reminders
+			if !services.IsPaused(int(reminder.Recurrence)) {
+				continue // Skip non-paused reminders
+			}
+		}
+
+		// Create a display name that includes both message and time
+		displayTime := reminder.RemindAtUTC.Format("Jan 2, 2006 15:04")
+		displayName := fmt.Sprintf("[%s] %s", displayTime, reminder.Message)
+		
+		// Add status indicator for pause/unpause commands
+		if subcommandName == "pause" || subcommandName == "unpause" {
+			recurrenceName := services.GetRecurrenceTypeLabel(services.GetRecurrenceType(int(reminder.Recurrence)))
+			if services.IsPaused(int(reminder.Recurrence)) {
+				displayName += " [⏸️ Paused]"
+			} else {
+				displayName += fmt.Sprintf(" [🔁 %s]", recurrenceName)
+			}
+		}
+		
+		// Truncate if too long (Discord has a limit)
+		if len(displayName) > 100 {
+			displayName = displayName[:97] + "..."
+		}
+
+		// Filter based on input
+		if currentInput == "" || strings.Contains(strings.ToLower(displayName), currentInput) || strings.Contains(strings.ToLower(reminder.Message), currentInput) {
+			choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+				Name:  displayName,
+				Value: reminder.ID.String(),
+			})
+		}
+	}
+
+	// Limit to 25 choices (Discord's limit)
+	if len(choices) > 25 {
+		choices = choices[:25]
+	}
+
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	})
 }

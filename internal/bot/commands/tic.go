@@ -7,11 +7,6 @@ import (
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
 
-// ticHandler handles the tic command
-func ticHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error {
-	return utils.SendInfo(session, interaction, "The bot is alive!", "⏰ Tac !")
-}
-
 // Register the tic command
 func init() {
 	RegisterCommand(&Command{
@@ -30,6 +25,8 @@ func init() {
 			Options:     nil,
 		},
 		NeedsAccount: false,
-		Run: 	  ticHandler,
+		Run: 	  func(session *discordgo.Session, interaction *discordgo.InteractionCreate, _ *models.Account) error {
+			return utils.SendInfo(session, interaction, "The bot is alive!", "⏰ Tac !")
+		},
 	})
 }

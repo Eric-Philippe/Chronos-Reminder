@@ -1,4 +1,4 @@
-package engine
+package dispatchers
 
 import (
 	"bytes"
@@ -10,6 +10,10 @@ import (
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
+
+// =====================================================================
+// Contains everything that may be used in multiple dispatchers
+// =====================================================================
 
 // DiscordSend handles sending reminders via Discord
 func DiscordSend(session *discordgo.Session, reminder *models.Reminder, channelID string, account *models.Account) error {
@@ -52,7 +56,7 @@ func DiscordSend(session *discordgo.Session, reminder *models.Reminder, channelI
 	button := discordgo.Button{
 		Label:   "Snooze",
 		Style:   discordgo.SecondaryButton,
-		CustomID: "reminder_snooze_" + fmt.Sprint(reminder.ID),
+		CustomID: "reminder_request_snooze_" + fmt.Sprint(reminder.ID),
 	}
 	components := []discordgo.MessageComponent{
 		discordgo.ActionsRow{

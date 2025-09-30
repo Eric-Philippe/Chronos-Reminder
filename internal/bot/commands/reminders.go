@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/ericp/chronos-bot-reminder/internal/bot/handlers"
+	"github.com/ericp/chronos-bot-reminder/internal/bot/logic"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
@@ -18,15 +18,15 @@ func remindersHandler(session *discordgo.Session, interaction *discordgo.Interac
 	subcommand := options[0]
 	switch subcommand.Name {
 	case "list":
-		return handlers.HandleListReminders(session, interaction, account, subcommand.Options)
+		return logic.HandleListReminders(session, interaction, account, subcommand.Options)
 	case "show":
-		return handlers.HandleShowReminder(session, interaction, account, subcommand.Options)
+		return logic.HandleShowReminder(session, interaction, account, subcommand.Options)
 	case "pause":
-		return handlers.HandlePauseReminder(session, interaction, account, subcommand.Options)
+		return logic.HandlePauseReminder(session, interaction, account, subcommand.Options)
 	case "unpause":
-		return handlers.HandleUnpauseReminder(session, interaction, account, subcommand.Options)
+		return logic.HandleUnpauseReminder(session, interaction, account, subcommand.Options)
 	case "delete":
-		return handlers.HandleDeleteReminder(session, interaction, account, subcommand.Options)
+		return logic.HandleDeleteReminder(session, interaction, account, subcommand.Options)
 	default:
 		return utils.SendError(session, interaction, "Unknown Subcommand", "The specified subcommand is not recognized.")
 	}
@@ -34,7 +34,7 @@ func remindersHandler(session *discordgo.Session, interaction *discordgo.Interac
 
 // Register the reminders command
 func init() {
-	autocompleteFunc := AutocompleteFunc(handlers.RemindersAutocompleteHandler)
+	autocompleteFunc := AutocompleteFunc(RemindersAutocompleteHandler)
 	
 	RegisterCommand(&Command{
 		Description: Description{
@@ -116,23 +116,6 @@ func init() {
 		NeedsAccount: true,
 		Run:          remindersHandler,
 		Autocomplete: &autocompleteFunc,
-		MessageComponentHandlers: []MessageComponentHandler{
-			{
-				CustomID: "confirm_delete_",
-				Handler:  handlers.HandleConfirmDelete,
-			},
-			{
-				CustomID: "cancel_delete_",
-				Handler:  handlers.HandleCancelDelete,
-			},
-			{
-				CustomID: "show_reminder_",
-				Handler:  handlers.HandleShowReminderFromList,
-			},
-			{
-				CustomID: "back_to_list",
-				Handler:  handlers.HandleBackToList,
-			},
-		},
+		
 	})
 }

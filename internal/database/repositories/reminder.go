@@ -11,15 +11,21 @@ import (
 
 // SchedulerNotifier interface for notifying the scheduler of reminder changes
 type SchedulerNotifier interface {
-	NotifyReminderCreated()
-	NotifyReminderUpdated()
-	NotifyReminderDeleted()
+	NotifyReminderCreated(reminderID uuid.UUID)
+	NotifyReminderUpdated(reminderID uuid.UUID)
+	NotifyReminderDeleted(reminderID uuid.UUID)
+}
+
+// GarbageCollectorNotifier interface for notifying the garbage collector
+type GarbageCollectorNotifier interface {
+	NotifyReminderUpdated(reminderID uuid.UUID)
 }
 
 // reminderRepository implementation
 type reminderRepository struct {
-	db        *gorm.DB
-	scheduler SchedulerNotifier
+	db               *gorm.DB
+	scheduler        SchedulerNotifier
+	garbageCollector GarbageCollectorNotifier
 }
 
 // NewReminderRepository creates a new reminder repository instance
@@ -32,12 +38,17 @@ func (r *reminderRepository) SetScheduler(scheduler SchedulerNotifier) {
 	r.scheduler = scheduler
 }
 
+// SetGarbageCollector sets the garbage collector notifier for the repository
+func (r *reminderRepository) SetGarbageCollector(gc GarbageCollectorNotifier) {
+	r.garbageCollector = gc
+}
+
 // Reminder Repository Implementation
 func (r *reminderRepository) Create(reminder *models.Reminder, notify bool) error {
 	err := r.db.Create(reminder).Error
 	if err == nil && notify {
 		if r.scheduler != nil {
-			r.scheduler.NotifyReminderCreated()
+			r.scheduler.NotifyReminderCreated(reminder.ID)
 		}
 	}
 	return err
@@ -107,7 +118,7 @@ func (r *reminderRepository) Update(reminder *models.Reminder, notify bool) erro
 	err := r.db.Save(reminder).Error
 	if err == nil && notify {
 		if r.scheduler != nil {
-			r.scheduler.NotifyReminderUpdated()
+			r.scheduler.NotifyReminderUpdated(reminder.ID)
 		}
 	}
 	return err
@@ -117,33 +128,10 @@ func (r *reminderRepository) Delete(id uuid.UUID, notify bool) error {
 	err := r.db.Delete(&models.Reminder{}, "id = ?", id).Error
 	if err == nil {
 		if r.scheduler != nil && notify {
-			r.scheduler.NotifyReminderDeleted()
+			r.scheduler.NotifyReminderDeleted(id)
 		}
 	}
 	return err
-}
-
-func (r *reminderRepository) GetDueReminders(beforeTime time.Time) ([]models.Reminder, error) {
-	var reminders []models.Reminder
-	err := r.db.Preload("Account").Preload("Account.Timezone").Preload("Destinations").Where("remind_at_utc <= ?", beforeTime).Find(&reminders).Error
-	return reminders, err
-}
-
-func (r *reminderRepository) GetUpcomingReminders(accountID uuid.UUID, limit int) ([]models.Reminder, error) {
-	var reminders []models.Reminder
-	err := r.db.Where("account_id = ? AND remind_at_utc > ?", accountID, time.Now().UTC()).
-		Order("remind_at_utc ASC").
-		Limit(limit).
-		Find(&reminders).Error
-	return reminders, err
-}
-
-func (r *reminderRepository) GetRemindersByDateRange(accountID uuid.UUID, startDate, endDate time.Time) ([]models.Reminder, error) {
-	var reminders []models.Reminder
-	err := r.db.Where("account_id = ? AND remind_at_utc BETWEEN ? AND ?", accountID, startDate, endDate).
-		Order("remind_at_utc ASC").
-		Find(&reminders).Error
-	return reminders, err
 }
 
 func (r *reminderRepository) GetNextReminders() ([]models.Reminder, error) {
@@ -160,38 +148,55 @@ func (r *reminderRepository) GetNextReminders() ([]models.Reminder, error) {
 	}
 
 	// Find the next reminder(s) to process in a single query
-	// Priority: past due reminders first, then earliest future reminders
-	// Exclude paused reminders (those with the pause bit set in recurrence_state)
+	// Priority: past due reminders first (including snoozed), then earliest future reminders
 	var reminders []models.Reminder
 	now := time.Now().UTC()
-	pauseBit := 128 // PauseBit from recurrence.go
+	pauseBit := 128 // PauseBit
 	
-	err = r.db.Preload("Account").
+	dbResult := r.db.Preload("Account").
 		Preload("Account.Timezone").
 		Preload("Destinations").
-		Where("(remind_at_utc <= ? OR remind_at_utc = (SELECT MIN(remind_at_utc) FROM reminders WHERE remind_at_utc > ? AND (recurrence & ?) = 0)) AND (recurrence & ?) = 0", now, now, pauseBit, pauseBit).
-		Order("remind_at_utc ASC").
-		Find(&reminders).Error
+		Where(`
+			(
+				next_fire_utc <= ?
 
+				OR
+				next_fire_utc = (
+					SELECT MIN(next_fire_utc)
+					FROM reminders s
+					WHERE s.next_fire_utc > ?
+					AND (s.recurrence & ?) = 0
+				)
+			)
+			AND (recurrence & ?) = 0
+		`, now, now, pauseBit, pauseBit).
+		Order("next_fire_utc ASC").
+		Find(&reminders)
+
+
+	err = dbResult.Error
 	if err != nil {
 		return nil, err
 	}
 
 	// If we found reminders, prioritize past due ones
 	if len(reminders) > 0 {
-		// Check if we have past due reminders
+		// Check if we have past due reminders (considering snooze time)
 		for _, reminder := range reminders {
-			if reminder.RemindAtUTC.Before(now) || reminder.RemindAtUTC.Equal(now) {
+			if reminder.NextFireUTC.Before(now) || reminder.NextFireUTC.Equal(now) {
 				// Return only the first past due reminder
 				return []models.Reminder{reminder}, nil
 			}
 		}
 		
 		// No past due reminders, return all reminders with the earliest future time
-		earliestTime := reminders[0].RemindAtUTC
 		var futureReminders []models.Reminder
 		for _, reminder := range reminders {
-			if reminder.RemindAtUTC.Equal(earliestTime) {
+			effectiveTime := reminder.RemindAtUTC
+			if reminder.SnoozedAtUTC != nil {
+				effectiveTime = *reminder.SnoozedAtUTC
+			}
+			if effectiveTime.Equal(*reminders[0].NextFireUTC) {
 				futureReminders = append(futureReminders, reminder)
 			}
 		}
@@ -202,12 +207,111 @@ func (r *reminderRepository) GetNextReminders() ([]models.Reminder, error) {
 	return []models.Reminder{}, nil
 }
 
+// Return all the reminders that are scheduled for deletion (one-time reminders that have been dispatched)
+func (r *reminderRepository) GetNextsRemindersToDelete() ([]models.Reminder, error) {
+	var reminders []models.Reminder
+	err := r.db.Preload("Account").
+		Preload("Account.Timezone").
+		Preload("Destinations").
+		Where("recurrence = 0 AND snoozed_at_utc IS NULL AND next_fire_utc IS NULL").
+		Find(&reminders).Error
+	return reminders, err
+}
+
 // Reschedule, used for snoozing and recurrence
 func (r *reminderRepository) Reschedule(id uuid.UUID, newTime time.Time, notify bool) error {
-	err := r.db.Model(&models.Reminder{}).Where("id = ?", id).Update("remind_at_utc", newTime).Error
+	// First, get the current reminder to check snoozed_at_utc
+	var reminder models.Reminder
+	if err := r.db.First(&reminder, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	// Calculate next_fire_utc as the minimum between remind_at_utc and snoozed_at_utc
+	nextFireUTC := newTime
+	if reminder.SnoozedAtUTC != nil && reminder.SnoozedAtUTC.Before(newTime) {
+		nextFireUTC = *reminder.SnoozedAtUTC
+	}
+
+	// Update both remind_at_utc and next_fire_utc
+	updates := map[string]interface{}{
+		"remind_at_utc": newTime,
+		"next_fire_utc": nextFireUTC,
+	}
+
+	err := r.db.Model(&models.Reminder{}).Where("id = ?", id).Updates(updates).Error
 	if err == nil && notify {
 		if r.scheduler != nil {
-			r.scheduler.NotifyReminderUpdated()
+			r.scheduler.NotifyReminderUpdated(id)
+		}
+	}
+	return err
+}
+
+func (r *reminderRepository) Snooze(id uuid.UUID, snoozeUntil time.Time) error {
+	// First, get the current reminder to check remind_at_utc
+	var reminder models.Reminder
+	if err := r.db.First(&reminder, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	// Calculate next_fire_utc as the minimum between remind_at_utc and snoozed_at_utc
+	nextFireUTC := snoozeUntil
+	if reminder.RemindAtUTC.Before(snoozeUntil) {
+		nextFireUTC = reminder.RemindAtUTC
+	}
+
+	// Update snoozed_at_utc and next_fire_utc
+	updates := map[string]interface{}{
+		"snoozed_at_utc":  snoozeUntil,
+		"next_fire_utc": nextFireUTC,
+	}
+
+	err := r.db.Model(&models.Reminder{}).Where("id = ?", id).Updates(updates).Error
+	if err == nil {
+		if r.scheduler != nil {
+			r.scheduler.NotifyReminderUpdated(id)
+		}
+		// Notify garbage collector that reminder was updated
+		if r.garbageCollector != nil {
+			r.garbageCollector.NotifyReminderUpdated(id)
+		}
+	}
+	return err
+}
+
+func (r *reminderRepository) RescheduleReminder(reminder *models.Reminder, newTime time.Time, notify bool) error {
+	// Calculate next_fire_utc as the minimum between remind_at_utc and snoozed_at_utc
+	nextFireUTC := newTime
+	if reminder.SnoozedAtUTC != nil && reminder.SnoozedAtUTC.Before(newTime) {
+		nextFireUTC = *reminder.SnoozedAtUTC
+	}
+
+	// Update both remind_at_utc and next_fire_utc
+	reminder.RemindAtUTC = newTime
+	reminder.NextFireUTC = &nextFireUTC
+
+	err := r.db.Save(reminder).Error
+	if err == nil && notify {
+		if r.scheduler != nil {
+			r.scheduler.NotifyReminderUpdated(reminder.ID)
+		}
+	}
+	return err
+}
+
+func (r *reminderRepository) SnoozeReminder(reminder *models.Reminder, snoozeUntil time.Time) error {
+	// Update snoozed_at_utc and next_fire_utc
+	reminder.SnoozedAtUTC = &snoozeUntil
+	reminder.NextFireUTC = &snoozeUntil
+
+	err := r.db.Save(reminder).Error
+	if err == nil {
+		if r.scheduler != nil {
+			r.scheduler.NotifyReminderUpdated(reminder.ID)
+		}
+		// Notify garbage collector that reminder was updated
+		if r.garbageCollector != nil {
+			r.garbageCollector.NotifyReminderUpdated(reminder.ID)
 		}
 	}
 	return err

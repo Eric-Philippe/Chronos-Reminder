@@ -5,6 +5,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/commands"
+	"github.com/ericp/chronos-bot-reminder/internal/bot/handlers"
 )
 
 func InteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -20,7 +21,7 @@ func InteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			log.Printf("[DISCORD_BOT] - ❌ Error handling autocomplete: %v", err)
 		}
 	case discordgo.InteractionMessageComponent:
-		err := commands.HandleMessageComponent(s, i)
+		err := handlers.HandleMessageComponent(s, i)
 		if err != nil {
 			log.Printf("[DISCORD_BOT] - ❌ Error handling message component: %v", err)
 		}

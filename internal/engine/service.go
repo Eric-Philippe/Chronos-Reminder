@@ -7,11 +7,13 @@ import (
 
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
+	"github.com/ericp/chronos-bot-reminder/internal/dispatchers"
 )
 
 // SchedulerService manages the complete scheduling system
 type SchedulerService struct {
 	Scheduler          *Scheduler
+	GarbageCollector   *GarbageCollector
 	DispatcherRegistry *DispatcherRegistry
 	ReminderRepo       repositories.ReminderRepository
 }
@@ -68,6 +70,9 @@ func StartSchedulerService() {
 	// Start the scheduler
 	schedulerService.Scheduler.Start(schedulerCtx)
 	log.Println("[ENGINE] - ✅ Scheduler started")
+
+	// Start the garbage collector
+	schedulerService.GarbageCollector.Start(schedulerCtx)
 }
 
 // StopSchedulerService gracefully stops the scheduler service
@@ -75,8 +80,13 @@ func StopSchedulerService() {
 	schedulerMutex.Lock()
 	defer schedulerMutex.Unlock()
 
-	if schedulerService != nil && schedulerService.Scheduler.IsRunning() {
-		schedulerService.Scheduler.Stop()
+	if schedulerService != nil {
+		if schedulerService.Scheduler.IsRunning() {
+			schedulerService.Scheduler.Stop()
+		}
+		if schedulerService.GarbageCollector.IsRunning() {
+			schedulerService.GarbageCollector.Stop()
+		}
 	}
 
 	if schedulerCancel != nil {
@@ -157,12 +167,15 @@ func NewSchedulerService(reminderRepo repositories.ReminderRepository, reminderE
 	dispatcherRegistry := NewDispatcherRegistry(reminderErrorRepo)
 	
 	// Register all dispatchers
-	dispatcherRegistry.RegisterDispatcher(NewDiscordDMDispatcher())
-	dispatcherRegistry.RegisterDispatcher(NewWebhookDispatcher())
-	dispatcherRegistry.RegisterDispatcher(NewDiscordChannelDispatcher())
-	
+	dispatcherRegistry.RegisterDispatcher(dispatchers.NewDiscordDMDispatcher())
+	dispatcherRegistry.RegisterDispatcher(dispatchers.NewWebhookDispatcher())
+	dispatcherRegistry.RegisterDispatcher(dispatchers.NewDiscordChannelDispatcher())
+
+	// Create garbage collector
+	garbageCollector := NewGarbageCollector(reminderRepo)
+
 	// Create scheduler
-	scheduler := NewScheduler(reminderRepo, reminderErrorRepo, dispatcherRegistry)
+	scheduler := NewScheduler(reminderRepo, reminderErrorRepo, dispatcherRegistry, garbageCollector)
 	
 	// Set the scheduler in the repository if it supports it
 	if schedulerAwareRepo, ok := reminderRepo.(interface{ SetScheduler(repositories.SchedulerNotifier) }); ok {
@@ -171,6 +184,7 @@ func NewSchedulerService(reminderRepo repositories.ReminderRepository, reminderE
 	
 	return &SchedulerService{
 		Scheduler:          scheduler,
+		GarbageCollector:   garbageCollector,
 		DispatcherRegistry: dispatcherRegistry,
 		ReminderRepo:       reminderRepo,
 	}

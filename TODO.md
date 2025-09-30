@@ -6,6 +6,7 @@
 - [ ] Add a logging table to track reminder deliveries and failures
 - [ ] Use REDIS ?
 - - [ ] Cache paused reminders
+- - [ ] Cache user account for Discord.EnsureAccount method
 
 ## Discord Bot
 
@@ -23,6 +24,12 @@
 - [ ] `/help` command -> Help command with all the commands and their descriptions, and buttons to get more information on each command
 - [ ] Test behavior when the bot can't send the reminder DM/CHANNEL (user blocked the bot, user left the server, bot kicked from the server, no permission to send messages in the channel...)
 - [ ] Being able to snooze a reminder when received (only for DM reminders)
+- - [x] Add the necessary fields in the database
+- - [x] Add buttons to the reminder message
+- - [x] Add the logic to handle a incoming reminder from snoozing
+- - [x] Add the delete reminder queue for not snoozed one time reminders
+- - [x] Add snooze operation handler and plug it to the buttons
+- - [ ] Prevent snoozing a reminder after its next recurrence time
 
 ## API
 

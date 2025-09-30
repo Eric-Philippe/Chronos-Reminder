@@ -1,4 +1,4 @@
-package engine
+package dispatchers
 
 import (
 	"log"
@@ -6,7 +6,7 @@ import (
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
 
-// WebhookDispatcher handles sending reminders via webhooks (placeholder)
+// WebhookDispatcher handles sending reminders via webhooks
 type WebhookDispatcher struct{}
 
 // NewWebhookDispatcher creates a new webhook dispatcher

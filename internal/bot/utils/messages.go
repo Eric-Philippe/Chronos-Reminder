@@ -123,6 +123,7 @@ func SendErrorDetailed(session *discordgo.Session, interaction *discordgo.Intera
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -148,6 +149,7 @@ func SendWarning(session *discordgo.Session, interaction *discordgo.InteractionC
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
+			Flags:  discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
