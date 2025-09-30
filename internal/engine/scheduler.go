@@ -203,7 +203,7 @@ func (s *Scheduler) scheduleNext() {
 		// Reminder is already due, process immediately
 		log.Printf("[ENGINE] - Reminder is already due, processing immediately")
 		go func() {
-			time.Sleep(10 * time.Millisecond) // Small delay to avoid tight loop
+			time.Sleep(100 * time.Millisecond) // Small delay to avoid tight loop
 			select {
 			case <-s.stopChan:
 				return
@@ -235,6 +235,8 @@ func (s *Scheduler) checkAndProcessReminders() {
 		log.Println("[ENGINE] - No upcoming reminders found")
 		return
 	}
+
+	log.Printf("[ENGINE] - Next reminder: %s", nextReminders[0].Message)
 
 	// Check if any of the next reminders are due (they should be, since timer fired)
 	now := time.Now().UTC()
@@ -284,13 +286,22 @@ func (s *Scheduler) processReminder(reminder *models.Reminder) {
 	}
 
 	// isFromSnooze returns if the reminder was sent due to snooze expiration (so a snooze time earlier than the original remind time)
-	isFromSnooze := reminder.SnoozedAtUTC != nil && reminder.SnoozedAtUTC.Equal(*reminder.NextFireUTC)
+	isFromSnooze := reminder.SnoozedAtUTC != nil && reminder.NextFireUTC != nil && reminder.SnoozedAtUTC.Equal(*reminder.NextFireUTC)
 	log.Printf("[ENGINE] - Reminder %s dispatched (from snooze: %v)", reminder.ID, isFromSnooze)
 
 	// If it's from a snooze we don't want to touch the reminder more than necessary
 	if isFromSnooze {
 		reminder.SnoozedAtUTC = nil
-		err = s.reminderRepo.Update(reminder, true) // notify the scheduler since the snooze time changed
+		
+		// For recurring reminders from snooze, set next_fire_utc back to remind_at_utc
+		if reminder.Recurrence != 0 {
+			reminder.NextFireUTC = &reminder.RemindAtUTC
+		} else {
+			// For one-time reminders, clear next_fire_utc
+			reminder.NextFireUTC = nil
+		}
+		
+		err = s.reminderRepo.Update(reminder, false)
 		if err != nil {
 			log.Printf("[ENGINE] - Error updating reminder %s after snooze dispatch: %v", reminder.ID, err)
 		}

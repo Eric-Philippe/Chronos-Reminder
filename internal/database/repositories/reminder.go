@@ -169,6 +169,11 @@ func (r *reminderRepository) GetNextReminders() ([]models.Reminder, error) {
 				)
 			)
 			AND (recurrence & ?) = 0
+			AND id NOT IN (
+				SELECT reminder_id
+				FROM reminder_errors
+				WHERE fixed = false
+			)
 		`, now, now, pauseBit, pauseBit).
 		Order("next_fire_utc ASC").
 		Find(&reminders)
