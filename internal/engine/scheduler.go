@@ -187,8 +187,10 @@ func (s *Scheduler) scheduleNext() {
 		return
 	}
 
-	if len(nextReminders) == 0 && config.IsDebugMode() {
-		log.Println("[ENGINE] - No upcoming reminders, waiting for updates...")
+	if len(nextReminders) == 0 {
+		if config.IsDebugMode() {
+			log.Println("[ENGINE] - No upcoming reminders, waiting for updates...")
+		}
 		return
 	}
 
