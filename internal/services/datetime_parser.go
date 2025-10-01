@@ -347,9 +347,13 @@ func getDateFormats(usFormat bool) []string {
 			"2006-01-02",      // YYYY-MM-DD (ISO format)
 			"2006/01/02",      // YYYY/MM/DD
 			"01/02/2006",      // MM/DD/YYYY (US format) - priority
+			"1/2/2006",        // M/D/YYYY (single digit month/day)
 			"01-02-2006",      // MM-DD-YYYY
+			"1-2-2006",        // M-D-YYYY (single digit month/day)
 			"01/02",           // MM/DD (current year)
+			"1/2",             // M/D (current year, single digit)
 			"01-02",           // MM-DD (current year)
+			"1-2",             // M-D (current year, single digit)
 			"January 2, 2006", // Full month name
 			"Jan 2, 2006",     // Short month name
 			"January 2",       // Month day (current year)
@@ -363,9 +367,13 @@ func getDateFormats(usFormat bool) []string {
 		"2006-01-02",      // YYYY-MM-DD (ISO format)
 		"2006/01/02",      // YYYY/MM/DD
 		"02/01/2006",      // DD/MM/YYYY (European format) - priority
+		"2/1/2006",        // D/M/YYYY (single digit day/month)
 		"02-01-2006",      // DD-MM-YYYY
+		"2-1-2006",        // D-M-YYYY (single digit day/month)
 		"02/01",           // DD/MM (current year)
+		"2/1",             // D/M (current year, single digit)
 		"02-01",           // DD-MM (current year)
+		"2-1",             // D-M (current year, single digit)
 		"2 January 2006",  // Day month year
 		"2 Jan 2006",      // Day month year (short)
 		"2 January",       // Day month (current year)
