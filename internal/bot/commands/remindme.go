@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 
@@ -45,6 +46,18 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 	if err != nil {
 		return utils.SendError(session, interaction, "Invalid Date/Time Format", 
 			fmt.Sprintf("Could not parse the date '%s' and time '%s'. Please check your date and time formats.", dateStr, timeStr))
+	}
+
+	location, err := time.LoadLocation(account.Timezone.IANALocation)
+	if err != nil {
+		return utils.SendError(session, interaction, "Invalid Timezone", 
+			fmt.Sprintf("Could not load timezone '%s'. Please check your timezone settings.", account.Timezone.IANALocation))
+	}
+	now := time.Now().In(location)
+	// If the parsed reminder time is before the current time, return an error
+	if parsedTime.Before(now) {
+		return utils.SendError(session, interaction, "Invalid Date/Time", 
+			"The specified date and time is in the past. Please provide a future date and time for the reminder.")
 	}
 
 	// Get recurrence type value
