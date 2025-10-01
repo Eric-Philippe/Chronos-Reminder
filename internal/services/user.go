@@ -37,6 +37,8 @@ func GetAccountFromDiscordUser(discordUser *discordgo.User) (*models.Account, er
 	var identity models.Identity
 	err := database.GetDB().
 		Preload("Account").
+		Preload("Account.Reminders").
+		Preload("Account.Timezone").
 		Where("provider = ? AND external_id = ?", models.ProviderDiscord, discordUser.ID).
 		First(&identity).Error
 	

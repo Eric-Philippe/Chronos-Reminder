@@ -26,7 +26,7 @@ func HandleListReminders(session *discordgo.Session, interaction *discordgo.Inte
 	if len(reminders) == 0 {
 		embed := &discordgo.MessageEmbed{
 			Title:       "📝 Your Reminders",
-			Description: "You don't have any reminders yet. Use `/remind` to create your first reminder!",
+			Description: "You don't have any reminders yet. Use `/remindme` to create your first reminder!",
 			Color:       0x3498db,
 		}
 
@@ -220,7 +220,7 @@ func HandleBackToList(session *discordgo.Session, interaction *discordgo.Interac
 	if len(reminders) == 0 {
 		embed := &discordgo.MessageEmbed{
 			Title:       "📝 Your Reminders",
-			Description: "You don't have any reminders yet. Use `/remind` to create your first reminder!",
+			Description: "You don't have any reminders yet. Use `/remindme` to create your first reminder!",
 			Color:       0x3498db,
 		}
 
