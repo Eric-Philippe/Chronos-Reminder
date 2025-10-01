@@ -24,9 +24,15 @@ func ConvertToUserTimezone(utcTime time.Time, timezoneStr string) (time.Time, er
 }
 
 // parseReminderTime parses various time formats and returns a time.Time
-func ParseReminderTime(timeStr string) (time.Time, error) {
+func ParseReminderTime(timeStr string, ianaLocation string) (time.Time, error) {
 	timeStr = strings.TrimSpace(timeStr)
-	now := time.Now()
+	
+	// Load timezone location
+	loc, err := time.LoadLocation(ianaLocation)
+	if err != nil {
+		loc = time.Local
+	}
+	now := time.Now().In(loc)
 
 	// Try parsing as time only first (for today)
 	if timeOnlyResult, err := parseTimeOnlyForToday(timeStr, now); err == nil {
@@ -34,21 +40,11 @@ func ParseReminderTime(timeStr string) (time.Time, error) {
 	}
 
 	// Try parsing as absolute datetime formats
-	formats := []string{
-		"2006-01-02 15:04:05",
-		"2006-01-02 15:04",
-		"2006-01-02T15:04:05",
-		"2006-01-02T15:04",
-		"01/02/2006 15:04",
-		"01/02/2006 3:04 PM",
-		"2006-01-02 3:04 PM",
-		"January 2, 2006 3:04 PM",
-		"Jan 2, 2006 3:04 PM",
-		"2 Jan 2006 15:04",
-	}
+	usDateFormat := isUSDateFormat(ianaLocation)
+	formats := getDateTimeFormats(usDateFormat)
 
 	for _, format := range formats {
-		if t, err := time.Parse(format, timeStr); err == nil {
+		if t, err := time.ParseInLocation(format, timeStr, loc); err == nil {
 			// If no year specified and parsed time is in the past, assume next year
 			if t.Year() == 0 {
 				t = t.AddDate(now.Year(), 0, 0)
@@ -66,7 +62,7 @@ func ParseReminderTime(timeStr string) (time.Time, error) {
 	}
 
 	// Try parsing simple words (tomorrow, today, etc.)
-	if simpleTime, err := parseSimpleTime(timeStr); err == nil {
+	if simpleTime, err := parseSimpleTime(timeStr, loc); err == nil {
 		return simpleTime, nil
 	}
 
@@ -74,11 +70,16 @@ func ParseReminderTime(timeStr string) (time.Time, error) {
 }
 
 // ParseReminderDateTime combines separate date and time strings into a time.Time
-func ParseReminderDateTime(dateStr, timeStr string) (time.Time, error) {
-	now := time.Now()
+func ParseReminderDateTime(dateStr, timeStr, ianaLocation string) (time.Time, error) {
+	// Load timezone location
+	loc, err := time.LoadLocation(ianaLocation)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid timezone: %w", err)
+	}
+	now := time.Now().In(loc)
 	
 	// Parse the date component
-	parsedDate, err := parseDateOnly(dateStr, now)
+	parsedDate, err := parseDateOnly(dateStr, now, ianaLocation)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid date: %w", err)
 	}
@@ -93,7 +94,7 @@ func ParseReminderDateTime(dateStr, timeStr string) (time.Time, error) {
 	result := time.Date(
 		parsedDate.Year(), parsedDate.Month(), parsedDate.Day(),
 		parsedTime.Hour(), parsedTime.Minute(), parsedTime.Second(),
-		0, now.Location(),
+		0, loc,
 	)
 	
 	return result, nil
@@ -101,25 +102,56 @@ func ParseReminderDateTime(dateStr, timeStr string) (time.Time, error) {
 
 // ParseReminderDateTimeInTimezone parses a date and time string in the specified timezone
 func ParseReminderDateTimeInTimezone(dateStr, timeStr, ianaLocation string) (time.Time, error) {
-	// Load the timezone location
-	loc, err := time.LoadLocation(ianaLocation)
-	if err != nil {
-		return time.Time{}, err
-	}
+	return ParseReminderDateTime(dateStr, timeStr, ianaLocation)
+}
 
-	// Parse the date and time strings (reuse your existing parsing logic)
-	// This should parse in the specified timezone instead of local time
-	parsedTime, err := ParseReminderDateTime(dateStr, timeStr)
-	if err != nil {
-		return time.Time{}, err
+// isUSDateFormat determines if the timezone uses US date format (MM/DD/YYYY) or not (DD/MM/YYYY)
+func isUSDateFormat(ianaLocation string) bool {
+	// US and some other regions use MM/DD/YYYY format
+	usRegions := []string{
+		"America/",
+		"Pacific/Honolulu",
+		"Pacific/Midway",
 	}
-
-	// Re-interpret the parsed time in the user's timezone
-	// This creates a new time with the same clock reading but in the user's timezone
-	year, month, day := parsedTime.Date()
-	hour, min, sec := parsedTime.Clock()
 	
-	return time.Date(year, month, day, hour, min, sec, 0, loc), nil
+	for _, region := range usRegions {
+		if strings.HasPrefix(ianaLocation, region) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// getDateTimeFormats returns datetime formats based on regional preference
+func getDateTimeFormats(usFormat bool) []string {
+	if usFormat {
+		return []string{
+			"2006-01-02 15:04:05",
+			"2006-01-02 15:04",
+			"2006-01-02T15:04:05",
+			"2006-01-02T15:04",
+			"01/02/2006 15:04",      // MM/DD/YYYY
+			"01/02/2006 3:04 PM",    // MM/DD/YYYY
+			"2006-01-02 3:04 PM",
+			"January 2, 2006 3:04 PM",
+			"Jan 2, 2006 3:04 PM",
+			"2 Jan 2006 15:04",
+		}
+	}
+	
+	return []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04",
+		"2006-01-02T15:04:05",
+		"2006-01-02T15:04",
+		"02/01/2006 15:04",      // DD/MM/YYYY
+		"02/01/2006 3:04 PM",    // DD/MM/YYYY
+		"2006-01-02 3:04 PM",
+		"2 January 2006 3:04 PM",
+		"2 Jan 2006 3:04 PM",
+		"2 Jan 2006 15:04",
+	}
 }
 
 // parseTimeOnlyForToday parses time-only formats (like "10:30", "10h30", "3pm") and applies them to today's date
@@ -203,24 +235,24 @@ func parseRelativeTime(timeStr string) (time.Duration, error) {
 }
 
 // parseSimpleTime parses simple time expressions like "tomorrow", "today", etc.
-func parseSimpleTime(timeStr string) (time.Time, error) {
-	now := time.Now()
+func parseSimpleTime(timeStr string, loc *time.Location) (time.Time, error) {
+	now := time.Now().In(loc)
 	lower := strings.ToLower(strings.TrimSpace(timeStr))
 
 	switch lower {
 	case "now":
 		return now, nil
 	case "today":
-		return time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location()), nil
+		return time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, loc), nil
 	case "tomorrow":
 		tomorrow := now.AddDate(0, 0, 1)
-		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, now.Location()), nil
+		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, loc), nil
 	case "next week":
 		nextWeek := now.AddDate(0, 0, 7)
-		return time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 12, 0, 0, 0, now.Location()), nil
+		return time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 12, 0, 0, 0, loc), nil
 	case "next month":
 		nextMonth := now.AddDate(0, 1, 0)
-		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 12, 0, 0, 0, now.Location()), nil
+		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 12, 0, 0, 0, loc), nil
 	}
 
 	return time.Time{}, fmt.Errorf("unable to parse simple time: %s", timeStr)
@@ -256,47 +288,33 @@ func parseTimeOfDay(timeStr string) (time.Time, error) {
 }
 
 // parseDateOnly parses date strings and returns a time.Time with date only
-func parseDateOnly(dateStr string, now time.Time) (time.Time, error) {
+func parseDateOnly(dateStr string, now time.Time, ianaLocation string) (time.Time, error) {
 	dateStr = strings.TrimSpace(strings.ToLower(dateStr))
+	loc := now.Location()
 	
 	// Handle simple date expressions
 	switch dateStr {
 	case "today":
-		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), nil
+		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc), nil
 	case "tomorrow":
 		tomorrow := now.AddDate(0, 0, 1)
-		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, now.Location()), nil
+		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, loc), nil
 	case "next week":
 		nextWeek := now.AddDate(0, 0, 7)
-		return time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 0, 0, 0, 0, now.Location()), nil
+		return time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 0, 0, 0, 0, loc), nil
 	case "next month":
 		nextMonth := now.AddDate(0, 1, 0)
-		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 0, 0, 0, 0, now.Location()), nil
+		return time.Date(nextMonth.Year(), nextMonth.Month(), nextMonth.Day(), 0, 0, 0, 0, loc), nil
 	}
 	
-	// Date formats to try
-	dateFormats := []string{
-		"2006-01-02",      // YYYY-MM-DD
-		"2006/01/02",      // YYYY/MM/DD
-		"01/02/2006",      // MM/DD/YYYY (US format)
-		"02/01/2006",      // DD/MM/YYYY (European format)
-		"01-02-2006",      // MM-DD-YYYY
-		"02-01-2006",      // DD-MM-YYYY
-		"01/02",           // MM/DD (current year)
-		"02/01",           // DD/MM (current year) 
-		"01-02",           // MM-DD (current year)
-		"02-01",           // DD-MM (current year)
-		"02",              // DD (current month/year)
-		"January 2, 2006", // Full month name
-		"Jan 2, 2006",     // Short month name
-		"2 Jan 2006",      // Day month year
-		"January 2",       // Month day (current year)
-		"Jan 2",           // Short month day (current year)
-		"2",               // Day only (current month/year)
-	}
+	// Determine date format based on timezone
+	usDateFormat := isUSDateFormat(ianaLocation)
+	
+	// Date formats to try - order matters based on regional preference
+	dateFormats := getDateFormats(usDateFormat)
 	
 	for _, format := range dateFormats {
-		if parsedTime, err := time.Parse(format, dateStr); err == nil {
+		if parsedTime, err := time.ParseInLocation(format, dateStr, loc); err == nil {
 			// Handle cases where year is missing
 			if parsedTime.Year() == 0 || parsedTime.Year() == 1 {
 				parsedTime = parsedTime.AddDate(now.Year()-1, 0, 0)
@@ -304,47 +322,54 @@ func parseDateOnly(dateStr string, now time.Time) (time.Time, error) {
 			
 			// Handle cases where month is missing (day only)
 			if parsedTime.Month() == 1 && parsedTime.Day() != 1 && !strings.Contains(dateStr, "jan") {
-				parsedTime = time.Date(now.Year(), now.Month(), parsedTime.Day(), 0, 0, 0, 0, now.Location())
-			}
-			
-			// Special handling for ambiguous DD/MM vs MM/DD formats
-			// If we have something like "25/12", it's clearly DD/MM (day > 12)
-			// If we have "12/25", it's clearly MM/DD (month > 12)
-			if strings.Contains(dateStr, "/") || strings.Contains(dateStr, "-") {
-				parts := strings.FieldsFunc(dateStr, func(c rune) bool { return c == '/' || c == '-' })
-				if len(parts) >= 2 {
-					if first, err1 := strconv.Atoi(parts[0]); err1 == nil {
-						if second, err2 := strconv.Atoi(parts[1]); err2 == nil {
-							// If first number > 12, it must be DD/MM format
-							if first > 12 && format == "01/02/2006" {
-								// Try DD/MM format instead
-								if ddmmTime, err := time.Parse("02/01/2006", dateStr); err == nil {
-									parsedTime = ddmmTime
-								}
-							}
-							// If second number > 12, it must be MM/DD format
-							if second > 12 && format == "02/01/2006" {
-								// Try MM/DD format instead
-								if mmddTime, err := time.Parse("01/02/2006", dateStr); err == nil {
-									parsedTime = mmddTime
-								}
-							}
-						}
-					}
-				}
+				parsedTime = time.Date(now.Year(), now.Month(), parsedTime.Day(), 0, 0, 0, 0, loc)
 			}
 			
 			// If date is in the past and no year was specified, assume next year
 			if parsedTime.Before(now) && !strings.Contains(dateStr, strconv.Itoa(now.Year())) {
 				if strings.Contains(format, "2006") && !strings.Contains(dateStr, strconv.Itoa(now.Year())) {
-					// Full date format but year in past, move to next year
 					parsedTime = parsedTime.AddDate(1, 0, 0)
 				}
 			}
 			
-			return time.Date(parsedTime.Year(), parsedTime.Month(), parsedTime.Day(), 0, 0, 0, 0, now.Location()), nil
+			return time.Date(parsedTime.Year(), parsedTime.Month(), parsedTime.Day(), 0, 0, 0, 0, loc), nil
 		}
 	}
 	
 	return time.Time{}, fmt.Errorf("unable to parse date format: %s", dateStr)
+}
+
+// getDateFormats returns date formats based on regional preference
+func getDateFormats(usFormat bool) []string {
+	if usFormat {
+		// US format: MM/DD/YYYY priority
+		return []string{
+			"2006-01-02",      // YYYY-MM-DD (ISO format)
+			"2006/01/02",      // YYYY/MM/DD
+			"01/02/2006",      // MM/DD/YYYY (US format) - priority
+			"01-02-2006",      // MM-DD-YYYY
+			"01/02",           // MM/DD (current year)
+			"01-02",           // MM-DD (current year)
+			"January 2, 2006", // Full month name
+			"Jan 2, 2006",     // Short month name
+			"January 2",       // Month day (current year)
+			"Jan 2",           // Short month day (current year)
+			"2",               // Day only (current month/year)
+		}
+	}
+	
+	// Rest of world: DD/MM/YYYY priority
+	return []string{
+		"2006-01-02",      // YYYY-MM-DD (ISO format)
+		"2006/01/02",      // YYYY/MM/DD
+		"02/01/2006",      // DD/MM/YYYY (European format) - priority
+		"02-01-2006",      // DD-MM-YYYY
+		"02/01",           // DD/MM (current year)
+		"02-01",           // DD-MM (current year)
+		"2 January 2006",  // Day month year
+		"2 Jan 2006",      // Day month year (short)
+		"2 January",       // Day month (current year)
+		"2 Jan",           // Day month (current year)
+		"2",               // Day only (current month/year)
+	}
 }

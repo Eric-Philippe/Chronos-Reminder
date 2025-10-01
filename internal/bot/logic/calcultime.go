@@ -39,7 +39,7 @@ func CalculTimeHandler(session *discordgo.Session, interaction *discordgo.Intera
 	}
 
 	// Parse the first time
-	parsedTime1, err := parseTimeInput(timeOne)
+	parsedTime1, err := parseTimeInput(timeOne, account)
 	if err != nil {
 		return utils.SendError(session, interaction, "Invalid Time Format", 
 			fmt.Sprintf("Could not parse time1 '%s'. Use formats like '2h 30m', '14:30', or '2.5h'.", timeOne))
@@ -50,7 +50,7 @@ func CalculTimeHandler(session *discordgo.Session, interaction *discordgo.Intera
 
 	switch strings.ToUpper(operation) {
 	case "ADD", "+":
-		parsedTime2, err := parseTimeInput(timeTwo)
+		parsedTime2, err := parseTimeInput(timeTwo, account)
 		if err != nil {
 			return utils.SendError(session, interaction, "Invalid Time Format", 
 				fmt.Sprintf("Could not parse time2 '%s'. Use formats like '2h 30m', '14:30', or '2.5h'.", timeTwo))
@@ -60,7 +60,7 @@ func CalculTimeHandler(session *discordgo.Session, interaction *discordgo.Intera
 			formatDuration(parsedTime1), formatDuration(parsedTime2), formatDuration(result))
 
 	case "SUBTRACT", "SUB", "-":
-		parsedTime2, err := parseTimeInput(timeTwo)
+		parsedTime2, err := parseTimeInput(timeTwo, account)
 		if err != nil {
 			return utils.SendError(session, interaction, "Invalid Time Format", 
 				fmt.Sprintf("Could not parse time2 '%s'. Use formats like '2h 30m', '14:30', or '2.5h'.", timeTwo))
@@ -114,7 +114,7 @@ func CalculTimeHandler(session *discordgo.Session, interaction *discordgo.Intera
 }
 
 // parseTimeInput parses various time input formats and returns a duration
-func parseTimeInput(input string) (time.Duration, error) {
+func parseTimeInput(input string, account *models.Account) (time.Duration, error) {
 	input = strings.TrimSpace(input)
 	
 	// Try parsing as duration first (e.g., "2h30m", "1.5h", "90m")
@@ -123,7 +123,7 @@ func parseTimeInput(input string) (time.Duration, error) {
 	}
 
 	// Try parsing as time-of-day (e.g., "14:30", "2:30 PM") and convert to duration since midnight
-	if timeOfDay, err := services.ParseReminderTime(input); err == nil {
+	if timeOfDay, err := services.ParseReminderTime(input, account.Timezone.IANALocation); err == nil {
 		// Convert time-of-day to duration since midnight
 		midnight := time.Date(timeOfDay.Year(), timeOfDay.Month(), timeOfDay.Day(), 0, 0, 0, 0, timeOfDay.Location())
 		return timeOfDay.Sub(midnight), nil
