@@ -30,6 +30,7 @@
 - - [x] Add the delete reminder queue for not snoozed one time reminders
 - - [x] Add snooze operation handler and plug it to the buttons
 - - [ ] Prevent snoozing a reminder after its next recurrence time
+- [x] Add testings for the timeparser
 
 ## API
 
@@ -56,16 +57,17 @@
 - [ ] Implement WEBHOOK dispatcher
 - [x] Implement recurrence handling
 - [x] Recalculate next occurrence on restart to avoid reminders trying to catch up spam
-- [ ] Add a ReminderError model to log errors when sending reminders and prevent retrying to send reminders that have failed multiple times
+- [x] Add a ReminderError model to log errors when sending reminders and prevent retrying to send reminders that have failed multiple times
 - [ ] Implement a purge system for deleting discord account not linked without activity for more than 3 months with no reminders
 - [ ] Logging system for sent reminders and errors
-- [ ] Only purge a failing reminder if it has only one destination
+- - [ ] Only purge a failing reminder if it has only one destination
 
 ## Global
 
-- [ ] Dockerize the application
-- [ ] Build container during CI/CD
+- [x] Dockerize the application
+- [x] Build container during CI/CD
 - [ ] Make a migration script from Kairos to Chronos
+- [x] Create an alpha version for testing
 - [ ] Create a beta version when the bot is ready
 - [ ] Create a proper README
 - [ ] Deploy the bot publicly

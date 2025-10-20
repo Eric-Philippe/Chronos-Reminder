@@ -317,7 +317,7 @@ func parseDateOnly(dateStr string, now time.Time, ianaLocation string) (time.Tim
 		if parsedTime, err := time.ParseInLocation(format, dateStr, loc); err == nil {
 			// Handle cases where year is missing
 			if parsedTime.Year() == 0 || parsedTime.Year() == 1 {
-				parsedTime = parsedTime.AddDate(now.Year()-1, 0, 0)
+				parsedTime = parsedTime.AddDate(now.Year(), 0, 0)
 			}
 			
 			// Handle cases where month is missing (day only)

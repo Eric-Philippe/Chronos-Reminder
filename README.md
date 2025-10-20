@@ -15,3 +15,5 @@ Ex:
 - You can then link your Discord account to your App account
 
 > In the future you'll be able to merge two accounts together (It will merge all your reminders and settings into one account)
+
+> Being able to send emojis in the reminders
