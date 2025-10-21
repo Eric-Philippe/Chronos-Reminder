@@ -31,18 +31,25 @@ func (d *DiscordChannelDispatcher) Dispatch(reminder *models.Reminder, destinati
 	}
 
 	// Build the data from the metadata
-	// {"guild_id": "912661874871533588", "channel_id": "913222458251837441"}
+	// {"guild_id": "912661874871533588", "channel_id": "913222458251837441", "mention_role_id": "role_id"}
 	channelID, exists := destination.Metadata["channel_id"]
 	if !exists {
 		return fmt.Errorf("channel_id not found in destination metadata")
 	}
-
 	channelIDStr, ok := channelID.(string)
 	if !ok {
 		return fmt.Errorf("channel_id is not a string: %v", channelID)
 	}
 
-	DiscordSend(d.session, reminder, channelIDStr, account)
+	// Extract optional role mention ID
+	var roleMentionID string
+	if mentionRole, exists := destination.Metadata["mention_role_id"]; exists {
+		if mentionRoleStr, ok := mentionRole.(string); ok {
+			roleMentionID = mentionRoleStr
+		}
+	}
+
+	DiscordSend(d.session, reminder, channelIDStr, account, roleMentionID)
 
 	return nil
 }

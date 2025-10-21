@@ -7,6 +7,7 @@
 - [ ] Use REDIS ?
 - - [ ] Cache paused reminders
 - - [ ] Cache user account for Discord.EnsureAccount method
+- - [ ] Cache user timezone preferences
 
 ## Discord Bot
 
@@ -54,6 +55,7 @@
 - [x] Implement main scheduler queue
 - [x] Implement DM_DISCORD dispatcher
 - [x] Implement CHANNEL_DISCORD dispatcher
+- - [x] Add role mention support
 - [ ] Implement WEBHOOK dispatcher
 - [x] Implement recurrence handling
 - [x] Recalculate next occurrence on restart to avoid reminders trying to catch up spam
@@ -61,6 +63,7 @@
 - [ ] Implement a purge system for deleting discord account not linked without activity for more than 3 months with no reminders
 - [ ] Logging system for sent reminders and errors
 - - [ ] Only purge a failing reminder if it has only one destination
+- [ ] When sending a past reminder that has recurrences, calculate the next occurrence from now instead of sending all the missed occurrences
 
 ## Global
 

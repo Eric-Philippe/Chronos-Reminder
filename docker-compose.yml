@@ -25,23 +25,6 @@ services:
     command: redis-server --appendonly yes
     restart: unless-stopped
 
-  chronos-reminder:
-    image: ghcr.io/eric-philippe/chronos-reminder:latest
-    container_name: chronos-reminder
-    env_file:
-      - .env
-    environment:
-      - ENVIRONMENT=PROD
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
-      - TZ=UTC
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-      - redis
-    restart: unless-stopped
-
 volumes:
   postgres_data:
   redis_data:

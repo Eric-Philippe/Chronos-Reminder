@@ -30,15 +30,28 @@ func ChangeAccountTimezone(account *models.Account, timezoneID uint) error {
 		return err
 	}
 
+	// Invalidate cache after account changes
+	if err := InvalidateAccountCache(account); err != nil {
+		// Log warning but don't fail the operation
+		fmt.Printf("[CACHE] Warning: Failed to invalidate cache after timezone change: %v\n", err)
+	}
+
 	return nil
 }
 
 func GetAccountFromDiscordUser(discordUser *discordgo.User) (*models.Account, error) {
+	// Try to get from cache first
+	cachedAccount, err := GetCachedAccountByDiscordID(discordUser.ID)
+	if err == nil && cachedAccount != nil {
+		return cachedAccount, nil
+	}
+
 	var identity models.Identity
-	err := database.GetDB().
+	err = database.GetDB().
 		Preload("Account").
 		Preload("Account.Reminders").
 		Preload("Account.Timezone").
+		Preload("Account.Identities").
 		Where("provider = ? AND external_id = ?", models.ProviderDiscord, discordUser.ID).
 		First(&identity).Error
 	
@@ -46,19 +59,35 @@ func GetAccountFromDiscordUser(discordUser *discordgo.User) (*models.Account, er
 		return nil, err
 	}
 	
+	// Cache the fetched account before returning
+	if identity.Account != nil {
+		if err := CacheAccount(identity.Account); err != nil {
+			// Log but don't fail - caching is non-critical
+			fmt.Printf("[CACHE] Warning: Failed to cache account: %v\n", err)
+		}
+	}
+
 	return identity.Account, nil
 }
 
-// EnsureDiscordUser ensures a Discord user identity linked to an account exists, returns Account or error TODO: May be clever to store the result in a cache
+// EnsureDiscordUser ensures a Discord user identity linked to an account exists, returns Account or error
+// This function uses caching to avoid redundant database queries.
 func EnsureDiscordUser(discordUser *discordgo.User) (*models.Account, error) {
+	// Try to get from cache first
+	cachedAccount, err := GetCachedAccountByDiscordID(discordUser.ID)
+	if err == nil && cachedAccount != nil {
+		return cachedAccount, nil
+	}
+
 	var identity models.Identity
-	err := database.GetDB().
+	err = database.GetDB().
 		Preload("Account").
 		// Preload the user's reminders
 		Preload("Account.Reminders").
 		// Preload the timezone for the account
 		Preload("Account.Timezone").
 		// Preload the identities for the account
+		Preload("Account.Identities").
 		Where("provider = ? AND external_id = ?", models.ProviderDiscord, discordUser.ID).
 		First(&identity).Error
 	
@@ -71,6 +100,14 @@ func EnsureDiscordUser(discordUser *discordgo.User) (*models.Account, error) {
 		return nil, err
 	}
 	
+	// Cache the fetched account before returning
+	if identity.Account != nil {
+		if err := CacheAccount(identity.Account); err != nil {
+			// Log but don't fail - caching is non-critical
+			fmt.Printf("[CACHE] Warning: Failed to cache account: %v\n", err)
+		}
+	}
+
 	// Identity found with preloaded account
 	return identity.Account, nil
 }
@@ -120,6 +157,12 @@ func createFromDiscordUser(discordUser *discordgo.User) (*models.Account, error)
 		First(account, account.ID).Error
 	if err != nil {
 		return nil, err
+	}
+
+	// Cache the newly created account
+	if err := CacheAccount(account); err != nil {
+		// Log but don't fail - caching is non-critical
+		fmt.Printf("[CACHE] Warning: Failed to cache newly created account: %v\n", err)
 	}
 
 	return account, nil

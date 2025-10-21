@@ -22,7 +22,19 @@ func BuildEmbed(session *discordgo.Session, title, description string, footerTex
 }
 
 func SendEmbed(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string) error {
+	return SendEmbedDeferred(session, interaction, title, description, footerText, false)
+}
+
+func SendEmbedDeferred(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string, deferred bool) error {
 	embed := BuildEmbed(session, title, description, footerText)
+
+	if deferred {
+		// Use edit for deferred interactions
+		_, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{embed},
+		})
+		return err
+	}
 
 	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -112,18 +124,51 @@ func BuildErrorEmbed(session *discordgo.Session, title, description string, foot
 
 // SendError without the footer
 func SendError(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string) error {
-	return SendErrorDetailed(session, interaction, title, description, nil)
+	return SendErrorDeferred(session, interaction, title, description, nil, false)
 }
 
-// SendError sends an error message as an interaction response
-func SendErrorDetailed(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string) error {
+// SendErrorDeferred sends an error message as an interaction response with deferred support
+func SendErrorDeferred(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string, deferred bool) error {
 	embed := BuildErrorEmbed(session, title, description, footerText)
+
+	if deferred {
+		// Use edit for deferred interactions
+		_, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{embed},
+		})
+		return err
+	}
 
 	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
-			Flags: discordgo.MessageFlagsEphemeral,
+			Flags:  discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+// SendError sends an error message as an interaction response
+func SendErrorDetailed(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string) error {
+	return SendErrorDetailedDeferred(session, interaction, title, description, footerText, false)
+}
+
+// SendErrorDetailedDeferred sends detailed error with deferred support
+func SendErrorDetailedDeferred(session *discordgo.Session, interaction *discordgo.InteractionCreate, title, description string, footerText *string, deferred bool) error {
+	embed := BuildErrorEmbed(session, title, description, footerText)
+
+	if deferred {
+		_, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{embed},
+		})
+		return err
+	}
+
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+			Flags:  discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

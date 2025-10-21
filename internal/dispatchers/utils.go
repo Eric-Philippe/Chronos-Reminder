@@ -16,7 +16,7 @@ import (
 // =====================================================================
 
 // DiscordSend handles sending reminders via Discord
-func DiscordSend(session *discordgo.Session, reminder *models.Reminder, channelID string, account *models.Account) error {
+func DiscordSend(session *discordgo.Session, reminder *models.Reminder, channelID string, account *models.Account, roleMentionID ...string) error {
 	// Create the reminder message
 	embed := &discordgo.MessageEmbed{
 		Title:       "⌛ | You have a new reminder ! ⌛",
@@ -63,7 +63,15 @@ func DiscordSend(session *discordgo.Session, reminder *models.Reminder, channelI
 			Components: []discordgo.MessageComponent{button},
 		},
 	}
+	
+	// Build message content with role mention if provided
+	var messageContent string
+	if len(roleMentionID) > 0 && roleMentionID[0] != "" {
+		messageContent = fmt.Sprintf("<@&%s>", roleMentionID[0])
+	}
+	
 	msg := &discordgo.MessageSend{
+		Content: messageContent,
 		File: &discordgo.File{
 			Name:        "reminder.png",
 			ContentType: "image/png",
