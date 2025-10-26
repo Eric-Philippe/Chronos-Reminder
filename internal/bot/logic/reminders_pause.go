@@ -121,8 +121,14 @@ func HandleUnpauseReminder(session *discordgo.Session, interaction *discordgo.In
 	// Update the recurrence to remove the pause bit
 	reminder.Recurrence = int16(services.SetPauseState(int(reminder.Recurrence), false))
 
+	// Get the user's timezone for proper DST-aware calculation
+	ianaLocation := "UTC" // Default to UTC
+	if reminder.Account != nil && reminder.Account.Timezone != nil {
+		ianaLocation = reminder.Account.Timezone.IANALocation
+	}
+
 	// Recalculate the next occurrence from now to avoid catching up
-	nextTime, err := services.RecalculateNextOccurrence(reminder.RemindAtUTC, int(reminder.Recurrence))
+	nextTime, err := services.RecalculateNextOccurrence(reminder.RemindAtUTC, int(reminder.Recurrence), ianaLocation)
 	if err != nil {
 		return utils.SendError(session, interaction, "Calculation Error", "Failed to recalculate the next reminder time.")
 	}
@@ -137,7 +143,7 @@ func HandleUnpauseReminder(session *discordgo.Session, interaction *discordgo.In
 	}
 
 	// Send success message
-	successEmbed := utils.BuildSuccessEmbed(session, "Reminder Resumed! ▶️", 
+	successEmbed := utils.BuildSuccessEmbed(session, "Reminder Resumed! ▶️",
 		fmt.Sprintf("The reminder \"%s\" has been successfully resumed and is now active again.", 
 			reminder.Message), nil)
 

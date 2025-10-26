@@ -334,7 +334,13 @@ func (s *Scheduler) handleRecurrence(reminder *models.Reminder) {
 		return // No recurrence
 	}
 
-	newTime, err := services.GetNextOccurrence(reminder.RemindAtUTC, int(reminder.Recurrence))
+	// Get the user's timezone for proper DST-aware calculation
+	ianaLocation := "UTC" // Default to UTC
+	if reminder.Account != nil && reminder.Account.Timezone != nil {
+		ianaLocation = reminder.Account.Timezone.IANALocation
+	}
+
+	newTime, err := services.GetNextOccurrence(reminder.RemindAtUTC, int(reminder.Recurrence), ianaLocation)
 	if err != nil {
 		log.Printf("[ENGINE] - Error getting next occurrence for reminder %s: %v", reminder.ID, err)
 		return

@@ -197,7 +197,8 @@ func (r WeekendRecurrence) NextOccurrence(from int64, interval int) int64 {
 }
 
 // GetNextOccurrence calculates the next occurrence timestamp based on recurrence state (with bits) and interval
-func GetNextOccurrence(from time.Time, recurrenceState int) (time.Time, error) {
+// ianaLocation is the IANA timezone identifier for the user (e.g., "Europe/Paris")
+func GetNextOccurrence(from time.Time, recurrenceState int, ianaLocation string) (time.Time, error) {
 	// Extract the actual recurrence type from the bit-encoded state
 	recurrenceType := GetRecurrenceType(recurrenceState)
 	isPaused := IsPaused(recurrenceState)
@@ -207,17 +208,33 @@ func GetNextOccurrence(from time.Time, recurrenceState int) (time.Time, error) {
 		return from, nil
 	}
 	
+	// Load the user's timezone to properly handle DST transitions
+	loc, err := time.LoadLocation(ianaLocation)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", ianaLocation, err)
+	}
+	
+	// Interpret 'from' as a local time in the user's timezone
+	// from is stored with UTC location, but represents local time
+	fromLocal := time.Date(
+		from.Year(), from.Month(), from.Day(),
+		from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
+		loc,
+	)
+	
 	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
 	if recurrence == nil {
 		return time.Time{}, fmt.Errorf("invalid recurrence type: %d (extracted from state: %d)", recurrenceType, recurrenceState)
 	}
 
-	nextTimestamp := recurrence.NextOccurrence(from.Unix(), 1)
-	return time.Unix(nextTimestamp, 0), nil
+	nextTimestamp := recurrence.NextOccurrence(fromLocal.Unix(), 1)
+	nextTimeLocal := time.Unix(nextTimestamp, 0).In(loc)
+	return nextTimeLocal, nil
 }
 
 // RecalculateNextOccurrence is a helper to recalculate the next occurrence for a reminder that has been paused and then unpaused
-func RecalculateNextOccurrence(from time.Time, recurrenceState int) (time.Time, error) {
+// ianaLocation is the IANA timezone identifier for the user (e.g., "Europe/Paris")
+func RecalculateNextOccurrence(from time.Time, recurrenceState int, ianaLocation string) (time.Time, error) {
 	// Extract the actual recurrence type from the bit-encoded state
 	recurrenceType := GetRecurrenceType(recurrenceState)
 	isPaused := IsPaused(recurrenceState)
@@ -227,13 +244,19 @@ func RecalculateNextOccurrence(from time.Time, recurrenceState int) (time.Time, 
 		return from, nil
 	}
 
+	// Load the user's timezone to properly handle DST transitions
+	loc, err := time.LoadLocation(ianaLocation)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", ianaLocation, err)
+	}
+
 	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
 	if recurrence == nil {
 		return time.Time{}, fmt.Errorf("invalid recurrence type: %d (extracted from state: %d)", recurrenceType, recurrenceState)
 	}
 
-	// Calculate the next occurrence from now instead of catching up from the paused time
-	now := time.Now()
+	// Get current time in the user's timezone
+	now := time.Now().In(loc)
 	
 	// For special recurrence types (workdays, weekend), we need to ensure we land on the correct day type
 	switch recurrenceType {
@@ -261,13 +284,19 @@ func RecalculateNextOccurrence(from time.Time, recurrenceState int) (time.Time, 
 	nextTime := time.Date(
 		now.Year(), now.Month(), now.Day(),
 		from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
-		from.Location(),
+		loc,
 	)
 	
 	// If the calculated time is in the past (same day but earlier time), move to next occurrence
 	if nextTime.Before(now) {
-		nextTimestamp := recurrence.NextOccurrence(nextTime.Unix(), 1)
-		nextTime = time.Unix(nextTimestamp, 0).In(from.Location())
+		// Create a local time version of 'from' for the calculation
+		fromLocal := time.Date(
+			from.Year(), from.Month(), from.Day(),
+			from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
+			loc,
+		)
+		nextTimestamp := recurrence.NextOccurrence(fromLocal.Unix(), 1)
+		nextTime = time.Unix(nextTimestamp, 0).In(loc)
 	}
 	
 	log.Printf("[RECURRENCE] - Recalculated next occurrence from %v to %v for recurrence type %s", 
