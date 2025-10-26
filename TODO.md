@@ -64,6 +64,7 @@
 - [ ] Logging system for sent reminders and errors
 - - [ ] Only purge a failing reminder if it has only one destination
 - [ ] When sending a past reminder that has recurrences, calculate the next occurrence from now instead of sending all the missed occurrences
+- [ ] Impelemnt emote support in reminders content
 
 ## Global
 

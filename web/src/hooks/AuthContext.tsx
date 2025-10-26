@@ -1,0 +1,191 @@
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import apiClient, {
+  type LoginRequest,
+  type RegisterRequest,
+  type SessionData,
+  type LoginResponse,
+  type RegisterResponse,
+} from "@/services/api";
+
+interface UseAuthReturn {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isCheckingAuth: boolean;
+  error: Error | null;
+  user: SessionData | null;
+  login: (
+    email: string,
+    password: string,
+    rememberMe: boolean
+  ) => Promise<void>;
+  register: (
+    email: string,
+    username: string,
+    password: string,
+    timezone: string
+  ) => Promise<void>;
+  logout: () => Promise<void>;
+  clearError: () => void;
+}
+
+const AuthContext = createContext<UseAuthReturn | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [user, setUser] = useState<SessionData | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize with actual auth status from apiClient
+    return apiClient.isAuthenticated();
+  });
+
+  // Check authentication status on mount and set user data
+  useEffect(() => {
+    const authenticated = apiClient.isAuthenticated();
+    setIsAuthenticated(authenticated);
+
+    if (authenticated) {
+      const userData = apiClient.getUserData();
+      setUser(userData);
+    } else {
+      setUser(null);
+    }
+
+    // Mark auth check as complete
+    setIsCheckingAuth(false);
+  }, []);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  const login = useCallback(
+    async (email: string, password: string, rememberMe: boolean) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const loginRequest: LoginRequest = {
+          email,
+          password,
+          remember_me: rememberMe,
+        };
+
+        const response: LoginResponse = await apiClient.login(loginRequest);
+
+        const userData: SessionData = {
+          user_id: response.id,
+          email: response.email,
+          username: response.username,
+          expires_at: response.expires_at,
+        };
+
+        // Update state - these updates should trigger a re-render
+        setUser(userData);
+        setIsAuthenticated(true);
+        setError(null);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Login failed";
+        const errorObj = new Error(errorMessage);
+        setError(errorObj);
+        setUser(null);
+        setIsAuthenticated(false);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const register = useCallback(
+    async (
+      email: string,
+      username: string,
+      password: string,
+      timezone: string
+    ) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const registerRequest: RegisterRequest = {
+          email,
+          username,
+          password,
+          timezone,
+        };
+
+        const response: RegisterResponse = await apiClient.register(
+          registerRequest
+        );
+
+        // After registration, user needs to log in
+        console.log("Registration successful:", response);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Registration failed";
+        setError(new Error(errorMessage));
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const logout = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await apiClient.logout();
+      setUser(null);
+      setIsAuthenticated(false);
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Logout failed";
+      setError(new Error(errorMessage));
+      // Still clear auth even if logout request fails
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const value: UseAuthReturn = {
+    isAuthenticated,
+    isLoading,
+    isCheckingAuth,
+    error,
+    user,
+    login,
+    register,
+    logout,
+    clearError,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): UseAuthReturn {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}

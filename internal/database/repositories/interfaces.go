@@ -12,6 +12,7 @@ type TimezoneRepository interface {
 	GetAll() ([]models.Timezone, error)
 	GetByID(id uint) (*models.Timezone, error)
 	GetByName(name string) (*models.Timezone, error)
+	GetByIANALocation(ianaLocation string) (*models.Timezone, error)
 	GetDefault() (*models.Timezone, error)
 }
 

@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ericp/chronos-bot-reminder/internal/api"
 	"github.com/ericp/chronos-bot-reminder/internal/bot"
 	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
@@ -14,8 +15,9 @@ import (
 
 func main() {
 	log.Println("[ALL] - ⏳ Initializing Chronos Reminder")
-	
-	config.Load()
+
+	// Load configuration
+	cfg := config.Load()
 
 	// Initialize database
 	if err := database.Initialize(); err != nil {
@@ -24,6 +26,17 @@ func main() {
 	defer func() {
 		if err := database.Close(); err != nil {
 			log.Printf("[DATABASE] - ❌ Error closing database: %v", err)
+		}
+	}()
+
+	// Get repositories
+	repos := database.GetRepositories()
+
+	// Initialize and start API server
+	apiServer := api.NewServer(cfg, repos)
+	go func() {
+		if err := apiServer.Start(); err != nil {
+			log.Fatalf("[API] - ❌ Failed to start API server: %v", err)
 		}
 	}()
 
@@ -39,10 +52,15 @@ func main() {
 	<-sc
 
 	log.Println("[ALL] - 🛑 Gracefully shutting down...")
-	
+
 	// Stop scheduler
 	engine.StopSchedulerService()
-	
+
 	// Stop Discord bot
 	bot.StopDiscordSession()
+
+	// Stop API server
+	if err := apiServer.Stop(); err != nil {
+		log.Printf("[API] - ❌ Error stopping API server: %v", err)
+	}
 }

@@ -1,0 +1,85 @@
+{
+  "header": {
+    "myReminders": "My Reminders",
+    "integration": "Integration",
+    "settings": "Settings",
+    "myAccount": "My Account"
+  },
+  "welcome": {
+    "title": "Welcome to Chronos",
+    "subtitle": "Manage and organize all your reminders in one place",
+    "newReminder": "+ New Reminder"
+  },
+  "overview": {
+    "totalReminders": "Total Reminders",
+    "activeReminders": "Active reminders",
+    "timezone": "Timezone",
+    "accountStatus": "Account Status",
+    "active": "Active",
+    "since": "Since"
+  },
+  "reminders": {
+    "title": "Your Reminders",
+    "subtitle": "Manage and edit your scheduled reminders",
+    "scheduledFor": "Scheduled For",
+    "created": "Created",
+    "destination": "Destination",
+    "status": "Status",
+    "pending": "Pending",
+    "view": "View",
+    "edit": "Edit",
+    "once": "Once",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "custom": "Custom"
+  },
+  "footer": {
+    "copyright": "© 2025 Chronos. Never miss a moment.",
+    "documentation": "Documentation",
+    "support": "Support",
+    "discord": "Discord"
+  },
+  "login": {
+    "welcomeTitle": "Welcome Back",
+    "welcomeSubtitle": "Manage your reminders with ease and never miss an important moment",
+    "smartRemindersTitle": "Smart Reminders",
+    "smartRemindersDesc": "Set and organize reminders across multiple channels",
+    "alwaysOnTimeTitle": "Always On Time",
+    "alwaysOnTimeDesc": "Get notified exactly when you need it",
+    "seamlessIntegrationTitle": "Seamless Integration",
+    "seamlessIntegrationDesc": "Works with Discord and your favorite platforms",
+    "allTimezoneTitle": "All Timezone Support",
+    "allTimezoneDesc": "Schedule reminders no matter where you are in the world",
+    "mobileSubtitle": "Sign in to manage your reminders",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "loginTitle": "Login",
+    "loginDesc": "Enter your credentials to continue",
+    "emailAddress": "Email Address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "continueWith": "Or continue with",
+    "discord": "Discord",
+    "createAccountTitle": "Create Account",
+    "createAccountDesc": "Join Chronos to start managing your reminders",
+    "username": "Username",
+    "usernamePlaceholder": "Choose a username",
+    "confirmPassword": "Confirm Password",
+    "passwordsDontMatch": "Passwords do not match",
+    "timezone": "Timezone",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?"
+  },
+  "passwordStrength": {
+    "eightChars": "8+ chars",
+    "uppercase": "Uppercase",
+    "lowercase": "Lowercase",
+    "number": "Number",
+    "special": "Special"
+  }
+}

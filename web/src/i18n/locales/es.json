@@ -1,0 +1,85 @@
+{
+  "header": {
+    "myReminders": "Mis Recordatorios",
+    "integration": "Integración",
+    "settings": "Configuración",
+    "myAccount": "Mi Cuenta"
+  },
+  "welcome": {
+    "title": "Bienvenido a Chronos",
+    "subtitle": "Administra y organiza todos tus recordatorios en un solo lugar",
+    "newReminder": "+ Nuevo Recordatorio"
+  },
+  "overview": {
+    "totalReminders": "Recordatorios Totales",
+    "activeReminders": "Recordatorios activos",
+    "timezone": "Zona Horaria",
+    "accountStatus": "Estado de la Cuenta",
+    "active": "Activo",
+    "since": "Desde"
+  },
+  "reminders": {
+    "title": "Tus Recordatorios",
+    "subtitle": "Administra y edita tus recordatorios programados",
+    "scheduledFor": "Programado Para",
+    "created": "Creado",
+    "destination": "Destino",
+    "status": "Estado",
+    "pending": "Pendiente",
+    "view": "Ver",
+    "edit": "Editar",
+    "once": "Una Vez",
+    "daily": "Diariamente",
+    "weekly": "Semanalmente",
+    "monthly": "Mensualmente",
+    "custom": "Personalizado"
+  },
+  "footer": {
+    "copyright": "© 2025 Chronos. Nunca pierdas un momento.",
+    "documentation": "Documentación",
+    "support": "Soporte",
+    "discord": "Discord"
+  },
+  "login": {
+    "welcomeTitle": "Bienvenido de Vuelta",
+    "welcomeSubtitle": "Administra tus recordatorios con facilidad y nunca pierdas un momento importante",
+    "smartRemindersTitle": "Recordatorios Inteligentes",
+    "smartRemindersDesc": "Establece y organiza recordatorios en múltiples canales",
+    "alwaysOnTimeTitle": "Siempre a Tiempo",
+    "alwaysOnTimeDesc": "Recibe notificaciones exactamente cuando las necesitas",
+    "seamlessIntegrationTitle": "Integración Perfecta",
+    "seamlessIntegrationDesc": "Funciona con Discord y tus plataformas favoritas",
+    "allTimezoneTitle": "Soporte para Todos los Zonas Horarias",
+    "allTimezoneDesc": "Programa recordatorios sin importar dónde estés en el mundo",
+    "mobileSubtitle": "Inicia sesión para administrar tus recordatorios",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "loginTitle": "Inicio de Sesión",
+    "loginDesc": "Ingresa tus credenciales para continuar",
+    "emailAddress": "Dirección de Correo Electrónico",
+    "emailPlaceholder": "tu@ejemplo.com",
+    "password": "Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "rememberMe": "Recuérdame",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "continueWith": "O continúa con",
+    "discord": "Discord",
+    "createAccountTitle": "Crear Cuenta",
+    "createAccountDesc": "Únete a Chronos para comenzar a administrar tus recordatorios",
+    "username": "Nombre de Usuario",
+    "usernamePlaceholder": "Elige un nombre de usuario",
+    "confirmPassword": "Confirmar Contraseña",
+    "passwordsDontMatch": "Las contraseñas no coinciden",
+    "timezone": "Zona Horaria",
+    "createAccount": "Crear Cuenta",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "dontHaveAccount": "¿No tienes una cuenta?"
+  },
+  "passwordStrength": {
+    "eightChars": "8+ caracteres",
+    "uppercase": "Mayúscula",
+    "lowercase": "Minúscula",
+    "number": "Número",
+    "special": "Especial"
+  }
+}

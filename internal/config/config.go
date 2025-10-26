@@ -15,11 +15,13 @@ type Config struct {
     Environment    string
     DefaultTZ       string
     APIPort         string
+	APICors         string
     DbHost          string
     DbPort          string
     DbUser          string
     DbPassword      string
     DbName          string
+    JWTSecret       string
 
 	// Redis configuration
 	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
@@ -50,11 +52,13 @@ func Load() *Config {
         Environment:     getEnv("ENVIRONMENT", "DEV"),
         DefaultTZ:       getEnv("DEFAULT_TZ", "15"), // Default to UTC+1
         APIPort:         getEnv("API_PORT", "8080"),
+		APICors:         getEnv("API_CORS", "*"),
         DbHost:          getEnv("DB_HOST", "localhost"),
         DbPort:          getEnv("DB_PORT", "5432"),
         DbUser:          getEnv("DB_USER", "user"),
         DbPassword:      getEnv("DB_PASSWORD", "password"),
         DbName:          getEnv("DB_NAME", "ChronosReminder"),
+        JWTSecret:       getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),
 		RedisPort:     getEnv("REDIS_PORT", "6379"),

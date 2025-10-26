@@ -1,0 +1,84 @@
+{
+  "header": {
+    "myReminders": "Mes Rappels",
+    "integration": "Intégration",
+    "settings": "Paramètres",
+    "myAccount": "Mon Compte"
+  },
+  "welcome": {
+    "title": "Bienvenue à Chronos",
+    "subtitle": "Gérez et organisez tous vos rappels en un seul endroit",
+    "newReminder": "+ Nouveau Rappel"
+  },
+  "overview": {
+    "totalReminders": "Rappels Totaux",
+    "activeReminders": "Rappels actifs",
+    "timezone": "Fuseau Horaire",
+    "accountStatus": "État du Compte",
+    "active": "Actif",
+    "since": "Depuis"
+  },
+  "reminders": {
+    "title": "Vos Rappels",
+    "subtitle": "Gérez et modifiez vos rappels programmés",
+    "scheduledFor": "Programmé Pour",
+    "created": "Créé",
+    "destination": "Destination",
+    "status": "Statut",
+    "pending": "En Attente",
+    "view": "Voir",
+    "edit": "Modifier",
+    "once": "Une Fois",
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "monthly": "Mensuel",
+    "custom": "Personnalisé"
+  },
+  "footer": {
+    "copyright": "© 2025 Chronos. Ne manquez jamais un moment.",
+    "documentation": "Documentation",
+    "support": "Support",
+    "discord": "Discord"
+  },
+  "login": {
+    "welcomeTitle": "Bienvenue",
+    "welcomeSubtitle": "Gérez vos rappels facilement et ne manquez jamais un moment important",
+    "smartRemindersTitle": "Rappels Intelligents",
+    "smartRemindersDesc": "Configurez et organisez les rappels sur plusieurs canaux",
+    "alwaysOnTimeTitle": "Toujours à l'Heure",
+    "alwaysOnTimeDesc": "Recevez une notification exactement quand vous en avez besoin",
+    "seamlessIntegrationTitle": "Intégration Transparente",
+    "seamlessIntegrationDesc": "Fonctionne avec Discord et vos plateformes préférées",
+    "allTimezoneTitle": "Prise en Charge de Tous les Fuseaux Horaires",
+    "allTimezoneDesc": "Planifiez des rappels où que vous soyez dans le monde",
+    "mobileSubtitle": "Connectez-vous pour gérer vos rappels",
+    "signIn": "Se Connecter",
+    "signUp": "S'Inscrire",
+    "loginTitle": "Connexion",
+    "loginDesc": "Entrez vos identifiants pour continuer",
+    "emailAddress": "Adresse E-mail",
+    "password": "Mot de Passe",
+    "passwordPlaceholder": "••••••••",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "continueWith": "Ou continuez avec",
+    "discord": "Discord",
+    "createAccountTitle": "Créer un Compte",
+    "createAccountDesc": "Rejoignez Chronos pour commencer à gérer vos rappels",
+    "username": "Nom d'Utilisateur",
+    "usernamePlaceholder": "Choisissez un nom d'utilisateur",
+    "confirmPassword": "Confirmer le Mot de Passe",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas",
+    "timezone": "Fuseau Horaire",
+    "createAccount": "Créer un Compte",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Vous n'avez pas de compte ?"
+  },
+  "passwordStrength": {
+    "eightChars": "8+ caractères",
+    "uppercase": "Majuscule",
+    "lowercase": "Minuscule",
+    "number": "Chiffre",
+    "special": "Spécial"
+  }
+}

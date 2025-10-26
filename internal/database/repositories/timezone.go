@@ -49,6 +49,18 @@ func (r *timezoneRepository) GetByName(name string) (*models.Timezone, error) {
 	return &timezone, nil
 }
 
+func (r *timezoneRepository) GetByIANALocation(ianaLocation string) (*models.Timezone, error) {
+	var timezone models.Timezone
+	err := r.db.Where("iana_location = ?", ianaLocation).First(&timezone).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &timezone, nil
+}
+
 func (r *timezoneRepository) GetDefault() (*models.Timezone, error) {
 	var timezone models.Timezone
 	defaultTzId := config.GetDatabaseConfig().DefaultTZ
