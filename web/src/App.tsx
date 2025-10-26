@@ -3,6 +3,7 @@ import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./hooks/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { WelcomePage } from "./pages/WelcomePage";
+import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { useAuth } from "./hooks/useAuth";
 import "./i18n/config";
 
@@ -21,6 +22,9 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* OAuth Callback route: Public route for Discord OAuth callback */}
+      <Route path="/auth/callback/discord" element={<OAuthCallbackPage />} />
+
       {/* Protected route: Welcome page requires authentication */}
       <Route
         path="/welcome"

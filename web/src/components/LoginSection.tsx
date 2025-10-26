@@ -157,6 +157,22 @@ export function LoginSection({
         <Button
           type="button"
           variant="outline"
+          onClick={() => {
+            const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
+            const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
+
+            if (!clientId || !redirectUri) {
+              console.error(
+                "Discord OAuth configuration is missing. Please check your environment variables."
+              );
+              return;
+            }
+
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+              redirectUri
+            )}&response_type=code&scope=identify%20email`;
+            window.location.href = discordAuthUrl;
+          }}
           className="w-full border-border text-foreground hover:bg-secondary/50 hover:text-foreground"
         >
           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">

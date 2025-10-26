@@ -34,8 +34,19 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		repos.Account,
 	)
 
+	discordOAuthService := services.NewDiscordOAuthService(
+		cfg.DiscordClientID,
+		cfg.DiscordClientSecret,
+		cfg.DiscordRedirectURI,
+		repos.Identity,
+		repos.Account,
+		repos.Timezone,
+		sessionService,
+	)
+
 	// Initialize handlers
 	authHandler := NewAuthHandler(authService, sessionService)
+	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
 
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()
@@ -44,6 +55,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	// Register all routes
 	registerSwaggerRoutes(wrappedMux)
 	registerAuthRoutes(wrappedMux, authHandler)
+	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 
 	return &Server{
 		mux:  wrappedMux,
@@ -78,6 +90,12 @@ func registerAuthRoutes(mux *WrappedMux, authHandler *AuthHandler) {
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
+}
+
+// registerDiscordOAuthRoutes registers Discord OAuth routes
+func registerDiscordOAuthRoutes(mux *WrappedMux, discordOAuthHandler *DiscordOAuthHandler) {
+	mux.HandleFunc("POST /api/auth/discord/callback", discordOAuthHandler.DiscordCallback)
+	mux.HandleFunc("POST /api/auth/discord/setup", discordOAuthHandler.CompleteDiscordSetup)
 }
 
 // Start starts the API server and listens for incoming requests

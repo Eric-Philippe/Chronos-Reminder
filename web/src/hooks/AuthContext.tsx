@@ -53,18 +53,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Check authentication status on mount and set user data
   useEffect(() => {
-    const authenticated = apiClient.isAuthenticated();
-    setIsAuthenticated(authenticated);
+    const checkAuth = () => {
+      const authenticated = apiClient.isAuthenticated();
+      setIsAuthenticated(authenticated);
 
-    if (authenticated) {
-      const userData = apiClient.getUserData();
-      setUser(userData);
-    } else {
-      setUser(null);
-    }
+      if (authenticated) {
+        const userData = apiClient.getUserData();
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
 
-    // Mark auth check as complete
-    setIsCheckingAuth(false);
+      // Mark auth check as complete
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (from other tabs or from localStorage updates)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "auth_token" || e.key === "user_data") {
+        console.log("[AUTH_CONTEXT] Storage changed, rechecking auth...");
+        checkAuth();
+      }
+    };
+
+    // Also listen for custom events from the same tab
+    const handleAuthUpdate = () => {
+      console.log(
+        "[AUTH_CONTEXT] Auth update event received, rechecking auth..."
+      );
+      checkAuth();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("auth-updated", handleAuthUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-updated", handleAuthUpdate);
+    };
   }, []);
 
   const clearError = useCallback(() => {

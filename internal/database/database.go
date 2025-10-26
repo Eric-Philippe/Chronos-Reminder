@@ -117,54 +117,65 @@ func createEnumTypes() error {
 
 // seedData inserts initial timezone data if it doesn't exist
 func seedData() error {
-	// Check if timezones already exist
-	var count int64
-	DB.Model(&models.Timezone{}).Count(&count)
+	// Check if UTC timezone already exists
+	var utcTimezone models.Timezone
+	result := DB.Where("iana_location = ?", "UTC").First(&utcTimezone)
 	
-	if count > 0 {
-		return nil
-	}
+	// If UTC doesn't exist, we need to seed all timezones
+	if result.Error == gorm.ErrRecordNotFound {
+		// Check if we have any timezones at all
+		var count int64
+		DB.Model(&models.Timezone{}).Count(&count)
 		
-	timezones := []models.Timezone{
-		{Name: "International Date Line West", GMTOffset: -12.0, IANALocation: "Pacific/Kwajalein"},
-		{Name: "Midway Island, Samoa", GMTOffset: -11.0, IANALocation: "Pacific/Midway"},
-		{Name: "Hawaii", GMTOffset: -10.0, IANALocation: "Pacific/Honolulu"},
-		{Name: "Alaska", GMTOffset: -9.0, IANALocation: "America/Anchorage"},
-		{Name: "Pacific Time (US & Canada)", GMTOffset: -8.0, IANALocation: "America/Los_Angeles"},
-		{Name: "Mountain Time (US & Canada)", GMTOffset: -7.0, IANALocation: "America/Denver"},
-		{Name: "Central Time (US & Canada), Mexico City", GMTOffset: -6.0, IANALocation: "America/Chicago"},
-		{Name: "Eastern Time (US & Canada), Bogota, Lima", GMTOffset: -5.0, IANALocation: "America/New_York"},
-		{Name: "Atlantic Time (Canada), Caracas, La Paz", GMTOffset: -4.0, IANALocation: "America/Halifax"},
-		{Name: "Newfoundland", GMTOffset: -3.5, IANALocation: "America/St_Johns"},
-		{Name: "Brazil, Buenos Aires, Georgetown", GMTOffset: -3.0, IANALocation: "America/Sao_Paulo"},
-		{Name: "Mid-Atlantic", GMTOffset: -2.0, IANALocation: "Atlantic/South_Georgia"},
-		{Name: "Azores, Cape Verde Islands", GMTOffset: -1.0, IANALocation: "Atlantic/Azores"},
-		{Name: "Western Europe Time, London, Lisbon, Casablanca", GMTOffset: 0.0, IANALocation: "Europe/London"},
-		{Name: "Brussels, Copenhagen, Madrid, Paris", GMTOffset: 1.0, IANALocation: "Europe/Paris"},
-		{Name: "Kaliningrad, South Africa", GMTOffset: 2.0, IANALocation: "Europe/Kaliningrad"},
-		{Name: "Baghdad, Riyadh, Moscow, St. Petersburg", GMTOffset: 3.0, IANALocation: "Europe/Moscow"},
-		{Name: "Tehran", GMTOffset: 3.5, IANALocation: "Asia/Tehran"},
-		{Name: "Abu Dhabi, Muscat, Baku, Tbilisi", GMTOffset: 4.0, IANALocation: "Asia/Dubai"},
-		{Name: "Kabul", GMTOffset: 4.5, IANALocation: "Asia/Kabul"},
-		{Name: "Ekaterinburg, Islamabad, Karachi, Tashkent", GMTOffset: 5.0, IANALocation: "Asia/Karachi"},
-		{Name: "Bombay, Calcutta, Madras, New Delhi", GMTOffset: 5.5, IANALocation: "Asia/Kolkata"},
-		{Name: "Kathmandu", GMTOffset: 5.75, IANALocation: "Asia/Kathmandu"},
-		{Name: "Almaty, Dhaka, Colombo", GMTOffset: 6.0, IANALocation: "Asia/Almaty"},
-		{Name: "Yangon, Bangkok, Hanoi, Jakarta", GMTOffset: 6.5, IANALocation: "Asia/Yangon"},
-		{Name: "Bangkok, Hanoi, Jakarta", GMTOffset: 7.0, IANALocation: "Asia/Bangkok"},
-		{Name: "Beijing, Perth, Singapore, Hong Kong", GMTOffset: 8.0, IANALocation: "Asia/Shanghai"},
-		{Name: "Tokyo, Seoul, Osaka, Sapporo, Yakutsk", GMTOffset: 9.0, IANALocation: "Asia/Tokyo"},
-		{Name: "Darwin", GMTOffset: 9.5, IANALocation: "Australia/Darwin"},
-		{Name: "Eastern Australia, Guam, Vladivostok", GMTOffset: 10.0, IANALocation: "Australia/Sydney"},
-		{Name: "Magadan, Solomon Islands, New Caledonia", GMTOffset: 11.0, IANALocation: "Pacific/Guadalcanal"},
-		{Name: "Auckland, Wellington, Fiji, Kamchatka", GMTOffset: 12.0, IANALocation: "Pacific/Auckland"},
+		// If we have timezones but no UTC, something is wrong - clear and reseed
+		if count > 0 {
+			log.Println("[DATABASE] - ⚠️ Timezones exist but UTC not found, reseeding...")
+			DB.Exec("DELETE FROM timezones")
+		}
+			
+		timezones := []models.Timezone{
+			{Name: "UTC (Coordinated Universal Time)", GMTOffset: 0.0, IANALocation: "UTC"},
+			{Name: "International Date Line West", GMTOffset: -12.0, IANALocation: "Pacific/Kwajalein"},
+			{Name: "Midway Island, Samoa", GMTOffset: -11.0, IANALocation: "Pacific/Midway"},
+			{Name: "Hawaii", GMTOffset: -10.0, IANALocation: "Pacific/Honolulu"},
+			{Name: "Alaska", GMTOffset: -9.0, IANALocation: "America/Anchorage"},
+			{Name: "Pacific Time (US & Canada)", GMTOffset: -8.0, IANALocation: "America/Los_Angeles"},
+			{Name: "Mountain Time (US & Canada)", GMTOffset: -7.0, IANALocation: "America/Denver"},
+			{Name: "Central Time (US & Canada), Mexico City", GMTOffset: -6.0, IANALocation: "America/Chicago"},
+			{Name: "Eastern Time (US & Canada), Bogota, Lima", GMTOffset: -5.0, IANALocation: "America/New_York"},
+			{Name: "Atlantic Time (Canada), Caracas, La Paz", GMTOffset: -4.0, IANALocation: "America/Halifax"},
+			{Name: "Newfoundland", GMTOffset: -3.5, IANALocation: "America/St_Johns"},
+			{Name: "Brazil, Buenos Aires, Georgetown", GMTOffset: -3.0, IANALocation: "America/Sao_Paulo"},
+			{Name: "Mid-Atlantic", GMTOffset: -2.0, IANALocation: "Atlantic/South_Georgia"},
+			{Name: "Azores, Cape Verde Islands", GMTOffset: -1.0, IANALocation: "Atlantic/Azores"},
+			{Name: "Western Europe Time, London, Lisbon, Casablanca", GMTOffset: 0.0, IANALocation: "Europe/London"},
+			{Name: "Brussels, Copenhagen, Madrid, Paris", GMTOffset: 1.0, IANALocation: "Europe/Paris"},
+			{Name: "Kaliningrad, South Africa", GMTOffset: 2.0, IANALocation: "Europe/Kaliningrad"},
+			{Name: "Baghdad, Riyadh, Moscow, St. Petersburg", GMTOffset: 3.0, IANALocation: "Europe/Moscow"},
+			{Name: "Tehran", GMTOffset: 3.5, IANALocation: "Asia/Tehran"},
+			{Name: "Abu Dhabi, Muscat, Baku, Tbilisi", GMTOffset: 4.0, IANALocation: "Asia/Dubai"},
+			{Name: "Kabul", GMTOffset: 4.5, IANALocation: "Asia/Kabul"},
+			{Name: "Ekaterinburg, Islamabad, Karachi, Tashkent", GMTOffset: 5.0, IANALocation: "Asia/Karachi"},
+			{Name: "Bombay, Calcutta, Madras, New Delhi", GMTOffset: 5.5, IANALocation: "Asia/Kolkata"},
+			{Name: "Kathmandu", GMTOffset: 5.75, IANALocation: "Asia/Kathmandu"},
+			{Name: "Almaty, Dhaka, Colombo", GMTOffset: 6.0, IANALocation: "Asia/Almaty"},
+			{Name: "Yangon, Bangkok, Hanoi, Jakarta", GMTOffset: 6.5, IANALocation: "Asia/Yangon"},
+			{Name: "Bangkok, Hanoi, Jakarta", GMTOffset: 7.0, IANALocation: "Asia/Bangkok"},
+			{Name: "Beijing, Perth, Singapore, Hong Kong", GMTOffset: 8.0, IANALocation: "Asia/Shanghai"},
+			{Name: "Tokyo, Seoul, Osaka, Sapporo, Yakutsk", GMTOffset: 9.0, IANALocation: "Asia/Tokyo"},
+			{Name: "Darwin", GMTOffset: 9.5, IANALocation: "Australia/Darwin"},
+			{Name: "Eastern Australia, Guam, Vladivostok", GMTOffset: 10.0, IANALocation: "Australia/Sydney"},
+			{Name: "Magadan, Solomon Islands, New Caledonia", GMTOffset: 11.0, IANALocation: "Pacific/Guadalcanal"},
+			{Name: "Auckland, Wellington, Fiji, Kamchatka", GMTOffset: 12.0, IANALocation: "Pacific/Auckland"},
+		}
+		
+		if err := DB.Create(&timezones).Error; err != nil {
+			return err
+		}
+		
+		log.Printf("[DATABASE] - ✅ Seeded %d timezones", len(timezones))
 	}
 	
-	if err := DB.Create(&timezones).Error; err != nil {
-		return err
-	}
-	
-	log.Printf("[DATABASE] - ✅ Seeded %d timezones", len(timezones))
 	return nil
 }
 

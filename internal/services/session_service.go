@@ -270,3 +270,30 @@ func GenerateSessionID() (string, error) {
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
 }
+
+// generateTokenForAccount creates a JWT token directly for an account and identity
+// This is used for OAuth flows where we don't have a password
+func (s *SessionService) generateTokenForAccount(account *models.Account, identity *models.Identity, duration time.Duration) (string, error) {
+	now := time.Now()
+	expiresAt := now.Add(duration)
+
+	username := ""
+	if identity.Username != nil {
+		username = *identity.Username
+	}
+
+	claims := SessionToken{
+		AccountID:  account.ID.String(),
+		IdentityID: identity.ID.String(),
+		Email:      identity.ExternalID,
+		Username:   username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+}

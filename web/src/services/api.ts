@@ -259,6 +259,8 @@ class ApiClient {
   /**
    * Setup automatic token refresh
    * Refreshes token 5 minutes before expiration
+   * Note: JavaScript setTimeout has a maximum delay of ~24.8 days (2^31-1 ms)
+   * For tokens with longer expiry, we skip scheduling and rely on response interceptor 401 handling
    */
   private setupTokenRefresh(): void {
     if (this.tokenRefreshTimer) {
@@ -266,12 +268,18 @@ class ApiClient {
     }
 
     const expiresAt = this.getTokenExpiresAt();
-    if (!expiresAt) return;
+    if (!expiresAt) {
+      return;
+    }
 
     const now = new Date();
-    const refreshTime = expiresAt.getTime() - now.getTime() - 5 * 60 * 1000; // 5 minutes before expiry
+    const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+    const refreshTime = timeUntilExpiry - 5 * 60 * 1000; // 5 minutes before expiry
 
-    if (refreshTime > 0) {
+    // Maximum safe timeout in JavaScript is ~24.8 days (2^31 - 1 milliseconds)
+    const MAX_SAFE_TIMEOUT = 2147483647;
+
+    if (refreshTime > 0 && refreshTime <= MAX_SAFE_TIMEOUT) {
       this.tokenRefreshTimer = setTimeout(() => {
         this.refreshToken();
       }, refreshTime);
@@ -279,12 +287,10 @@ class ApiClient {
   }
 
   /**
-   * Refresh the token (placeholder - implement based on backend)
+   * Refresh the token
    */
   private async refreshToken(): Promise<void> {
     try {
-      // This would call a refresh endpoint if your backend provides one
-      // For now, we'll just notify subscribers and clear auth
       this.refreshSubscribers.forEach((callback) => callback());
       this.refreshSubscribers = [];
       this.isRefreshing = false;
@@ -303,7 +309,8 @@ class ApiClient {
    * Restore session from localStorage if available
    */
   private restoreSession(): void {
-    if (this.isAuthenticated()) {
+    const authenticated = this.isAuthenticated();
+    if (authenticated) {
       this.setupTokenRefresh();
     } else {
       this.clearAuth();
@@ -330,6 +337,19 @@ class ApiClient {
    */
   getAxiosInstance(): AxiosInstance {
     return this.axiosInstance;
+  }
+
+  /**
+   * Set authentication token and user data (used by OAuth flows)
+   */
+  setAuthentication(
+    token: string,
+    expiresAtStr: string,
+    userData: SessionData
+  ): void {
+    this.setToken(token, new Date(expiresAtStr));
+    this.setUserData(userData);
+    this.setupTokenRefresh();
   }
 }
 

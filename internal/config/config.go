@@ -23,6 +23,11 @@ type Config struct {
     DbName          string
     JWTSecret       string
 
+	// Discord OAuth configuration
+	DiscordClientID     string
+	DiscordClientSecret string
+	DiscordRedirectURI  string
+
 	// Redis configuration
 	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
 	RedisPort     string `env:"REDIS_PORT" envDefault:"6379"`
@@ -59,6 +64,11 @@ func Load() *Config {
         DbPassword:      getEnv("DB_PASSWORD", "password"),
         DbName:          getEnv("DB_NAME", "ChronosReminder"),
         JWTSecret:       getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
+
+		// Discord OAuth configuration
+		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", ""),
+		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", ""),
+		DiscordRedirectURI:  getEnv("DISCORD_REDIRECT_URI", "http://localhost:5173/auth/callback/discord"),
 
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),
 		RedisPort:     getEnv("REDIS_PORT", "6379"),
