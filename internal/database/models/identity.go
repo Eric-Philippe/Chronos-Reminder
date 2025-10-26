@@ -70,6 +70,8 @@ type Identity struct {
 	Username     *string   `json:"username"`                     // snapshot for display purposes
 	Avatar       *string   `json:"avatar"`                       // optional, snapshot of Discord avatar
 	PasswordHash *string   `json:"-"`                            // only for app identities, hidden in JSON
+	AccessToken  *string   `json:"-"`                            // Discord OAuth access token, hidden in JSON
+	RefreshToken *string   `json:"-"`                            // Discord OAuth refresh token, hidden in JSON
 	CreatedAt    time.Time `gorm:"not null;default:now()" json:"created_at"`
 	
 	// Relationships

@@ -106,7 +106,7 @@ func (h *DiscordOAuthHandler) DiscordCallback(w http.ResponseWriter, r *http.Req
 	}()
 
 	// Exchange code for access token
-	accessToken, err := h.discordOAuthService.ExchangeCodeForToken(r.Context(), req.Code)
+	accessToken, refreshToken, err := h.discordOAuthService.ExchangeCodeForToken(r.Context(), req.Code)
 	if err != nil {
 		resultChannel <- &ProcessingResult{Error: err.Error()} // Signal failure to other waiters
 		WriteError(w, http.StatusUnauthorized, "Failed to authenticate with Discord")
@@ -122,7 +122,7 @@ func (h *DiscordOAuthHandler) DiscordCallback(w http.ResponseWriter, r *http.Req
 	}
 
 	// Process Discord auth (create or login)
-	account, token, err := h.discordOAuthService.ProcessDiscordAuth(r.Context(), userInfo)
+	account, token, err := h.discordOAuthService.ProcessDiscordAuth(r.Context(), userInfo, accessToken, refreshToken)
 	if err != nil {
 		resultChannel <- &ProcessingResult{Error: err.Error()} // Signal failure to other waiters
 		WriteError(w, http.StatusInternalServerError, "Failed to process authentication")

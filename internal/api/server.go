@@ -38,6 +38,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		cfg.DiscordClientID,
 		cfg.DiscordClientSecret,
 		cfg.DiscordRedirectURI,
+		cfg.DiscordBotToken,
 		repos.Identity,
 		repos.Account,
 		repos.Timezone,
@@ -47,6 +48,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	// Initialize handlers
 	authHandler := NewAuthHandler(authService, sessionService)
 	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
+	discordGuildHandler := NewDiscordGuildHandler(discordOAuthService)
 
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()
@@ -56,6 +58,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerSwaggerRoutes(wrappedMux)
 	registerAuthRoutes(wrappedMux, authHandler)
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
+	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
 
 	return &Server{
 		mux:  wrappedMux,
@@ -66,12 +69,6 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 
 // registerSwaggerRoutes registers Swagger documentation routes
 func registerSwaggerRoutes(mux *WrappedMux) {
-	// Swagger UI main page
-	swaggerHandler := httpSwagger.Handler()
-
-	mux.Handle("GET /swagger/", swaggerHandler)
-	mux.Handle("GET /swagger/*", swaggerHandler)
-
 	// Swagger JSON endpoint
 	mux.HandleFunc("GET /swagger/doc.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -79,10 +76,13 @@ func registerSwaggerRoutes(mux *WrappedMux) {
 		w.Write([]byte(docs.ReadDoc()))
 	})
 
-	// Redirect /swagger/index.html to /swagger/
-	mux.HandleFunc("GET /swagger/index.html", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/swagger/", http.StatusMovedPermanently)
-	})
+	// Swagger UI handler - handles all swagger UI requests including assets
+	swaggerHandler := httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	)
+
+	// Register swagger handler for the entire /swagger/ path including nested paths
+	mux.Handle("GET /swagger/", swaggerHandler)
 }
 
 // registerAuthRoutes registers authentication routes
@@ -96,6 +96,13 @@ func registerAuthRoutes(mux *WrappedMux, authHandler *AuthHandler) {
 func registerDiscordOAuthRoutes(mux *WrappedMux, discordOAuthHandler *DiscordOAuthHandler) {
 	mux.HandleFunc("POST /api/auth/discord/callback", discordOAuthHandler.DiscordCallback)
 	mux.HandleFunc("POST /api/auth/discord/setup", discordOAuthHandler.CompleteDiscordSetup)
+}
+
+// registerDiscordGuildRoutes registers Discord guild-related routes
+func registerDiscordGuildRoutes(mux *WrappedMux, discordGuildHandler *DiscordGuildHandler) {
+	mux.HandleFunc("POST /api/discord/guilds", discordGuildHandler.GetUserGuilds)
+	mux.HandleFunc("POST /api/discord/guilds/channels", discordGuildHandler.GetGuildChannels)
+	mux.HandleFunc("POST /api/discord/guilds/roles", discordGuildHandler.GetGuildRoles)
 }
 
 // Start starts the API server and listens for incoming requests

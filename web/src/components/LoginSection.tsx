@@ -170,7 +170,7 @@ export function LoginSection({
 
             const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
               redirectUri
-            )}&response_type=code&scope=identify%20email`;
+            )}&response_type=code&scope=identify%20email%20guilds%20guilds.members.read`;
             window.location.href = discordAuthUrl;
           }}
           className="w-full border-border text-foreground hover:bg-secondary/50 hover:text-foreground"

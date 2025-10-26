@@ -20,6 +20,7 @@ type DiscordOAuthService struct {
 	clientID       string
 	clientSecret   string
 	redirectURI    string
+	botToken       string
 	identityRepo   repositories.IdentityRepository
 	accountRepo    repositories.AccountRepository
 	timezoneRepo   repositories.TimezoneRepository
@@ -33,6 +34,38 @@ type DiscordUserInfo struct {
 	Email         string `json:"email"`
 	Avatar        string `json:"avatar"`
 	Discriminator string `json:"discriminator"`
+}
+
+// DiscordGuild represents a Discord guild (server)
+type DiscordGuild struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Icon        string `json:"icon"`
+	Owner       bool   `json:"owner"`
+	Permissions int64  `json:"permissions"`
+	Features    []string `json:"features"`
+}
+
+// DiscordGuildChannel represents a Discord guild channel
+type DiscordGuildChannel struct {
+	ID                   string        `json:"id"`
+	Name                 string        `json:"name"`
+	Type                 int           `json:"type"` // 0=text, 1=DM, 2=voice, 4=category, etc.
+	Position             int           `json:"position"`
+	Topic                *string       `json:"topic"`
+	PermissionOverwrites []interface{} `json:"permission_overwrites"`
+}
+
+// DiscordRole represents a Discord guild role
+type DiscordRole struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Color       int    `json:"color"`
+	Hoist       bool   `json:"hoist"`
+	Position    int    `json:"position"`
+	Permissions int64  `json:"permissions"`
+	Managed     bool   `json:"managed"`
+	Mentionable bool   `json:"mentionable"`
 }
 
 // DiscordTokenResponse represents the response from Discord token exchange
@@ -49,6 +82,7 @@ func NewDiscordOAuthService(
 	clientID string,
 	clientSecret string,
 	redirectURI string,
+	botToken string,
 	identityRepo repositories.IdentityRepository,
 	accountRepo repositories.AccountRepository,
 	timezoneRepo repositories.TimezoneRepository,
@@ -58,6 +92,7 @@ func NewDiscordOAuthService(
 		clientID:       clientID,
 		clientSecret:   clientSecret,
 		redirectURI:    redirectURI,
+		botToken:       botToken,
 		identityRepo:   identityRepo,
 		accountRepo:    accountRepo,
 		timezoneRepo:   timezoneRepo,
@@ -65,10 +100,10 @@ func NewDiscordOAuthService(
 	}
 }
 
-// ExchangeCodeForToken exchanges Discord authorization code for access token
-func (s *DiscordOAuthService) ExchangeCodeForToken(ctx context.Context, code string) (string, error) {
+// ExchangeCodeForToken exchanges Discord authorization code for access token and refresh token
+func (s *DiscordOAuthService) ExchangeCodeForToken(ctx context.Context, code string) (string, string, error) {
 	if s.clientID == "" || s.clientSecret == "" {
-		return "", fmt.Errorf("discord credentials not configured: client_id or client_secret is empty")
+		return "", "", fmt.Errorf("discord credentials not configured: client_id or client_secret is empty")
 	}
 
 	data := url.Values{}
@@ -80,22 +115,22 @@ func (s *DiscordOAuthService) ExchangeCodeForToken(ctx context.Context, code str
 
 	resp, err := http.PostForm("https://discord.com/api/oauth2/token", data)
 	if err != nil {
-		return "", fmt.Errorf("failed to exchange code: %w", err)
+		return "", "", fmt.Errorf("failed to exchange code: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
 	
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("discord token exchange failed (status %d): %s", resp.StatusCode, string(body))
+		return "", "", fmt.Errorf("discord token exchange failed (status %d): %s", resp.StatusCode, string(body))
 	}
 
 	var tokenResp DiscordTokenResponse
 	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return "", fmt.Errorf("failed to decode token response: %w", err)
+		return "", "", fmt.Errorf("failed to decode token response: %w", err)
 	}
 
-	return tokenResp.AccessToken, nil
+	return tokenResp.AccessToken, tokenResp.RefreshToken, nil
 }
 
 // GetUserInfo retrieves Discord user information using access token
@@ -131,7 +166,7 @@ func (s *DiscordOAuthService) GetUserInfo(ctx context.Context, accessToken strin
 //   - Case 2: Email exists as app provider -> Link Discord identity in background, login
 //   - Case 3: Email exists as Discord provider -> Login with existing account
 //   - Case 4: New user (no Discord ID or email) -> Create new account with Discord identity, prompt setup
-func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *DiscordUserInfo) (*models.Account, string, error) {
+func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *DiscordUserInfo, accessToken, refreshToken string) (*models.Account, string, error) {
 	if userInfo == nil {
 		return nil, "", errors.New("user info is nil")
 	}
@@ -150,6 +185,15 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 		}
 		if account == nil {
 			return nil, "", errors.New("account not found for existing discord identity")
+		}
+
+		// Update access token for the Discord identity
+		discordIdentity.AccessToken = &accessToken
+		if refreshToken != "" {
+			discordIdentity.RefreshToken = &refreshToken
+		}
+		if err := s.identityRepo.Update(discordIdentity); err != nil {
+			fmt.Printf("[DISCORD_AUTH] Warning: Failed to update access token: %v\n", err)
 		}
 
 		// Check if account has app identity
@@ -202,12 +246,16 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 			// Link Discord identity in the background (non-blocking)
 			go func() {
 				newDiscordIdentity := &models.Identity{
-					ID:         uuid.New(),
-					AccountID:  account.ID,
-					Provider:   models.ProviderDiscord,
-					ExternalID: userInfo.ID,
-					Username:   &userInfo.Username,
-					Avatar:     &userInfo.Avatar,
+					ID:           uuid.New(),
+					AccountID:    account.ID,
+					Provider:     models.ProviderDiscord,
+					ExternalID:   userInfo.ID,
+					Username:     &userInfo.Username,
+					Avatar:       &userInfo.Avatar,
+					AccessToken:  &accessToken,
+				}
+				if refreshToken != "" {
+					newDiscordIdentity.RefreshToken = &refreshToken
 				}
 				_ = s.identityRepo.Create(newDiscordIdentity)
 			}()
@@ -261,12 +309,16 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 
 	// Create Discord identity
 	newDiscordIdentity := &models.Identity{
-		ID:         uuid.New(),
-		AccountID:  account.ID,
-		Provider:   models.ProviderDiscord,
-		ExternalID: userInfo.ID,
-		Username:   &userInfo.Username,
-		Avatar:     &userInfo.Avatar,
+		ID:           uuid.New(),
+		AccountID:    account.ID,
+		Provider:     models.ProviderDiscord,
+		ExternalID:   userInfo.ID,
+		Username:     &userInfo.Username,
+		Avatar:       &userInfo.Avatar,
+		AccessToken:  &accessToken,
+	}
+	if refreshToken != "" {
+		newDiscordIdentity.RefreshToken = &refreshToken
 	}
 
 	if err := s.identityRepo.Create(newDiscordIdentity); err != nil {
@@ -392,4 +444,154 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 // GetAccount retrieves an account with all its identities
 func (s *DiscordOAuthService) GetAccount(ctx context.Context, accountID uuid.UUID) (*models.Account, error) {
 	return s.accountRepo.GetWithIdentities(accountID)
+}
+
+// RefreshDiscordToken refreshes a Discord access token using the refresh token
+func (s *DiscordOAuthService) RefreshDiscordToken(ctx context.Context, refreshToken string) (string, string, error) {
+	if refreshToken == "" {
+		return "", "", errors.New("refresh token is empty")
+	}
+
+	data := url.Values{}
+	data.Set("client_id", s.clientID)
+	data.Set("client_secret", s.clientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+
+	resp, err := http.PostForm("https://discord.com/api/oauth2/token", data)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to refresh token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("discord token refresh failed (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp DiscordTokenResponse
+	if err := json.Unmarshal(body, &tokenResp); err != nil {
+		return "", "", fmt.Errorf("failed to decode token response: %w", err)
+	}
+
+	return tokenResp.AccessToken, tokenResp.RefreshToken, nil
+}
+
+// GetUserGuilds retrieves all guilds the user has access to
+func (s *DiscordOAuthService) GetUserGuilds(ctx context.Context, accessToken string) ([]DiscordGuild, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://discord.com/api/users/@me/guilds", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guilds: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("discord guilds request failed (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var guilds []DiscordGuild
+	if err := json.NewDecoder(resp.Body).Decode(&guilds); err != nil {
+		return nil, fmt.Errorf("failed to decode guilds: %w", err)
+	}
+
+	return guilds, nil
+}
+
+// GetGuildChannels retrieves all channels for a specific guild
+// Uses bot token instead of user OAuth token as Discord API requires bot authentication for this endpoint
+func (s *DiscordOAuthService) GetGuildChannels(ctx context.Context, accessToken string, guildID string) ([]DiscordGuildChannel, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://discord.com/api/guilds/%s/channels", guildID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Use bot token for this endpoint (user OAuth tokens don't work for guild endpoints)
+	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", s.botToken))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get channels: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("discord channels request failed (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var channels []DiscordGuildChannel
+	if err := json.NewDecoder(resp.Body).Decode(&channels); err != nil {
+		return nil, fmt.Errorf("failed to decode channels: %w", err)
+	}
+
+	return channels, nil
+}
+
+// GetGuildRoles retrieves all roles for a specific guild
+// Uses bot token instead of user OAuth token as Discord API requires bot authentication for this endpoint
+func (s *DiscordOAuthService) GetGuildRoles(ctx context.Context, accessToken string, guildID string) ([]DiscordRole, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://discord.com/api/guilds/%s/roles", guildID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Use bot token for this endpoint (user OAuth tokens don't work for guild endpoints)
+	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", s.botToken))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get roles: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("discord roles request failed (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var roles []DiscordRole
+	if err := json.NewDecoder(resp.Body).Decode(&roles); err != nil {
+		return nil, fmt.Errorf("failed to decode roles: %w", err)
+	}
+
+	return roles, nil
+}
+
+// IsBotInGuild checks if the bot is a member of the specified guild
+func (s *DiscordOAuthService) IsBotInGuild(ctx context.Context, guildID string) (bool, error) {
+	if s.botToken == "" {
+		return false, errors.New("bot token not configured")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://discord.com/api/guilds/%s", guildID), nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", s.botToken))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to check guild: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 200 = bot is in the guild, 404 = bot is not in the guild, other = error
+	if resp.StatusCode == http.StatusOK {
+		return true, nil
+	} else if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return false, fmt.Errorf("failed to check guild membership (status %d): %s", resp.StatusCode, string(body))
 }
