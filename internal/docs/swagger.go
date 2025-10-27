@@ -372,6 +372,172 @@ func ReadDoc() string {
           }
         }
       }
+    },
+    "/reminders": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "Get all user reminders",
+        "description": "Get all reminders for the authenticated user with their destinations",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved reminders",
+            "schema": {
+              "$ref": "#/definitions/GetRemindersResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "Get single reminder",
+        "description": "Get a single reminder by ID for the authenticated user with its destinations",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Reminder ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved reminder",
+            "schema": {
+              "$ref": "#/definitions/Reminder"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden - no permission to access this reminder",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Reminder not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reminders/errors": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "Get reminders with errors",
+        "description": "Get all reminders with errors for the authenticated user",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved reminder errors",
+            "schema": {
+              "$ref": "#/definitions/GetReminderErrorsResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/account": {
+      "get": {
+        "tags": ["Account"],
+        "summary": "Get authenticated user account",
+        "description": "Get the authenticated user's account information with all identities",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved account",
+            "schema": {
+              "$ref": "#/definitions/Account"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Account not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -739,6 +905,244 @@ func ReadDoc() string {
         "error": {
           "type": "string",
           "example": "Invalid request"
+        }
+      }
+    },
+    "Timezone": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "America/New_York"
+        },
+        "gmt_offset": {
+          "type": "number",
+          "format": "double",
+          "example": -5.0
+        },
+        "iana_location": {
+          "type": "string",
+          "example": "America/New_York"
+        }
+      }
+    },
+    "Identity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "account_id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["app", "discord"],
+          "example": "app"
+        },
+        "external_id": {
+          "type": "string",
+          "example": "user@example.com"
+        },
+        "username": {
+          "type": "string",
+          "example": "john_doe"
+        },
+        "avatar_url": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "timezone_id": {
+          "type": "integer",
+          "example": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "$ref": "#/definitions/Timezone"
+        },
+        "identities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Identity"
+          }
+        }
+      }
+    },
+    "ReminderDestination": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "reminder_id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "destination_type": {
+          "type": "string",
+          "enum": ["discord_channel", "discord_dm", "webhook"],
+          "example": "discord_channel"
+        },
+        "metadata": {
+          "type": "object",
+          "example": {
+            "channel_id": "987654321",
+            "guild_id": "123456789"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Reminder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "account_id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "remind_at_utc": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2024-10-27T15:04:05Z"
+        },
+        "snoozed_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "next_fire_utc": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2024-10-27T15:04:05Z"
+        },
+        "message": {
+          "type": "string",
+          "example": "Remember to take a break"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recurrence": {
+          "type": "integer",
+          "format": "int16",
+          "example": 0
+        },
+        "account": {
+          "$ref": "#/definitions/Account"
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReminderDestination"
+          }
+        }
+      }
+    },
+    "ReminderError": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "reminder_id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "reminder_destination_id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stacktrace": {
+          "type": "string",
+          "example": "error stacktrace here"
+        },
+        "fixed": {
+          "type": "boolean",
+          "example": false
+        },
+        "reminder": {
+          "$ref": "#/definitions/Reminder"
+        },
+        "reminder_destination": {
+          "$ref": "#/definitions/ReminderDestination"
+        }
+      }
+    },
+    "GetRemindersResponse": {
+      "type": "object",
+      "properties": {
+        "reminders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Reminder"
+          }
+        },
+        "count": {
+          "type": "integer",
+          "example": 5
+        }
+      }
+    },
+    "GetReminderErrorsResponse": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReminderError"
+          }
+        },
+        "count": {
+          "type": "integer",
+          "example": 2
         }
       }
     }

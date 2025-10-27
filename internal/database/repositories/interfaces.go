@@ -21,6 +21,7 @@ type AccountRepository interface {
 	Create(account *models.Account) error
 	GetByID(id uuid.UUID) (*models.Account, error)
 	Update(account *models.Account) error
+	UpdateTimezone(accountID uuid.UUID, timezoneID uint) error
 	Delete(id uuid.UUID) error
 	GetWithTimezone(id uuid.UUID) (*models.Account, error)
 	GetWithIdentities(id uuid.UUID) (*models.Account, error)

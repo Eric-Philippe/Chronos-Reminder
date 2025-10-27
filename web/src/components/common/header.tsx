@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ModeToggle } from "@/components/mode-toggle";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { ModeToggle } from "@/components/common/mode-toggle";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 

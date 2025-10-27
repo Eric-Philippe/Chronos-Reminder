@@ -14,12 +14,13 @@ var RestrictedRoutes = map[string]bool{
 	// Add more website-restricted routes here
 }
 
-// PublicRoutes defines routes that allow any origin (no credential requirement)
-// For routes that should be accessible from any origin (e.g., mobile apps, third-party integrations)
-var PublicRoutes = map[string]bool{
-	// "/api/reminders":     true, // Example: get all user reminders (any origin)
-	// "/api/reminders/add": true, // Example: add reminder (any origin)
-	// Add routes that should be accessible from anywhere here
+// ProtectedRoutes defines routes that require authentication
+var ProtectedRoutes = map[string]bool{
+	"/api/reminders":       true, // Get all reminders
+	"/api/reminders/{id}":  true, // Get single reminder
+	"/api/reminders/errors": true, // Get reminders with errors
+	"/api/account":         true, // Get account info
+	// Add more authenticated routes here
 }
 
 // CORSMiddleware adds CORS headers to responses
@@ -28,13 +29,13 @@ func CORSMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 			isRestrictedRoute := RestrictedRoutes[r.URL.Path]
-			isPublicRoute := PublicRoutes[r.URL.Path]
+			isProtectedRoute := ProtectedRoutes[r.URL.Path]
 
 			// Determine allowed origin based on route type and environment
 			var allowedOrigin string
 
-			if isRestrictedRoute {
-				// Website-only routes: require specific origin (configured in API_CORS)
+			if isRestrictedRoute || isProtectedRoute {
+				// Restricted/Protected routes: require specific origin (configured in API_CORS)
 				if cfg.Environment == "DEV" {
 					// In DEV mode, allow any origin
 					if origin != "" {
@@ -52,13 +53,6 @@ func CORSMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 					} else if configuredOrigin == "*" {
 						allowedOrigin = "*"
 					}
-				}
-			} else if isPublicRoute {
-				// Truly public routes: allow any origin (e.g., API integrations)
-				if origin != "" {
-					allowedOrigin = origin
-				} else {
-					allowedOrigin = "*"
 				}
 			} else {
 				// Default: treat as protected routes (auth endpoints)
@@ -88,11 +82,7 @@ func CORSMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 				w.Header().Set("Access-Control-Max-Age", "3600")
-
-				// Only set credentials for non-public routes
-				if !isPublicRoute {
-					w.Header().Set("Access-Control-Allow-Credentials", "true")
-				}
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 
 			// Handle preflight requests

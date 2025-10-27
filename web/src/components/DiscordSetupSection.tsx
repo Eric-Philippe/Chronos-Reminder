@@ -10,14 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TimezoneSelect } from "@/components/TimezoneSelect";
-import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { TimezoneSelect } from "@/components/common/TimezoneSelect";
+import { PasswordStrengthIndicator } from "@/components/common/PasswordStrengthIndicator";
 
 interface DiscordSetupSectionProps {
   discordEmail: string;
   discordUsername: string;
   onSetupComplete: (data: {
     email: string;
+    username: string;
     password: string;
     timezone: string;
   }) => Promise<void>;
@@ -35,6 +36,7 @@ export function DiscordSetupSection({
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState(discordEmail);
+  const [username, setUsername] = useState(discordUsername);
   const [password, setPassword] = useState("");
   const [timezone, setTimezone] = useState("UTC");
   const [localError, setLocalError] = useState<string | null>(null);
@@ -45,22 +47,31 @@ export function DiscordSetupSection({
     setLocalError(null);
 
     if (!email.trim()) {
-      setLocalError(t("login.emailAddress") + " is required");
+      setLocalError(
+        t("login.discordSetup.emailLabel") +
+          " " +
+          t("login.discordSetup.passwordRequired")
+      );
+      return;
+    }
+
+    if (!username.trim()) {
+      setLocalError(t("login.discordSetup.usernameRequired"));
       return;
     }
 
     if (!password.trim()) {
-      setLocalError(t("login.password") + " is required");
+      setLocalError(t("login.discordSetup.passwordRequired"));
       return;
     }
 
     if (password.length < 8) {
-      setLocalError("Password must be at least 8 characters");
+      setLocalError(t("login.discordSetup.passwordMin"));
       return;
     }
 
     try {
-      await onSetupComplete({ email, password, timezone });
+      await onSetupComplete({ email, username, password, timezone });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Setup failed";
       setLocalError(errorMsg);
@@ -70,10 +81,11 @@ export function DiscordSetupSection({
   return (
     <Card className="border-border bg-card/95 backdrop-blur">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-foreground">Complete Your Profile</CardTitle>
+        <CardTitle className="text-foreground">
+          {t("login.discordSetup.title")}
+        </CardTitle>
         <CardDescription>
-          Welcome, {discordUsername}! Set up your app identity to secure your
-          account.
+          {t("login.discordSetup.subtitle", { username: discordUsername })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -91,12 +103,12 @@ export function DiscordSetupSection({
               htmlFor="setup-email"
               className="text-sm font-medium text-foreground"
             >
-              Email Address
+              {t("login.discordSetup.emailLabel")}
             </label>
             <Input
               id="setup-email"
               type="email"
-              placeholder="your@email.com"
+              placeholder={t("login.discordSetup.emailPlaceholder")}
               value={email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setEmail(e.target.value)
@@ -105,8 +117,31 @@ export function DiscordSetupSection({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Pre-filled from your Discord account. You can change this if
-              needed.
+              {t("login.discordSetup.emailHelper")}
+            </p>
+          </div>
+
+          {/* Username Field (App Identity) */}
+          <div className="space-y-2">
+            <label
+              htmlFor="setup-username"
+              className="text-sm font-medium text-foreground"
+            >
+              {t("login.discordSetup.usernameLabel")}
+            </label>
+            <Input
+              id="setup-username"
+              type="text"
+              placeholder={t("login.discordSetup.usernamePlaceholder")}
+              value={username}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setUsername(e.target.value)
+              }
+              className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("login.discordSetup.usernameHelper")}
             </p>
           </div>
 
@@ -116,13 +151,13 @@ export function DiscordSetupSection({
               htmlFor="setup-password"
               className="text-sm font-medium text-foreground"
             >
-              Password
+              {t("login.discordSetup.passwordLabel")}
             </label>
             <div className="relative">
               <Input
                 id="setup-password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Create a strong password"
+                placeholder={t("login.discordSetup.passwordPlaceholder")}
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setPassword(e.target.value)
@@ -153,9 +188,14 @@ export function DiscordSetupSection({
               htmlFor="setup-timezone"
               className="text-sm font-medium text-foreground"
             >
-              Timezone
+              {t("login.discordSetup.timezoneLabel")}
             </label>
-            <TimezoneSelect value={timezone} onChange={setTimezone} />
+            <TimezoneSelect
+              value={timezone}
+              onChange={setTimezone}
+              searchPlaceholder={t("login.discordSetup.searchTimezone")}
+              noResultsText={t("login.discordSetup.noTimezones")}
+            />
           </div>
 
           {/* Submit Button */}
@@ -164,15 +204,16 @@ export function DiscordSetupSection({
             disabled={isLoading}
             className="w-full bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-accent-foreground font-semibold mt-6"
           >
-            {isLoading ? "Completing Setup..." : "Complete Setup"}
+            {isLoading
+              ? t("login.discordSetup.buttonCompleting")
+              : t("login.discordSetup.buttonComplete")}
           </Button>
         </form>
 
         {/* Info Box */}
         <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
           <p className="text-sm text-foreground">
-            <strong>💡 Tip:</strong> By setting up a password, you can log in
-            using either your Discord account or your email address.
+            <strong>💡 {t("login.discordSetup.tip")}</strong>
           </p>
         </div>
       </CardContent>

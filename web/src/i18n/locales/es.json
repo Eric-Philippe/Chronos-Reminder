@@ -8,7 +8,7 @@
   "welcome": {
     "title": "Bienvenido a Chronos",
     "subtitle": "Administra y organiza todos tus recordatorios en un solo lugar",
-    "newReminder": "+ Nuevo Recordatorio"
+    "newReminder": "Nuevo Recordatorio"
   },
   "overview": {
     "totalReminders": "Recordatorios Totales",
@@ -73,7 +73,28 @@
     "timezone": "Zona Horaria",
     "createAccount": "Crear Cuenta",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
-    "dontHaveAccount": "¿No tienes una cuenta?"
+    "dontHaveAccount": "¿No tienes una cuenta?",
+    "discordSetup": {
+      "title": "Completa Tu Perfil",
+      "subtitle": "¡Bienvenido, {{username}}! Configura tu identidad de aplicación para asegurar tu cuenta.",
+      "emailLabel": "Correo Electrónico",
+      "emailPlaceholder": "tu@correo.com",
+      "emailHelper": "Completado previamente desde tu cuenta de Discord. Puedes cambiarlo si lo necesitas.",
+      "usernameLabel": "Nombre de Usuario",
+      "usernamePlaceholder": "Elige un nombre de usuario para la aplicación",
+      "usernameHelper": "Este será tu nombre de usuario de identidad de aplicación. Puedes cambiarlo más tarde.",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Crea una contraseña fuerte",
+      "timezoneLabel": "Zona Horaria",
+      "searchTimezone": "Buscar zona horaria...",
+      "noTimezones": "No se encontraron zonas horarias",
+      "buttonComplete": "Completar Configuración",
+      "buttonCompleting": "Completando Configuración...",
+      "tip": "Al configurar una contraseña, puedes iniciar sesión usando tu cuenta de Discord o tu dirección de correo electrónico.",
+      "passwordRequired": "La contraseña es obligatoria",
+      "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+      "usernameRequired": "El nombre de usuario es obligatorio"
+    }
   },
   "passwordStrength": {
     "eightChars": "8+ caracteres",
@@ -81,5 +102,101 @@
     "lowercase": "Minúscula",
     "number": "Número",
     "special": "Especial"
+  },
+  "calendar": {
+    "title": "Calendario",
+    "subtitle": "Ver tus recordatorios por mes",
+    "previousMonth": "Anterior",
+    "nextMonth": "Siguiente",
+    "today": "Hoy",
+    "noReminders": "Sin recordatorios",
+    "remindersOnDate": "recordatorios",
+    "monday": "Lun",
+    "tuesday": "Mar",
+    "wednesday": "Mié",
+    "thursday": "Jue",
+    "friday": "Vie",
+    "saturday": "Sab",
+    "sunday": "Dom",
+    "january": "Enero",
+    "february": "Febrero",
+    "march": "Marzo",
+    "april": "Abril",
+    "may": "Mayo",
+    "june": "Junio",
+    "july": "Julio",
+    "august": "Agosto",
+    "september": "Septiembre",
+    "october": "Octubre",
+    "november": "Noviembre",
+    "december": "Diciembre"
+  },
+  "recurrence": {
+    "once": "Una Vez",
+    "hourly": "Cada Hora",
+    "daily": "Diariamente",
+    "weekly": "Semanalmente",
+    "monthly": "Mensualmente",
+    "yearly": "Anualmente",
+    "workdays": "Días de Trabajo",
+    "weekend": "Fin de Semana"
+  },
+  "reminderCreation": {
+    "title": "Crear un Recordatorio",
+    "step": "Paso {{current}} de {{total}}",
+    "backToDashboard": "Volver al Panel",
+    "details": {
+      "title": "Detalles del Recordatorio",
+      "subtitle": "Establece la información básica de tu recordatorio",
+      "date": "Fecha",
+      "dateRequired": "La fecha es obligatoria",
+      "time": "Hora",
+      "message": "Mensaje",
+      "messagePlaceholder": "¿Qué debería decir tu recordatorio?",
+      "messageRequired": "El mensaje es obligatorio",
+      "recurrence": "Recurrencia"
+    },
+    "destinations": {
+      "title": "Destinos",
+      "subtitle": "Elige dónde enviar tus recordatorios (opcional)",
+      "addedDestinations": "Destinos Añadidos",
+      "addDestination": "Añadir Destino",
+      "discordDM": "Mensaje Directo de Discord",
+      "discordDMDesc": "El recordatorio será enviado como MD",
+      "discordGuild": "Servidor de Gremio Discord",
+      "discordGuildDesc": "Enviar a un canal de gremio Discord",
+      "webhook": "Webhook",
+      "webhookDesc": "Enviar a una URL de webhook personalizada",
+      "webhookPlaceholder": "https://tu-webhook-url.com",
+      "guildId": "ID del Gremio",
+      "channelId": "ID del Canal",
+      "sendAsDM": "Enviar como MD a tu cuenta de Discord",
+      "connectDiscordFirst": "Conecta primero tu cuenta de Discord"
+    },
+    "review": {
+      "title": "Revisa Tu Recordatorio",
+      "dateTime": "Fecha y Hora",
+      "message": "Mensaje",
+      "recurrence": "Recurrencia",
+      "destinations": "Destinos",
+      "noDestinations": "Sin destinos configurados",
+      "destination": "destino",
+      "destinations_plural": "destinos"
+    },
+    "buttons": {
+      "next": "Siguiente",
+      "back": "Atrás",
+      "close": "Cerrar",
+      "create": "Crear Recordatorio",
+      "creating": "Creando...",
+      "view": "Ver",
+      "delete": "Eliminar",
+      "deleting": "Eliminando...",
+      "addNew": "+ Añadir Nuevo"
+    },
+    "errors": {
+      "failed": "Error al crear el recordatorio. Por favor, inténtalo de nuevo.",
+      "selectDate": "Por favor, selecciona una fecha"
+    }
   }
 }

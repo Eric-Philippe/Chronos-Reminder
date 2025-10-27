@@ -197,6 +197,7 @@ func (h *DiscordOAuthHandler) DiscordCallback(w http.ResponseWriter, r *http.Req
 type CompleteDiscordSetupRequest struct {
 	AccountID string `json:"account_id"`
 	Email     string `json:"email"`
+	Username  string `json:"username"`
 	Password  string `json:"password"`
 	Timezone  string `json:"timezone"`
 }
@@ -224,6 +225,11 @@ func (h *DiscordOAuthHandler) CompleteDiscordSetup(w http.ResponseWriter, r *htt
 		return
 	}
 
+	if strings.TrimSpace(req.Username) == "" {
+		WriteError(w, http.StatusBadRequest, "Username is required")
+		return
+	}
+
 	if strings.TrimSpace(req.Password) == "" {
 		WriteError(w, http.StatusBadRequest, "Password is required")
 		return
@@ -233,11 +239,14 @@ func (h *DiscordOAuthHandler) CompleteDiscordSetup(w http.ResponseWriter, r *htt
 		req.Timezone = "UTC" // Default to UTC
 	}
 
+	fmt.Printf("[DISCORD_SETUP] Request received - Email: %s, Username: %s, Timezone: %s\n", req.Email, req.Username, req.Timezone)
+
 	// Create app identity for the account
 	token, err := h.discordOAuthService.CreateAppIdentityForDiscordAccount(
 		r.Context(),
 		req.AccountID,
 		req.Email,
+		req.Username,
 		req.Password,
 		req.Timezone,
 	)

@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "./components/common/theme-provider";
 import { AuthProvider } from "./hooks/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
-import { WelcomePage } from "./pages/WelcomePage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { useAuth } from "./hooks/useAuth";
 import "./i18n/config";
@@ -25,19 +27,31 @@ function AppRoutes() {
       {/* OAuth Callback route: Public route for Discord OAuth callback */}
       <Route path="/auth/callback/discord" element={<OAuthCallbackPage />} />
 
-      {/* Protected route: Welcome page requires authentication */}
+      {/* Protected route: Dashboard page requires authentication */}
       <Route
-        path="/welcome"
+        path="/dashboard"
         element={
-          isAuthenticated ? <WelcomePage /> : <Navigate to="/login" replace />
+          isAuthenticated ? <DashboardPage /> : <Navigate to="/login" replace />
         }
       />
 
-      {/* Login route: Redirect to welcome if already authenticated */}
+      {/* Protected route: Create Reminder page requires authentication */}
+      <Route
+        path="/reminders/create"
+        element={
+          isAuthenticated ? (
+            <CreateReminderPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      {/* Login route: Redirect to dashboard if already authenticated */}
       <Route
         path="/login"
         element={
-          isAuthenticated ? <Navigate to="/welcome" replace /> : <LoginPage />
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
         }
       />
 
@@ -45,7 +59,7 @@ function AppRoutes() {
       <Route
         path="/"
         element={
-          <Navigate to={isAuthenticated ? "/welcome" : "/login"} replace />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
         }
       />
 
@@ -61,6 +75,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <AppRoutes />
+          <Toaster richColors theme="dark" position="top-right" expand />
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

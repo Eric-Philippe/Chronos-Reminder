@@ -49,6 +49,8 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	authHandler := NewAuthHandler(authService, sessionService)
 	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
 	discordGuildHandler := NewDiscordGuildHandler(discordOAuthService)
+	userHandler := NewUserHandler(repos.Reminder, repos.ReminderError, repos.Account, sessionService)
+	userHandler.SetReminderDestinationRepository(repos.ReminderDestination)
 
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()
@@ -59,6 +61,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerAuthRoutes(wrappedMux, authHandler)
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
+	registerUserRoutes(wrappedMux, userHandler, sessionService)
 
 	return &Server{
 		mux:  wrappedMux,
@@ -103,6 +106,20 @@ func registerDiscordGuildRoutes(mux *WrappedMux, discordGuildHandler *DiscordGui
 	mux.HandleFunc("POST /api/discord/guilds", discordGuildHandler.GetUserGuilds)
 	mux.HandleFunc("POST /api/discord/guilds/channels", discordGuildHandler.GetGuildChannels)
 	mux.HandleFunc("POST /api/discord/guilds/roles", discordGuildHandler.GetGuildRoles)
+}
+
+// registerUserRoutes registers authenticated user routes with auth middleware
+func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionService *services.SessionService) {
+	// Apply auth middleware to user routes
+	authMiddleware := AuthMiddleware(sessionService)
+	
+	// Wrap each user route handler with auth middleware
+	mux.Handle("GET /api/reminders", authMiddleware(http.HandlerFunc(userHandler.GetReminders)))
+	mux.Handle("GET /api/reminders/{id}", authMiddleware(http.HandlerFunc(userHandler.GetReminder)))
+	mux.Handle("POST /api/reminders", authMiddleware(http.HandlerFunc(userHandler.CreateReminder)))
+	mux.Handle("DELETE /api/reminders/{id}", authMiddleware(http.HandlerFunc(userHandler.DeleteReminder)))
+	mux.Handle("GET /api/reminders/errors", authMiddleware(http.HandlerFunc(userHandler.GetReminderErrors)))
+	mux.Handle("GET /api/account", authMiddleware(http.HandlerFunc(userHandler.GetAccount)))
 }
 
 // Start starts the API server and listens for incoming requests

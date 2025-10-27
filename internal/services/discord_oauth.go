@@ -369,6 +369,7 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 	ctx context.Context,
 	accountIDStr string,
 	email string,
+	username string,
 	password string,
 	timezone string,
 ) (string, error) {
@@ -402,12 +403,13 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 		return "", fmt.Errorf("error hashing password: %w", err)
 	}
 
-	// Create app identity
+	// Create app identity with username
 	appIdentity := &models.Identity{
 		ID:           uuid.New(),
 		AccountID:    accountID,
 		Provider:     models.ProviderApp,
 		ExternalID:   email,
+		Username:     &username,
 		PasswordHash: &hashedPassword,
 	}
 
@@ -415,14 +417,11 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 		return "", fmt.Errorf("error creating app identity: %w", err)
 	}
 
-	// Update timezone if provided
-	if timezone != "" && account.TimezoneID != nil {
+	// Update timezone if provided and valid
+	if timezone != "" {
 		tz, err := s.timezoneRepo.GetByIANALocation(timezone)
 		if err == nil && tz != nil {
-			account.TimezoneID = &tz.ID
-			if err := s.accountRepo.Update(account); err != nil {
-				// Log error but don't fail setup if timezone update fails
-			}
+			_ = s.accountRepo.UpdateTimezone(accountID, tz.ID)
 		}
 	}
 

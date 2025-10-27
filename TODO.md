@@ -6,8 +6,8 @@
 - [ ] Add a logging table to track reminder deliveries and failures
 - [ ] Use REDIS ?
 - - [ ] Cache paused reminders
-- - [ ] Cache user account for Discord.EnsureAccount method
-- - [ ] Cache user timezone preferences
+- - [x] Cache user account for Discord.EnsureAccount method
+- - [x] Cache user timezone preferences
 
 ## Discord Bot
 
@@ -43,12 +43,12 @@
 
 - [ ] https://chronosreminder.app/.fr?
 - [ ] Welcome unsigned page
-- [ ] Create account/login => (Possibility to merge from an already existing Discord account => OAuth2 Discord => Create account prefiled with Discord info)
+- [x] Create account/login => (Possibility to merge from an already existing Discord account => OAuth2 Discord => Create account prefiled with Discord info)
 - [ ] CRUD on reminders
 - [ ] View profile and integrations
 - [ ] Link Discord account
 - [ ] View history/logs
-- [ ] Same slick style as SnapFileThing
+- [x] Same slick style as SnapFileThing
 
 ## Reminder engine
 
@@ -75,3 +75,8 @@
 - [ ] Create a beta version when the bot is ready
 - [ ] Create a proper README
 - [ ] Deploy the bot publicly
+
+## Todo
+
+- [ ] Forbid the user to create reminders in the past
+- [ ] Clean components directory

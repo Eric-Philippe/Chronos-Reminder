@@ -8,7 +8,7 @@
   "welcome": {
     "title": "Welcome to Chronos",
     "subtitle": "Manage and organize all your reminders in one place",
-    "newReminder": "+ New Reminder"
+    "newReminder": "New Reminder"
   },
   "overview": {
     "totalReminders": "Total Reminders",
@@ -73,7 +73,28 @@
     "timezone": "Timezone",
     "createAccount": "Create Account",
     "alreadyHaveAccount": "Already have an account?",
-    "dontHaveAccount": "Don't have an account?"
+    "dontHaveAccount": "Don't have an account?",
+    "discordSetup": {
+      "title": "Complete Your Profile",
+      "subtitle": "Welcome, {{username}}! Set up your app identity to secure your account.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your@email.com",
+      "emailHelper": "Pre-filled from your Discord account. You can change this if needed.",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Choose a username for the app",
+      "usernameHelper": "This will be your app identity username. You can change it later.",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a strong password",
+      "timezoneLabel": "Timezone",
+      "searchTimezone": "Search timezone...",
+      "noTimezones": "No timezones found",
+      "buttonComplete": "Complete Setup",
+      "buttonCompleting": "Completing Setup...",
+      "tip": "By setting up a password, you can log in using either your Discord account or your email address.",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Password must be at least 8 characters",
+      "usernameRequired": "Username is required"
+    }
   },
   "passwordStrength": {
     "eightChars": "8+ chars",
@@ -81,5 +102,101 @@
     "lowercase": "Lowercase",
     "number": "Number",
     "special": "Special"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "View your reminders by month",
+    "previousMonth": "Previous",
+    "nextMonth": "Next",
+    "today": "Today",
+    "noReminders": "No reminders",
+    "remindersOnDate": "reminders",
+    "monday": "Mon",
+    "tuesday": "Tue",
+    "wednesday": "Wed",
+    "thursday": "Thu",
+    "friday": "Fri",
+    "saturday": "Sat",
+    "sunday": "Sun",
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  },
+  "recurrence": {
+    "once": "Once",
+    "hourly": "Hourly",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "workdays": "Workdays",
+    "weekend": "Weekend"
+  },
+  "reminderCreation": {
+    "title": "Create a Reminder",
+    "step": "Step {{current}} of {{total}}",
+    "backToDashboard": "Back to Dashboard",
+    "details": {
+      "title": "Reminder Details",
+      "subtitle": "Set up the basic information for your reminder",
+      "date": "Date",
+      "dateRequired": "Date is required",
+      "time": "Time",
+      "message": "Message",
+      "messagePlaceholder": "What should your reminder say?",
+      "messageRequired": "Message is required",
+      "recurrence": "Recurrence"
+    },
+    "destinations": {
+      "title": "Destinations",
+      "subtitle": "Choose where to send your reminders (optional)",
+      "addedDestinations": "Added Destinations",
+      "addDestination": "Add Destination",
+      "discordDM": "Discord Direct Message",
+      "discordDMDesc": "Reminder will be sent as a DM",
+      "discordGuild": "Discord Guild Server",
+      "discordGuildDesc": "Send to a Discord guild channel",
+      "webhook": "Webhook",
+      "webhookDesc": "Send to a custom webhook URL",
+      "webhookPlaceholder": "https://your-webhook-url.com",
+      "guildId": "Guild ID",
+      "channelId": "Channel ID",
+      "sendAsDM": "Send as DM to your Discord account",
+      "connectDiscordFirst": "Connect your Discord account first"
+    },
+    "review": {
+      "title": "Review Your Reminder",
+      "dateTime": "Date & Time",
+      "message": "Message",
+      "recurrence": "Recurrence",
+      "destinations": "Destinations",
+      "noDestinations": "No destinations configured",
+      "destination": "destination",
+      "destinations_plural": "destinations"
+    },
+    "buttons": {
+      "next": "Next",
+      "back": "Back",
+      "close": "Close",
+      "create": "Create Reminder",
+      "creating": "Creating...",
+      "view": "View",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "addNew": "+ Add New"
+    },
+    "errors": {
+      "failed": "Failed to create reminder. Please try again.",
+      "selectDate": "Please select a date"
+    }
   }
 }

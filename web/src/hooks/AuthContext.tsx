@@ -6,13 +6,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import apiClient, {
+import {
+  authService,
   type LoginRequest,
   type RegisterRequest,
   type SessionData,
   type LoginResponse,
   type RegisterResponse,
-} from "@/services/api";
+} from "@/services";
 
 interface UseAuthReturn {
   isAuthenticated: boolean;
@@ -47,18 +48,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = useState<Error | null>(null);
   const [user, setUser] = useState<SessionData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Initialize with actual auth status from apiClient
-    return apiClient.isAuthenticated();
+    // Initialize with actual auth status from authService
+    return authService.isAuthenticated();
   });
 
   // Check authentication status on mount and set user data
   useEffect(() => {
     const checkAuth = () => {
-      const authenticated = apiClient.isAuthenticated();
+      const authenticated = authService.isAuthenticated();
       setIsAuthenticated(authenticated);
 
       if (authenticated) {
-        const userData = apiClient.getUserData();
+        const userData = authService.getUserData();
         setUser(userData);
       } else {
         setUser(null);
@@ -111,7 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           remember_me: rememberMe,
         };
 
-        const response: LoginResponse = await apiClient.login(loginRequest);
+        const response: LoginResponse = await authService.login(loginRequest);
 
         const userData: SessionData = {
           user_id: response.id,
@@ -157,7 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           timezone,
         };
 
-        const response: RegisterResponse = await apiClient.register(
+        const response: RegisterResponse = await authService.register(
           registerRequest
         );
 
@@ -180,7 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
-      await apiClient.logout();
+      await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
@@ -210,6 +211,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): UseAuthReturn {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -217,3 +219,5 @@ export function useAuth(): UseAuthReturn {
   }
   return context;
 }
+
+export type AuthProvider = typeof AuthProvider;

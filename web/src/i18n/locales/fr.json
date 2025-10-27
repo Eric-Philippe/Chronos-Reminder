@@ -8,7 +8,7 @@
   "welcome": {
     "title": "Bienvenue à Chronos",
     "subtitle": "Gérez et organisez tous vos rappels en un seul endroit",
-    "newReminder": "+ Nouveau Rappel"
+    "newReminder": "Nouveau Rappel"
   },
   "overview": {
     "totalReminders": "Rappels Totaux",
@@ -72,7 +72,28 @@
     "timezone": "Fuseau Horaire",
     "createAccount": "Créer un Compte",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "dontHaveAccount": "Vous n'avez pas de compte ?"
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "discordSetup": {
+      "title": "Complétez Votre Profil",
+      "subtitle": "Bienvenue, {{username}} ! Configurez votre identité d'application pour sécuriser votre compte.",
+      "emailLabel": "Adresse E-mail",
+      "emailPlaceholder": "votre@email.com",
+      "emailHelper": "Pré-rempli depuis votre compte Discord. Vous pouvez le modifier si nécessaire.",
+      "usernameLabel": "Nom d'Utilisateur",
+      "usernamePlaceholder": "Choisissez un nom d'utilisateur pour l'application",
+      "usernameHelper": "Ce sera votre nom d'utilisateur d'identité d'application. Vous pouvez le modifier ultérieurement.",
+      "passwordLabel": "Mot de Passe",
+      "passwordPlaceholder": "Créez un mot de passe fort",
+      "timezoneLabel": "Fuseau Horaire",
+      "searchTimezone": "Rechercher le fuseau horaire...",
+      "noTimezones": "Aucun fuseau horaire trouvé",
+      "buttonComplete": "Compléter la Configuration",
+      "buttonCompleting": "Configuration en cours...",
+      "tip": "En configurant un mot de passe, vous pouvez vous connecter en utilisant votre compte Discord ou votre adresse e-mail.",
+      "passwordRequired": "Le mot de passe est obligatoire",
+      "passwordMin": "Le mot de passe doit contenir au moins 8 caractères",
+      "usernameRequired": "Le nom d'utilisateur est obligatoire"
+    }
   },
   "passwordStrength": {
     "eightChars": "8+ caractères",
@@ -80,5 +101,101 @@
     "lowercase": "Minuscule",
     "number": "Chiffre",
     "special": "Spécial"
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "subtitle": "Consultez vos rappels par mois",
+    "previousMonth": "Précédent",
+    "nextMonth": "Suivant",
+    "today": "Aujourd'hui",
+    "noReminders": "Aucun rappel",
+    "remindersOnDate": "rappels",
+    "monday": "Lun",
+    "tuesday": "Mar",
+    "wednesday": "Mer",
+    "thursday": "Jeu",
+    "friday": "Ven",
+    "saturday": "Sam",
+    "sunday": "Dim",
+    "january": "Janvier",
+    "february": "Février",
+    "march": "Mars",
+    "april": "Avril",
+    "may": "Mai",
+    "june": "Juin",
+    "july": "Juillet",
+    "august": "Août",
+    "september": "Septembre",
+    "october": "Octobre",
+    "november": "Novembre",
+    "december": "Décembre"
+  },
+  "recurrence": {
+    "once": "Une Fois",
+    "hourly": "Horaire",
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "workdays": "Jours de Travail",
+    "weekend": "Fin de Semaine"
+  },
+  "reminderCreation": {
+    "title": "Créer un Rappel",
+    "step": "Étape {{current}} sur {{total}}",
+    "backToDashboard": "Retour au Tableau de Bord",
+    "details": {
+      "title": "Détails du Rappel",
+      "subtitle": "Configurez les informations de base de votre rappel",
+      "date": "Date",
+      "dateRequired": "La date est obligatoire",
+      "time": "Heure",
+      "message": "Message",
+      "messagePlaceholder": "Que devrait dire votre rappel ?",
+      "messageRequired": "Le message est obligatoire",
+      "recurrence": "Récurrence"
+    },
+    "destinations": {
+      "title": "Destinations",
+      "subtitle": "Choisissez où envoyer vos rappels (optionnel)",
+      "addedDestinations": "Destinations Ajoutées",
+      "addDestination": "Ajouter une Destination",
+      "discordDM": "Message Direct Discord",
+      "discordDMDesc": "Le rappel sera envoyé en tant que MD",
+      "discordGuild": "Serveur de Guilde Discord",
+      "discordGuildDesc": "Envoyer à un canal de guilde Discord",
+      "webhook": "Webhook",
+      "webhookDesc": "Envoyer à une URL webhook personnalisée",
+      "webhookPlaceholder": "https://votre-webhook-url.com",
+      "guildId": "ID de Guilde",
+      "channelId": "ID de Canal",
+      "sendAsDM": "Envoyer en tant que MD à votre compte Discord",
+      "connectDiscordFirst": "Connectez d'abord votre compte Discord"
+    },
+    "review": {
+      "title": "Vérifiez Votre Rappel",
+      "dateTime": "Date et Heure",
+      "message": "Message",
+      "recurrence": "Récurrence",
+      "destinations": "Destinations",
+      "noDestinations": "Aucune destination configurée",
+      "destination": "destination",
+      "destinations_plural": "destinations"
+    },
+    "buttons": {
+      "next": "Suivant",
+      "back": "Retour",
+      "close": "Fermer",
+      "create": "Créer un Rappel",
+      "creating": "Création...",
+      "view": "Voir",
+      "delete": "Supprimer",
+      "deleting": "Suppression...",
+      "addNew": "+ Ajouter un Nouveau"
+    },
+    "errors": {
+      "failed": "Échec de la création du rappel. Veuillez réessayer.",
+      "selectDate": "Veuillez sélectionner une date"
+    }
   }
 }

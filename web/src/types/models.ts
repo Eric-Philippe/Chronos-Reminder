@@ -21,7 +21,8 @@ export interface Reminder {
   next_fire_utc?: string;
   message: string;
   created_at: string;
-  recurrence: number;
+  recurrence_type: number;
+  is_paused: boolean;
   destinations?: ReminderDestination[];
 }
 

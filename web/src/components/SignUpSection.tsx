@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
-import { TimezoneSelect } from "@/components/TimezoneSelect";
+import { PasswordStrengthIndicator } from "@/components/common/PasswordStrengthIndicator";
+import { TimezoneSelect } from "@/components/common/TimezoneSelect";
 
 interface SignUpSectionProps {
   signUpEmail: string;

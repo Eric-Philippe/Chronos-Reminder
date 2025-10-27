@@ -39,6 +39,10 @@ func (r *accountRepository) Update(account *models.Account) error {
 	return r.db.Save(account).Error
 }
 
+func (r *accountRepository) UpdateTimezone(accountID uuid.UUID, timezoneID uint) error {
+	return r.db.Model(&models.Account{}).Where("id = ?", accountID).Update("timezone_id", timezoneID).Error
+}
+
 func (r *accountRepository) Delete(id uuid.UUID) error {
 	return r.db.Delete(&models.Account{}, "id = ?", id).Error
 }

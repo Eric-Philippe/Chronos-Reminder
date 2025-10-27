@@ -1,89 +1,82 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
+// IANA timezone identifiers
 const TIMEZONES = [
-  "UTC",
-  "UTC+1",
-  "UTC+2",
-  "UTC+3",
-  "UTC+3:30",
-  "UTC+4",
-  "UTC+4:30",
-  "UTC+5",
-  "UTC+5:30",
-  "UTC+5:45",
-  "UTC+6",
-  "UTC+6:30",
-  "UTC+7",
-  "UTC+8",
-  "UTC+8:45",
-  "UTC+9",
-  "UTC+9:30",
-  "UTC+10",
-  "UTC+10:30",
-  "UTC+11",
-  "UTC+12",
-  "UTC+12:45",
-  "UTC+13",
-  "UTC+14",
-  "UTC-1",
-  "UTC-2",
-  "UTC-3",
-  "UTC-3:30",
-  "UTC-4",
-  "UTC-4:30",
-  "UTC-5",
-  "UTC-6",
-  "UTC-7",
-  "UTC-8",
-  "UTC-8:30",
-  "UTC-9",
-  "UTC-9:30",
-  "UTC-10",
-  "UTC-11",
-  "UTC-12",
-  "Africa/Johannesburg",
   "Africa/Cairo",
+  "Africa/Johannesburg",
   "Africa/Lagos",
   "Africa/Nairobi",
-  "America/New_York",
+  "America/Anchorage",
+  "America/Argentina/Buenos_Aires",
   "America/Chicago",
   "America/Denver",
   "America/Los_Angeles",
-  "America/Toronto",
   "America/Mexico_City",
-  "America/Buenos_Aires",
-  "America/Sao_Paulo",
-  "Asia/Dubai",
+  "America/New_York",
+  "America/Phoenix",
+  "America/Toronto",
+  "America/Vancouver",
   "Asia/Bangkok",
-  "Asia/Singapore",
+  "Asia/Dubai",
   "Asia/Hong_Kong",
-  "Asia/Tokyo",
-  "Asia/Seoul",
-  "Asia/Shanghai",
-  "Asia/India",
+  "Asia/Kolkata",
   "Asia/Jakarta",
-  "Australia/Sydney",
-  "Australia/Melbourne",
+  "Asia/Manila",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Seoul",
+  "Asia/Tokyo",
+  "Atlantic/Azores",
+  "Atlantic/Cape_Verde",
+  "Australia/Adelaide",
   "Australia/Brisbane",
+  "Australia/Melbourne",
   "Australia/Perth",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Europe/Moscow",
-  "Europe/Istanbul",
+  "Australia/Sydney",
   "Europe/Amsterdam",
+  "Europe/Athens",
+  "Europe/Belgrade",
+  "Europe/Berlin",
+  "Europe/Brussels",
+  "Europe/Bucharest",
+  "Europe/Budapest",
+  "Europe/Dublin",
+  "Europe/Helsinki",
+  "Europe/Istanbul",
+  "Europe/Lisbon",
+  "Europe/London",
+  "Europe/Madrid",
+  "Europe/Moscow",
+  "Europe/Paris",
+  "Europe/Prague",
+  "Europe/Rome",
+  "Europe/Stockholm",
+  "Europe/Vienna",
+  "Europe/Warsaw",
+  "Europe/Zurich",
   "Pacific/Auckland",
   "Pacific/Fiji",
   "Pacific/Honolulu",
+  "Pacific/Tongatapu",
+  "UTC",
 ].sort();
 
 interface TimezoneSelectProps {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  noResultsText?: string;
 }
 
-export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
+export function TimezoneSelect({
+  value,
+  onChange,
+  placeholder = "Select timezone",
+  searchPlaceholder = "Search timezone...",
+  noResultsText = "No timezones found",
+}: TimezoneSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -98,7 +91,7 @@ export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground rounded-md px-3 py-2 text-sm flex justify-between items-center hover:bg-secondary/70 transition-colors"
       >
-        <span>{value || "Select timezone"}</span>
+        <span>{value || placeholder}</span>
         <svg
           className={`w-4 h-4 transition-transform ${
             isOpen ? "rotate-180" : ""
@@ -122,7 +115,7 @@ export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
           <div className="p-2 border-b border-border">
             <Input
               type="text"
-              placeholder="Search timezone..."
+              placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground text-sm"
@@ -153,7 +146,7 @@ export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
               ))
             ) : (
               <div className="px-3 py-2 text-sm text-muted-foreground text-center">
-                No timezones found
+                {noResultsText}
               </div>
             )}
           </div>

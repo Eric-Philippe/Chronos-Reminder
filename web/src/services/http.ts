@@ -4,60 +4,15 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
-// API Response types
-interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-interface LoginResponse {
-  id: string;
-  email: string;
-  username: string;
-  token: string;
-  expires_at: string;
-  message: string;
-}
-
-interface RegisterResponse {
-  id: string;
-  email: string;
-  username: string;
-  message: string;
-}
-
-interface SessionData {
-  user_id: string;
-  email: string;
-  username: string;
-  expires_at: string;
-}
-
-// Auth Request types
-interface RegisterRequest {
-  email: string;
-  username: string;
-  password: string;
-  timezone: string;
-}
-
-interface LoginRequest {
-  email: string;
-  password: string;
-  remember_me: boolean;
-}
-
 // Token storage keys
 const TOKEN_STORAGE_KEY = "auth_token";
 const EXPIRES_AT_STORAGE_KEY = "token_expires_at";
-const USER_DATA_STORAGE_KEY = "user_data";
 
 /**
- * API Client with Token Management
- * Handles authentication, token refresh, and session management
+ * HTTP Client with Token Management
+ * Handles authentication headers, token refresh, and error handling
  */
-class ApiClient {
+export class HttpClient {
   private axiosInstance: AxiosInstance;
   private tokenRefreshTimer: ReturnType<typeof setTimeout> | null = null;
   private isRefreshing = false;
@@ -133,58 +88,83 @@ class ApiClient {
   }
 
   /**
-   * Register a new user
+   * Make a GET request
    */
-  async register(data: RegisterRequest): Promise<RegisterResponse> {
+  async get<T>(url: string, config?: Record<string, unknown>): Promise<T> {
     try {
-      const response = await this.axiosInstance.post<
-        ApiResponse<RegisterResponse>
-      >("/api/auth/register", data);
-      return (response.data.data || response.data) as RegisterResponse;
+      const response = await this.axiosInstance.get<T>(url, config);
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
   /**
-   * Login user
+   * Make a POST request
    */
-  async login(data: LoginRequest): Promise<LoginResponse> {
+  async post<T>(
+    url: string,
+    data?: Record<string, unknown>,
+    config?: Record<string, unknown>
+  ): Promise<T> {
     try {
-      const response = await this.axiosInstance.post<
-        ApiResponse<LoginResponse>
-      >("/api/auth/login", data);
-      const loginData = (response.data.data || response.data) as LoginResponse;
-
-      // Store token and user data
-      this.setToken(loginData.token, new Date(loginData.expires_at));
-      this.setUserData({
-        user_id: loginData.id,
-        email: loginData.email,
-        username: loginData.username,
-        expires_at: loginData.expires_at,
-      });
-
-      // Set up token refresh
-      this.setupTokenRefresh();
-
-      return loginData;
+      const response = await this.axiosInstance.post<T>(url, data, config);
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
   /**
-   * Logout user
+   * Make a PUT request
    */
-  async logout(): Promise<void> {
+  async put<T>(
+    url: string,
+    data?: Record<string, unknown>,
+    config?: Record<string, unknown>
+  ): Promise<T> {
     try {
-      await this.axiosInstance.post("/api/auth/logout");
+      const response = await this.axiosInstance.put<T>(url, data, config);
+      return response.data;
     } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      this.clearAuth();
+      throw this.handleError(error);
     }
+  }
+
+  /**
+   * Make a DELETE request
+   */
+  async delete<T>(url: string, config?: Record<string, unknown>): Promise<T> {
+    try {
+      const response = await this.axiosInstance.delete<T>(url, config);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Get stored token
+   */
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  }
+
+  /**
+   * Get token expiration time
+   */
+  getTokenExpiresAt(): Date | null {
+    const expiresAt = localStorage.getItem(EXPIRES_AT_STORAGE_KEY);
+    return expiresAt ? new Date(expiresAt) : null;
+  }
+
+  /**
+   * Store token with expiration
+   */
+  setToken(token: string, expiresAt: Date): void {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(EXPIRES_AT_STORAGE_KEY, expiresAt.toISOString());
+    this.setupTokenRefresh();
   }
 
   /**
@@ -202,50 +182,11 @@ class ApiClient {
   }
 
   /**
-   * Get current user data
-   */
-  getUserData(): SessionData | null {
-    const data = localStorage.getItem(USER_DATA_STORAGE_KEY);
-    return data ? JSON.parse(data) : null;
-  }
-
-  /**
-   * Get stored token
-   */
-  getToken(): string | null {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
-  }
-
-  /**
-   * Get token expiration time
-   */
-  private getTokenExpiresAt(): Date | null {
-    const expiresAt = localStorage.getItem(EXPIRES_AT_STORAGE_KEY);
-    return expiresAt ? new Date(expiresAt) : null;
-  }
-
-  /**
-   * Store token with expiration
-   */
-  private setToken(token: string, expiresAt: Date): void {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    localStorage.setItem(EXPIRES_AT_STORAGE_KEY, expiresAt.toISOString());
-  }
-
-  /**
-   * Store user data
-   */
-  private setUserData(data: SessionData): void {
-    localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(data));
-  }
-
-  /**
    * Clear all auth data
    */
-  private clearAuth(): void {
+  clearAuth(): void {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(EXPIRES_AT_STORAGE_KEY);
-    localStorage.removeItem(USER_DATA_STORAGE_KEY);
 
     if (this.tokenRefreshTimer) {
       clearTimeout(this.tokenRefreshTimer);
@@ -259,8 +200,6 @@ class ApiClient {
   /**
    * Setup automatic token refresh
    * Refreshes token 5 minutes before expiration
-   * Note: JavaScript setTimeout has a maximum delay of ~24.8 days (2^31-1 ms)
-   * For tokens with longer expiry, we skip scheduling and rely on response interceptor 401 handling
    */
   private setupTokenRefresh(): void {
     if (this.tokenRefreshTimer) {
@@ -338,32 +277,7 @@ class ApiClient {
   getAxiosInstance(): AxiosInstance {
     return this.axiosInstance;
   }
-
-  /**
-   * Set authentication token and user data (used by OAuth flows)
-   */
-  setAuthentication(
-    token: string,
-    expiresAtStr: string,
-    userData: SessionData
-  ): void {
-    this.setToken(token, new Date(expiresAtStr));
-    this.setUserData(userData);
-    this.setupTokenRefresh();
-  }
 }
 
 // Export singleton instance
-export const apiClient = new ApiClient();
-
-// Export types
-export type {
-  ApiResponse,
-  LoginResponse,
-  RegisterResponse,
-  SessionData,
-  RegisterRequest,
-  LoginRequest,
-};
-
-export default apiClient;
+export const httpClient = new HttpClient();

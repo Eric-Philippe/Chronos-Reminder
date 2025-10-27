@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { ModeToggle } from "@/components/mode-toggle";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
+import { ModeToggle } from "@/components/common/mode-toggle";
 import { LoginSection } from "@/components/LoginSection";
 import { SignUpSection } from "@/components/SignUpSection";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,7 +57,6 @@ export function LoginPage() {
       await register(signUpEmail, username, signUpPassword, timezone);
       setLocalError(null);
       // Show success message and switch to login
-      alert(t("login.registrationSuccess"));
       setIsSignUp(false);
       setSignUpEmail("");
       setUsername("");

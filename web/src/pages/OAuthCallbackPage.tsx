@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DiscordSetupSection } from "@/components/DiscordSetupSection";
-import apiClient from "@/services/api";
+import { authService } from "@/services";
 
 interface SetupData {
   status: string;
@@ -127,6 +127,7 @@ export function OAuthCallbackPage() {
 
   const handleSetupComplete = async (setupForm: {
     email: string;
+    username: string;
     password: string;
     timezone: string;
   }) => {
@@ -147,6 +148,7 @@ export function OAuthCallbackPage() {
         body: JSON.stringify({
           account_id: setupData.account_id,
           email: setupForm.email,
+          username: setupForm.username,
           password: setupForm.password,
           timezone: setupForm.timezone,
         }),
@@ -175,7 +177,7 @@ export function OAuthCallbackPage() {
       };
 
       // Use the ApiClient's method to set authentication (handles both localStorage and internal state)
-      apiClient.setAuthentication(data.token, expiresAtStr, userData);
+      authService.setAuthentication(data.token, expiresAtStr, userData);
 
       // Dispatch custom event to notify auth context
       window.dispatchEvent(new Event("auth-updated"));
