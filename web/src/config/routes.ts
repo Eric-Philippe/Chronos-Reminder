@@ -37,6 +37,13 @@ export const ROUTES = {
     showInNav: true,
   } as Route,
 
+  REMINDER_DETAILS: {
+    path: "/reminders/:reminderId",
+    requiresAuth: true,
+    name: "reminderDetails",
+    showInNav: false,
+  } as Route,
+
   INSTALLATION: {
     path: "/installation",
     requiresAuth: false,

@@ -1,4 +1,7 @@
 {
+  "common": {
+    "close": "Cerrar"
+  },
   "header": {
     "home": "Inicio",
     "myReminders": "Mis Recordatorios",
@@ -113,6 +116,7 @@
     "subtitle": "Ver tus recordatorios por mes",
     "previousMonth": "Anterior",
     "nextMonth": "Siguiente",
+    "nextReminder": "Próximo Mes de Recordatorios",
     "today": "Hoy",
     "noReminders": "Sin recordatorios",
     "remindersOnDate": "recordatorios",
@@ -203,6 +207,43 @@
       "failed": "Error al crear el recordatorio. Por favor, inténtalo de nuevo.",
       "selectDate": "Por favor, selecciona una fecha"
     }
+  },
+  "reminderDetails": {
+    "title": "Detalles del Recordatorio",
+    "editingTitle": "Editar Recordatorio",
+    "backToDashboard": "Volver al Panel de Control",
+    "id": "ID",
+    "message": "Mensaje",
+    "messagePlaceholder": "¿Qué debería decir tu recordatorio?",
+    "date": "Fecha",
+    "time": "Hora",
+    "recurrence": "Recurrencia",
+    "destinations": "Destinos",
+    "noDestinations": "Sin destinos configurados",
+    "info": "Información",
+    "created": "Creado",
+    "status": "Estado",
+    "active": "Activo",
+    "paused": "En Pausa",
+    "completed": "Completado",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "edit": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "duplicate": "Duplicar",
+    "delete": "Eliminar",
+    "dangerZone": "Zona de Peligro",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este recordatorio? Esta acción no se puede deshacer.",
+    "updatedSuccessfully": "¡Recordatorio actualizado exitosamente!",
+    "pausedSuccessfully": "¡Recordatorio pausado exitosamente!",
+    "resumedSuccessfully": "¡Recordatorio reanudado exitosamente!",
+    "deletedSuccessfully": "¡Recordatorio eliminado exitosamente!",
+    "duplicatedSuccessfully": "¡Recordatorio duplicado exitosamente!",
+    "updateFailed": "Error al actualizar el recordatorio",
+    "pauseFailed": "Error al cambiar el estado de pausa",
+    "deleteFailed": "Error al eliminar el recordatorio",
+    "duplicateFailed": "Error al duplicar el recordatorio"
   },
   "vitrine": {
     "heroTitle": "Nunca Pierdas un Momento",

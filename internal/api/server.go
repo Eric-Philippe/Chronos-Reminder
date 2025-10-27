@@ -52,6 +52,13 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	userHandler := NewUserHandler(repos.Reminder, repos.ReminderError, repos.Account, sessionService)
 	userHandler.SetReminderDestinationRepository(repos.ReminderDestination)
 
+	// Initialize reminder handler
+	reminderHandler := NewReminderHandler(
+		repos.Reminder,
+		repos.ReminderDestination,
+		repos.ReminderError,
+	)
+
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()
 	wrappedMux.Use(CORSMiddleware(cfg))
@@ -62,6 +69,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
 	registerUserRoutes(wrappedMux, userHandler, sessionService)
+	registerReminderRoutes(wrappedMux, reminderHandler, sessionService)
 
 	return &Server{
 		mux:  wrappedMux,
@@ -115,11 +123,24 @@ func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionServic
 	
 	// Wrap each user route handler with auth middleware
 	mux.Handle("GET /api/reminders", authMiddleware(http.HandlerFunc(userHandler.GetReminders)))
-	mux.Handle("GET /api/reminders/{id}", authMiddleware(http.HandlerFunc(userHandler.GetReminder)))
 	mux.Handle("POST /api/reminders", authMiddleware(http.HandlerFunc(userHandler.CreateReminder)))
-	mux.Handle("DELETE /api/reminders/{id}", authMiddleware(http.HandlerFunc(userHandler.DeleteReminder)))
 	mux.Handle("GET /api/reminders/errors", authMiddleware(http.HandlerFunc(userHandler.GetReminderErrors)))
 	mux.Handle("GET /api/account", authMiddleware(http.HandlerFunc(userHandler.GetAccount)))
+}
+
+// registerReminderRoutes registers reminder-specific routes with auth middleware
+func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, sessionService *services.SessionService) {
+	authMiddleware := AuthMiddleware(sessionService)
+
+	// Reminder CRUD operations
+	mux.Handle("GET /api/reminders/{id}", authMiddleware(http.HandlerFunc(reminderHandler.GetReminder)))
+	mux.Handle("PUT /api/reminders/{id}", authMiddleware(http.HandlerFunc(reminderHandler.UpdateReminder)))
+	mux.Handle("DELETE /api/reminders/{id}", authMiddleware(http.HandlerFunc(reminderHandler.DeleteReminder)))
+	
+	// Reminder state operations
+	mux.Handle("POST /api/reminders/{id}/pause", authMiddleware(http.HandlerFunc(reminderHandler.PauseReminder)))
+	mux.Handle("POST /api/reminders/{id}/resume", authMiddleware(http.HandlerFunc(reminderHandler.ResumeReminder)))
+	mux.Handle("POST /api/reminders/{id}/duplicate", authMiddleware(http.HandlerFunc(reminderHandler.DuplicateReminder)))
 }
 
 // Start starts the API server and listens for incoming requests

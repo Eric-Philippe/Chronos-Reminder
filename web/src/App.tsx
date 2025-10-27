@@ -6,6 +6,7 @@ import { VitrinePage } from "./pages/VitrinePage";
 import { LoginPage } from "./pages/LoginPage";
 import { HomePage } from "./pages/HomePage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
+import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { useAuth } from "./hooks/useAuth";
 import { ROUTES } from "./config/routes";
@@ -53,6 +54,18 @@ function AppRoutes() {
         element={
           isAuthenticated ? (
             <CreateReminderPage />
+          ) : (
+            <Navigate to={ROUTES.VITRINE.path} replace />
+          )
+        }
+      />
+
+      {/* Protected route: Reminder Details page requires authentication */}
+      <Route
+        path={ROUTES.REMINDER_DETAILS.path}
+        element={
+          isAuthenticated ? (
+            <ReminderDetailsPage />
           ) : (
             <Navigate to={ROUTES.VITRINE.path} replace />
           )

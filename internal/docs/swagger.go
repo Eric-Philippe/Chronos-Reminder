@@ -227,11 +227,6 @@ func ReadDoc() string {
         "description": "Get list of Discord guilds for the authenticated user",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "in": "body",
@@ -278,11 +273,6 @@ func ReadDoc() string {
         "description": "Get list of channels for a Discord guild",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "in": "body",
@@ -329,11 +319,6 @@ func ReadDoc() string {
         "description": "Get list of roles for a Discord guild",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "in": "body",
@@ -404,6 +389,55 @@ func ReadDoc() string {
             }
           }
         }
+      },
+      "post": {
+        "tags": ["Reminders"],
+        "summary": "Create a new reminder",
+        "description": "Create a new reminder for the authenticated user",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Create reminder request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Reminder created successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateReminderResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
       }
     },
     "/reminders/{id}": {
@@ -448,6 +482,296 @@ func ReadDoc() string {
           },
           "403": {
             "description": "Forbidden - no permission to access this reminder",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Reminder not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Reminders"],
+        "summary": "Update a reminder",
+        "description": "Update an existing reminder by ID",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Reminder ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Update reminder request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder updated successfully",
+            "schema": {
+              "$ref": "#/definitions/Reminder"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden - no permission to modify this reminder",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Reminder not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Reminders"],
+        "summary": "Delete a reminder",
+        "description": "Delete a reminder by ID",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Reminder ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder deleted successfully"
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden - no permission to delete this reminder",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Reminder not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}/pause": {
+      "post": {
+        "tags": ["Reminders"],
+        "summary": "Pause a reminder",
+        "description": "Pause an active reminder",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Reminder ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder paused successfully",
+            "schema": {
+              "$ref": "#/definitions/Reminder"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Reminder not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}/resume": {
+      "post": {
+        "tags": ["Reminders"],
+        "summary": "Resume a reminder",
+        "description": "Resume a paused reminder",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Reminder ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder resumed successfully",
+            "schema": {
+              "$ref": "#/definitions/Reminder"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Reminder not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}/duplicate": {
+      "post": {
+        "tags": ["Reminders"],
+        "summary": "Duplicate a reminder",
+        "description": "Create a copy of an existing reminder",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Reminder ID to duplicate",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Reminder duplicated successfully",
+            "schema": {
+              "$ref": "#/definitions/Reminder"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "schema": {
               "$ref": "#/definitions/ErrorResponse"
             }
@@ -541,6 +865,120 @@ func ReadDoc() string {
     }
   },
   "definitions": {
+    "CreateReminderRequest": {
+      "type": "object",
+      "required": ["date", "time", "message"],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date in ISO 8601 format (YYYY-MM-DD)",
+          "example": "2024-10-27"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time in HH:mm format",
+          "example": "15:30"
+        },
+        "message": {
+          "type": "string",
+          "description": "Reminder message",
+          "example": "Remember to take a break"
+        },
+        "recurrence": {
+          "type": "integer",
+          "format": "int16",
+          "description": "Recurrence type (0 = None, 1 = Daily, 2 = Weekly, 3 = Monthly, bit 7 = Paused)",
+          "example": 0
+        },
+        "destinations": {
+          "type": "array",
+          "description": "List of destinations for the reminder",
+          "items": {
+            "$ref": "#/definitions/CreateDestinationRequest"
+          }
+        }
+      }
+    },
+    "CreateDestinationRequest": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["discord_dm", "discord_channel", "webhook"],
+          "example": "discord_dm"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Type-specific metadata",
+          "example": {"user_id": "123456789"}
+        }
+      }
+    },
+    "CreateReminderResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "message": {
+          "type": "string",
+          "example": "Remember to take a break"
+        },
+        "remind_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recurrence_type": {
+          "type": "integer",
+          "example": 0
+        },
+        "is_paused": {
+          "type": "boolean",
+          "example": false
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReminderDestination"
+          }
+        }
+      }
+    },
+    "UpdateReminderRequest": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Updated reminder message"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date in ISO 8601 format",
+          "example": "2024-10-27"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time in HH:mm format",
+          "example": "15:30"
+        },
+        "recurrence": {
+          "type": "integer",
+          "format": "int16",
+          "example": 0
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CreateDestinationRequest"
+          }
+        }
+      }
+    },
     "RegisterRequest": {
       "type": "object",
       "required": ["email", "username", "password", "timezone"],

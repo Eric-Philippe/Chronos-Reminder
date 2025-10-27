@@ -3,6 +3,7 @@ import { X, Clock, Link2, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { remindersService } from "@/services";
 import type { Reminder } from "@/services";
 import { getRecurrenceTypeI18nKey } from "@/lib/recurrenceUtils";
@@ -25,6 +26,7 @@ export function ReminderDetailModal({
   onAddNew,
 }: ReminderDetailModalProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [displayedReminders, setDisplayedReminders] = useState(reminders);
@@ -176,6 +178,7 @@ export function ReminderDetailModal({
                           variant="outline"
                           className="flex-1 text-xs border-accent/50 text-accent hover:bg-accent/10"
                           disabled={deletingId === reminder.id}
+                          onClick={() => navigate(`/reminders/${reminder.id}`)}
                         >
                           <Eye className="w-3 h-3 mr-1.5" />
                           View

@@ -133,6 +133,82 @@ class RemindersService {
       return null;
     }
   }
+
+  /**
+   * Update an existing reminder
+   */
+  async updateReminder(
+    reminderId: string,
+    data: {
+      message?: string;
+      date?: string;
+      time?: string;
+      recurrence?: number;
+      destinations?: Array<{
+        type: "discord_dm" | "discord_channel" | "webhook";
+        metadata: Record<string, unknown>;
+      }>;
+    }
+  ): Promise<Reminder | null> {
+    try {
+      const response = await httpClient.put<ApiResponse<Reminder>>(
+        `/api/reminders/${reminderId}`,
+        data
+      );
+      const reminder = (response.data || response) as Reminder;
+      return this.normalizeReminder(
+        reminder as Record<string, unknown> & Partial<Reminder>
+      );
+    } catch (error) {
+      console.error("Failed to update reminder:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Pause a reminder
+   */
+  async pauseReminder(reminderId: string): Promise<boolean> {
+    try {
+      await httpClient.post(`/api/reminders/${reminderId}/pause`, {});
+      return true;
+    } catch (error) {
+      console.error("Failed to pause reminder:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Resume a reminder
+   */
+  async resumeReminder(reminderId: string): Promise<boolean> {
+    try {
+      await httpClient.post(`/api/reminders/${reminderId}/resume`, {});
+      return true;
+    } catch (error) {
+      console.error("Failed to resume reminder:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Duplicate a reminder
+   */
+  async duplicateReminder(reminderId: string): Promise<Reminder | null> {
+    try {
+      const response = await httpClient.post<ApiResponse<Reminder>>(
+        `/api/reminders/${reminderId}/duplicate`,
+        {}
+      );
+      const reminder = (response.data || response) as Reminder;
+      return this.normalizeReminder(
+        reminder as Record<string, unknown> & Partial<Reminder>
+      );
+    } catch (error) {
+      console.error("Failed to duplicate reminder:", error);
+      return null;
+    }
+  }
 }
 
 // Export singleton instance

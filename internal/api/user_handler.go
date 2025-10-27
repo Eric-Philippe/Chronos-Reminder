@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -537,12 +538,23 @@ func AuthMiddleware(sessionService *services.SessionService) func(http.Handler) 
 				return
 			}
 
-			// Validate token
-			_, err := sessionService.ValidateToken(token)
+			// Validate token and extract claims
+			claims, err := sessionService.ValidateToken(token)
 			if err != nil {
 				WriteError(w, http.StatusUnauthorized, "Invalid or expired token")
 				return
 			}
+
+			// Extract account ID from claims
+			accountID, err := uuid.Parse(claims.AccountID)
+			if err != nil {
+				WriteError(w, http.StatusUnauthorized, "Invalid token claims")
+				return
+			}
+
+			// Add account ID to request context
+			ctx := context.WithValue(r.Context(), AccountIDKey, accountID)
+			*r = *r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
 		})

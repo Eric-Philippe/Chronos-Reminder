@@ -18,6 +18,11 @@ export function Calendar({ reminders = [], onAddReminder }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [displayedReminders, setDisplayedReminders] = useState(reminders);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [datePickerYear, setDatePickerYear] = useState(
+    new Date().getFullYear()
+  );
+  const [datePickerMonth, setDatePickerMonth] = useState(new Date().getMonth());
 
   // Sync displayed reminders when props change
   useEffect(() => {
@@ -49,6 +54,43 @@ export function Calendar({ reminders = [], onAddReminder }: CalendarProps) {
     t("calendar.friday"),
     t("calendar.saturday"),
   ];
+
+  // Find the next month with reminders
+  const getNextReminderMonth = () => {
+    let nextDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      1
+    );
+    let attempts = 0;
+    const maxAttempts = 24; // Check up to 2 years ahead
+
+    while (attempts < maxAttempts) {
+      const monthReminders = displayedReminders.filter((reminder) => {
+        const reminderDate = new Date(reminder.remind_at_utc);
+        return (
+          reminderDate.getFullYear() === nextDate.getFullYear() &&
+          reminderDate.getMonth() === nextDate.getMonth()
+        );
+      });
+
+      if (monthReminders.length > 0) {
+        return nextDate;
+      }
+
+      nextDate = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 1);
+      attempts++;
+    }
+
+    return null; // No future months with reminders
+  };
+
+  const goToNextReminderMonth = () => {
+    const nextMonth = getNextReminderMonth();
+    if (nextMonth) {
+      setCurrentDate(nextMonth);
+    }
+  };
 
   // Get reminders for specific date
   const getRemindersForDate = (date: Date): Reminder[] => {
@@ -139,18 +181,28 @@ export function Calendar({ reminders = [], onAddReminder }: CalendarProps) {
             {t("calendar.subtitle")}
           </p>
         </div>
-        <Button
-          onClick={goToToday}
-          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold md:w-auto w-full"
-        >
-          {t("calendar.today")}
-        </Button>
+        <div className="flex gap-2 w-full md:w-auto flex-col sm:flex-row">
+          {displayedReminders.length > 0 && getNextReminderMonth() && (
+            <Button
+              onClick={goToNextReminderMonth}
+              className="bg-secondary hover:bg-secondary/80 text-foreground font-semibold"
+            >
+              {t("calendar.nextReminder")}
+            </Button>
+          )}
+          <Button
+            onClick={goToToday}
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+          >
+            {t("calendar.today")}
+          </Button>
+        </div>
       </div>
 
       {/* Calendar Card */}
       <Card className="border-border bg-card/95 backdrop-blur overflow-hidden">
         {/* Month Navigation */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-border">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-border gap-2 relative">
           <Button
             onClick={previousMonth}
             variant="ghost"
@@ -163,9 +215,18 @@ export function Calendar({ reminders = [], onAddReminder }: CalendarProps) {
             </span>
           </Button>
 
-          <h3 className="text-xl md:text-2xl font-bold text-foreground text-center min-w-[200px]">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h3>
+          <div className="flex-1 flex justify-center">
+            <button
+              onClick={() => {
+                setIsDatePickerOpen(!isDatePickerOpen);
+                setDatePickerYear(currentDate.getFullYear());
+                setDatePickerMonth(currentDate.getMonth());
+              }}
+              className="text-xl md:text-2xl font-bold text-foreground text-center min-w-[200px] px-4 py-2 rounded-lg hover:bg-accent/10 transition-colors cursor-pointer"
+            >
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </button>
+          </div>
 
           <Button
             onClick={nextMonth}
@@ -178,6 +239,82 @@ export function Calendar({ reminders = [], onAddReminder }: CalendarProps) {
             </span>
             <ChevronRight className="w-5 h-5" />
           </Button>
+
+          {/* Date Picker Popover */}
+          {isDatePickerOpen && (
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-card border-2 border-border rounded-lg shadow-lg p-4 z-50 backdrop-blur">
+              <div className="w-80">
+                {/* Year and Month Selection */}
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <Button
+                    onClick={() => setDatePickerYear(datePickerYear - 1)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm font-semibold text-foreground min-w-[60px] text-center">
+                    {datePickerYear}
+                  </span>
+                  <Button
+                    onClick={() => setDatePickerYear(datePickerYear + 1)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Month Grid */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {monthNames.map((month, index) => (
+                    <Button
+                      key={month}
+                      onClick={() => {
+                        setCurrentDate(new Date(datePickerYear, index, 1));
+                        setIsDatePickerOpen(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "text-xs font-medium h-8 transition-colors",
+                        datePickerMonth === index
+                          ? "bg-accent text-accent-foreground hover:bg-accent/90"
+                          : "text-foreground hover:text-accent hover:bg-accent/10"
+                      )}
+                    >
+                      {month.slice(0, 3)}
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setCurrentDate(new Date());
+                      setIsDatePickerOpen(false);
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-xs text-foreground hover:text-accent hover:bg-accent/10"
+                  >
+                    {t("calendar.today")}
+                  </Button>
+                  <Button
+                    onClick={() => setIsDatePickerOpen(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-xs text-foreground hover:text-accent hover:bg-accent/10"
+                  >
+                    {t("common.close") || "Close"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop Calendar Grid */}

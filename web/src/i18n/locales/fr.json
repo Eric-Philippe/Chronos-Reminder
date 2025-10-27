@@ -1,4 +1,7 @@
 {
+  "common": {
+    "close": "Fermer"
+  },
   "header": {
     "home": "Accueil",
     "myReminders": "Mes Rappels",
@@ -11,12 +14,12 @@
     "startNow": "Commencer Maintenant"
   },
   "welcome": {
-    "title": "Bienvenue à Chronos",
+    "title": "Bienvenue sur Chronos",
     "subtitle": "Gérez et organisez tous vos rappels en un seul endroit",
     "newReminder": "Nouveau Rappel"
   },
   "overview": {
-    "totalReminders": "Rappels Totaux",
+    "totalReminders": "Nombre de Rappels",
     "activeReminders": "Rappels actifs",
     "timezone": "Fuseau Horaire",
     "accountStatus": "État du Compte",
@@ -50,7 +53,7 @@
     "welcomeSubtitle": "Gérez vos rappels facilement et ne manquez jamais un moment important",
     "smartRemindersTitle": "Rappels Intelligents",
     "smartRemindersDesc": "Configurez et organisez les rappels sur plusieurs canaux",
-    "alwaysOnTimeTitle": "Toujours à l'Heure",
+    "alwaysOnTimeTitle": "Toujours à l'heure",
     "alwaysOnTimeDesc": "Recevez une notification exactement quand vous en avez besoin",
     "seamlessIntegrationTitle": "Intégration Transparente",
     "seamlessIntegrationDesc": "Fonctionne avec Discord et vos plateformes préférées",
@@ -112,6 +115,7 @@
     "subtitle": "Consultez vos rappels par mois",
     "previousMonth": "Précédent",
     "nextMonth": "Suivant",
+    "nextReminder": "Prochain Mois de Rappel",
     "today": "Aujourd'hui",
     "noReminders": "Aucun rappel",
     "remindersOnDate": "rappels",
@@ -202,6 +206,43 @@
       "failed": "Échec de la création du rappel. Veuillez réessayer.",
       "selectDate": "Veuillez sélectionner une date"
     }
+  },
+  "reminderDetails": {
+    "title": "Détails du Rappel",
+    "editingTitle": "Modifier le Rappel",
+    "backToDashboard": "Retour au Tableau de Bord",
+    "id": "ID",
+    "message": "Message",
+    "messagePlaceholder": "Que devrait dire votre rappel ?",
+    "date": "Date",
+    "time": "Heure",
+    "recurrence": "Récurrence",
+    "destinations": "Destinations",
+    "noDestinations": "Aucune destination configurée",
+    "info": "Informations",
+    "created": "Créé",
+    "status": "Statut",
+    "active": "Actif",
+    "paused": "En Pause",
+    "completed": "Complété",
+    "pause": "Mettre en Pause",
+    "resume": "Reprendre",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "duplicate": "Dupliquer",
+    "delete": "Supprimer",
+    "dangerZone": "Zone de Danger",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce rappel ? Cette action ne peut pas être annulée.",
+    "updatedSuccessfully": "Rappel mis à jour avec succès !",
+    "pausedSuccessfully": "Rappel mis en pause avec succès !",
+    "resumedSuccessfully": "Rappel repris avec succès !",
+    "deletedSuccessfully": "Rappel supprimé avec succès !",
+    "duplicatedSuccessfully": "Rappel dupliqué avec succès !",
+    "updateFailed": "Impossible de mettre à jour le rappel",
+    "pauseFailed": "Impossible de basculer la pause",
+    "deleteFailed": "Impossible de supprimer le rappel",
+    "duplicateFailed": "Impossible de dupliquer le rappel"
   },
   "vitrine": {
     "heroTitle": "Ne Manquez Jamais un Moment",
