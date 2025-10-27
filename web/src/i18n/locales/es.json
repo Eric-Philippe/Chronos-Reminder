@@ -1,6 +1,7 @@
 {
   "common": {
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "loading": "Cargando..."
   },
   "header": {
     "home": "Inicio",

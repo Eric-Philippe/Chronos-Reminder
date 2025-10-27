@@ -496,17 +496,6 @@ export function Calendar({ reminders = [], onAddReminder }: CalendarProps) {
         </div>
       </Card>
 
-      {/* Empty State */}
-      {displayedReminders.length === 0 && (
-        <Card className="border-border bg-secondary/40 backdrop-blur text-center py-12">
-          <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            {t("calendar.noReminders")}
-          </h3>
-          <p className="text-muted-foreground">{t("calendar.subtitle")}</p>
-        </Card>
-      )}
-
       {/* Reminder Detail Modal */}
       <ReminderDetailModal
         isOpen={isModalOpen}

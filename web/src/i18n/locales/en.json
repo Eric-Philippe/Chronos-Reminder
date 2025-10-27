@@ -1,6 +1,7 @@
 {
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "loading": "Loading..."
   },
   "header": {
     "home": "Home",
