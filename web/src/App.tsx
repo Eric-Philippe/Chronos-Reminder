@@ -72,7 +72,15 @@ function AppRoutes() {
       />
 
       {/* Catch all: Redirect to vitrine by default */}
-      <Route path="*" element={<Navigate to={ROUTES.VITRINE.path} replace />} />
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to={isAuthenticated ? ROUTES.DASHBOARD.path : ROUTES.VITRINE.path}
+            replace
+          />
+        }
+      />
     </Routes>
   );
 }

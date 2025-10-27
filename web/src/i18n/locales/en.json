@@ -1,11 +1,13 @@
 {
   "header": {
+    "home": "Home",
     "myReminders": "My Reminders",
-    "integration": "Integration",
+    "createReminder": "Create Reminder",
     "settings": "Settings",
+    "installation": "Installation",
+    "contact": "Contact",
     "myAccount": "My Account",
     "logout": "Logout",
-    "signIn": "Sign In",
     "startNow": "Start Now"
   },
   "welcome": {

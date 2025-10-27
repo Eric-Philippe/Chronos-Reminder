@@ -13,16 +13,56 @@ export interface Route {
   requiresAuth: boolean;
   name: string;
   showInNav?: boolean;
-  navGroup?: "auth" | "public";
 }
 
 export const ROUTES = {
-  // Public routes
   VITRINE: {
     path: "/",
     requiresAuth: false,
     name: "home",
-    showInNav: false,
+    showInNav: true,
+  } as Route,
+
+  DASHBOARD: {
+    path: "/home",
+    requiresAuth: true,
+    name: "myReminders",
+    showInNav: true,
+  } as Route,
+
+  CREATE_REMINDER: {
+    path: "/reminders/create",
+    requiresAuth: true,
+    name: "createReminder",
+    showInNav: true,
+  } as Route,
+
+  INSTALLATION: {
+    path: "/installation",
+    requiresAuth: false,
+    name: "installation",
+    showInNav: true,
+  } as Route,
+
+  SETTINGS: {
+    path: "/settings",
+    requiresAuth: true,
+    name: "settings",
+    showInNav: true,
+  } as Route,
+
+  CONTACT: {
+    path: "/contact",
+    requiresAuth: false,
+    name: "contact",
+    showInNav: true,
+  } as Route,
+
+  ACCOUNT: {
+    path: "/account",
+    requiresAuth: true,
+    name: "myAccount",
+    showInNav: true,
   } as Route,
 
   LOGIN: {
@@ -38,38 +78,6 @@ export const ROUTES = {
     name: "Discord OAuth Callback",
     showInNav: false,
   } as Route,
-
-  // Protected routes
-  DASHBOARD: {
-    path: "/home",
-    requiresAuth: true,
-    name: "myReminders",
-    showInNav: true,
-    navGroup: "auth",
-  } as Route,
-
-  CREATE_REMINDER: {
-    path: "/reminders/create",
-    requiresAuth: true,
-    name: "createReminder",
-    showInNav: false,
-  } as Route,
 } as const;
 
-// Helper function to get the appropriate redirect based on auth status
-export const getDefaultRoute = (isAuthenticated: boolean): string => {
-  return isAuthenticated ? ROUTES.DASHBOARD.path : ROUTES.LOGIN.path;
-};
-
-// Helper function to check if a route requires authentication
-export const requiresAuthentication = (path: string): boolean => {
-  const route = Object.values(ROUTES).find((r) => r.path === path);
-  return route?.requiresAuth ?? false;
-};
-
-// Helper function to get navigation routes for a specific group
-export const getNavRoutes = (navGroup: "auth" | "public"): Route[] => {
-  return Object.values(ROUTES).filter(
-    (route) => route.showInNav && route.navGroup === navGroup
-  );
-};
+export const ROUTES_ARRAY: Route[] = Object.values(ROUTES);
