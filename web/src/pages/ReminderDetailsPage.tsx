@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { getRecurrenceTypeI18nKey } from "@/lib/recurrenceUtils";
 import type { Reminder } from "@/services";
 import { remindersService } from "@/services/reminders";
+import { Footer } from "@/components/common/footer";
 
 interface EditableReminderData {
   message: string;
@@ -261,21 +262,21 @@ export function ReminderDetailsPage() {
       <div className="absolute inset-0 opacity-8 pointer-events-none overflow-hidden">
         {/* MAIN CLUSTER - Bottom Right */}
         <div
-          className="absolute bottom-10 right-4 text-foreground"
+          className="absolute bottom-20 right-4 text-foreground"
           style={{ transform: "rotate(15deg)" }}
         >
           <Settings size={300} strokeWidth={0.8} className="opacity-50" />
         </div>
 
         <div
-          className="absolute bottom-40 right-64 text-foreground"
+          className="absolute bottom-50 right-64 text-foreground"
           style={{ transform: "rotate(-60deg)" }}
         >
           <Settings size={200} strokeWidth={0.8} className="opacity-45" />
         </div>
 
         <div
-          className="absolute bottom-72 right-36 text-foreground"
+          className="absolute bottom-82 right-36 text-foreground"
           style={{ transform: "rotate(45deg)" }}
         >
           <Settings size={130} strokeWidth={0.8} className="opacity-42" />
@@ -704,6 +705,8 @@ export function ReminderDetailsPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
