@@ -3,7 +3,10 @@
     "myReminders": "Mis Recordatorios",
     "integration": "Integración",
     "settings": "Configuración",
-    "myAccount": "Mi Cuenta"
+    "myAccount": "Mi Cuenta",
+    "logout": "Cerrar Sesión",
+    "signIn": "Iniciar Sesión",
+    "startNow": "Comienza Ahora"
   },
   "welcome": {
     "title": "Bienvenido a Chronos",
@@ -198,5 +201,44 @@
       "failed": "Error al crear el recordatorio. Por favor, inténtalo de nuevo.",
       "selectDate": "Por favor, selecciona una fecha"
     }
+  },
+  "vitrine": {
+    "heroTitle": "Nunca Pierdas un Momento",
+    "heroSubtitle": "Chronos es tu asistente de recordatorio inteligente. Crea, administra y organiza recordatorios en Discord y múltiples plataformas con soporte de zonas horarias.",
+    "feature1": "Programación inteligente de recordatorios con lenguaje natural",
+    "feature2": "Entrega multiplataforma (Discord, Webhooks, y más)",
+    "feature3": "Soporte global de zonas horarias",
+    "feature4": "Recordatorios recurrentes con patrones flexibles",
+    "getStarted": "Comenzar",
+    "learnMore": "Saber Más",
+    "featuresTitle": "Características Poderosas",
+    "featuresSubtitle": "Todo lo que necesitas para mantenerte organizado y en control de tu agenda",
+    "smartRemindersTitle": "Recordatorios Inteligentes",
+    "smartRemindersDesc": "Establece recordatorios con programación flexible y soporte de lenguaje natural. Nunca más olvides momentos importantes.",
+    "alwaysOnTimeTitle": "Siempre a Tiempo",
+    "alwaysOnTimeDesc": "Entrega precisa de tus recordatorios exactamente cuando los necesitas, impulsada por infraestructura confiable.",
+    "multiPlatformTitle": "Multiplataforma",
+    "multiPlatformDesc": "Recibe recordatorios en Discord, a través de webhooks, correo electrónico y más. Elige tu método de notificación preferido.",
+    "timezoneTitle": "Soporte de Zonas Horarias",
+    "timezoneDesc": "Establece recordatorios para cualquier zona horaria. Perfecto para equipos e individuos distribuidos globalmente.",
+    "benefitsTitle": "¿Por Qué Elegir Chronos?",
+    "benefitsSubtitle": "Únete a miles de usuarios que confían en Chronos para sus recordatorios importantes",
+    "benefit1Title": "Fácil de Usar",
+    "benefit1Desc": "Crea recordatorios en segundos con nuestra interfaz intuitiva. No se requiere configuración complicada.",
+    "benefit2Title": "Confiable y Seguro",
+    "benefit2Desc": "Tus recordatorios se almacenan de forma segura y se entregan con una confiabilidad del 99,9%.",
+    "benefit3Title": "Privacidad Primero",
+    "benefit3Desc": "Respetamos tu privacidad. Tus datos están encriptados y nunca se comparten con terceros.",
+    "ctaTitle": "¿Listo para Mantenerte Organizado?",
+    "ctaSubtitle": "Comienza a administrar tus recordatorios hoy. Es gratis y toma menos de un minuto para empezar.",
+    "startFree": "Comenzar Gratis",
+    "viewDocs": "Ver Documentación",
+    "footerDesc": "Tu asistente de recordatorio inteligente impulsado por programación avanzada.",
+    "footerProduct": "Producto",
+    "footerFeatures": "Características",
+    "footerPricing": "Precios",
+    "footerResources": "Recursos",
+    "footerCommunity": "Comunidad",
+    "footerTwitter": "Twitter"
   }
 }

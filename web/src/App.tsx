@@ -2,11 +2,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/common/theme-provider";
 import { AuthProvider } from "./hooks/AuthContext";
+import { VitrinePage } from "./pages/VitrinePage";
 import { LoginPage } from "./pages/LoginPage";
-import { DashboardPage } from "./pages/DashboardPage";
+import { HomePage } from "./pages/HomePage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { useAuth } from "./hooks/useAuth";
+import { ROUTES } from "./config/routes";
 import "./i18n/config";
 
 function AppRoutes() {
@@ -25,46 +27,52 @@ function AppRoutes() {
   return (
     <Routes>
       {/* OAuth Callback route: Public route for Discord OAuth callback */}
-      <Route path="/auth/callback/discord" element={<OAuthCallbackPage />} />
+      <Route
+        path={ROUTES.AUTH_CALLBACK_DISCORD.path}
+        element={<OAuthCallbackPage />}
+      />
+
+      {/* Vitrine route: Public route at root for all users */}
+      <Route path={ROUTES.VITRINE.path} element={<VitrinePage />} />
 
       {/* Protected route: Dashboard page requires authentication */}
       <Route
-        path="/dashboard"
+        path={ROUTES.DASHBOARD.path}
         element={
-          isAuthenticated ? <DashboardPage /> : <Navigate to="/login" replace />
+          isAuthenticated ? (
+            <HomePage />
+          ) : (
+            <Navigate to={ROUTES.VITRINE.path} replace />
+          )
         }
       />
 
       {/* Protected route: Create Reminder page requires authentication */}
       <Route
-        path="/reminders/create"
+        path={ROUTES.CREATE_REMINDER.path}
         element={
           isAuthenticated ? (
             <CreateReminderPage />
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to={ROUTES.VITRINE.path} replace />
           )
         }
       />
 
       {/* Login route: Redirect to dashboard if already authenticated */}
       <Route
-        path="/login"
+        path={ROUTES.LOGIN.path}
         element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          isAuthenticated ? (
+            <Navigate to={ROUTES.DASHBOARD.path} replace />
+          ) : (
+            <LoginPage />
+          )
         }
       />
 
-      {/* Default route: Redirect to appropriate page based on auth status */}
-      <Route
-        path="/"
-        element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
-        }
-      />
-
-      {/* Catch all: Redirect to appropriate page */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch all: Redirect to vitrine by default */}
+      <Route path="*" element={<Navigate to={ROUTES.VITRINE.path} replace />} />
     </Routes>
   );
 }

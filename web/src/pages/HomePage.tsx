@@ -13,7 +13,7 @@ import {
   type Account,
 } from "@/services";
 
-export function DashboardPage() {
+export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [reminders, setReminders] = useState<Reminder[]>([]);

@@ -3,7 +3,10 @@
     "myReminders": "Mes Rappels",
     "integration": "Intégration",
     "settings": "Paramètres",
-    "myAccount": "Mon Compte"
+    "myAccount": "Mon Compte",
+    "logout": "Déconnexion",
+    "signIn": "Se Connecter",
+    "startNow": "Commencer Maintenant"
   },
   "welcome": {
     "title": "Bienvenue à Chronos",
@@ -197,5 +200,44 @@
       "failed": "Échec de la création du rappel. Veuillez réessayer.",
       "selectDate": "Veuillez sélectionner une date"
     }
+  },
+  "vitrine": {
+    "heroTitle": "Ne Manquez Jamais un Moment",
+    "heroSubtitle": "Chronos est votre assistant de rappel intelligent. Créez, gérez et organisez des rappels sur Discord et plusieurs plateformes avec support des fuseaux horaires.",
+    "feature1": "Planification intelligente des rappels avec langage naturel",
+    "feature2": "Livraison multi-plateforme (Discord, Webhooks, et plus)",
+    "feature3": "Support des fuseaux horaires mondiaux",
+    "feature4": "Rappels récurrents avec motifs flexibles",
+    "getStarted": "Commencer",
+    "learnMore": "En Savoir Plus",
+    "featuresTitle": "Fonctionnalités Puissantes",
+    "featuresSubtitle": "Tout ce dont vous avez besoin pour rester organisé et maître de votre emploi du temps",
+    "smartRemindersTitle": "Rappels Intelligents",
+    "smartRemindersDesc": "Définissez des rappels avec planification flexible et support du langage naturel. Ne manquez plus jamais les moments importants.",
+    "alwaysOnTimeTitle": "Toujours à l'Heure",
+    "alwaysOnTimeDesc": "Livraison précise de vos rappels exactement quand vous en avez besoin, alimentée par une infrastructure fiable.",
+    "multiPlatformTitle": "Multi-Plateforme",
+    "multiPlatformDesc": "Recevez des rappels sur Discord, via webhooks, email, et plus. Choisissez votre méthode de notification préférée.",
+    "timezoneTitle": "Support des Fuseaux Horaires",
+    "timezoneDesc": "Définissez des rappels pour n'importe quel fuseau horaire. Parfait pour les équipes et les individus répartis dans le monde.",
+    "benefitsTitle": "Pourquoi Choisir Chronos ?",
+    "benefitsSubtitle": "Rejoignez des milliers d'utilisateurs qui font confiance à Chronos pour leurs rappels importants",
+    "benefit1Title": "Facile à Utiliser",
+    "benefit1Desc": "Créez des rappels en quelques secondes avec notre interface intuitive. Aucune configuration compliquée requise.",
+    "benefit2Title": "Fiable et Sécurisé",
+    "benefit2Desc": "Vos rappels sont stockés en toute sécurité et livrés avec une fiabilité de 99,9%.",
+    "benefit3Title": "Respect de la Vie Privée",
+    "benefit3Desc": "Nous respectons votre vie privée. Vos données sont chiffrées et ne sont jamais partagées avec des tiers.",
+    "ctaTitle": "Prêt à Rester Organisé ?",
+    "ctaSubtitle": "Commencez à gérer vos rappels aujourd'hui. C'est gratuit et cela prend moins d'une minute pour commencer.",
+    "startFree": "Commencer Gratuitement",
+    "viewDocs": "Voir la Documentation",
+    "footerDesc": "Votre assistant de rappel intelligent alimenté par la planification avancée.",
+    "footerProduct": "Produit",
+    "footerFeatures": "Fonctionnalités",
+    "footerPricing": "Tarification",
+    "footerResources": "Ressources",
+    "footerCommunity": "Communauté",
+    "footerTwitter": "Twitter"
   }
 }

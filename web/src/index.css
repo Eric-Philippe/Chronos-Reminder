@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "sonner/toastbar.css";
-@import "sonner/toast.css";
+@import "sonner/dist/styles.css";
 
 @font-face {
   font-family: "NASA21";

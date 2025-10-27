@@ -3,7 +3,10 @@
     "myReminders": "My Reminders",
     "integration": "Integration",
     "settings": "Settings",
-    "myAccount": "My Account"
+    "myAccount": "My Account",
+    "logout": "Logout",
+    "signIn": "Sign In",
+    "startNow": "Start Now"
   },
   "welcome": {
     "title": "Welcome to Chronos",
@@ -198,5 +201,44 @@
       "failed": "Failed to create reminder. Please try again.",
       "selectDate": "Please select a date"
     }
+  },
+  "vitrine": {
+    "heroTitle": "Never Miss a Moment",
+    "heroSubtitle": "Chronos is your intelligent reminder assistant. Create, manage, and organize reminders across Discord and multiple platforms with timezone support.",
+    "feature1": "Smart reminder scheduling with natural language",
+    "feature2": "Multi-platform delivery (Discord, Webhooks, and more)",
+    "feature3": "Global timezone support",
+    "feature4": "Recurring reminders with flexible patterns",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "featuresTitle": "Powerful Features",
+    "featuresSubtitle": "Everything you need to stay organized and on top of your schedule",
+    "smartRemindersTitle": "Smart Reminders",
+    "smartRemindersDesc": "Set reminders with flexible scheduling and natural language support. Never forget important moments again.",
+    "alwaysOnTimeTitle": "Always On Time",
+    "alwaysOnTimeDesc": "Precise delivery of your reminders exactly when you need them, powered by reliable infrastructure.",
+    "multiPlatformTitle": "Multi-Platform",
+    "multiPlatformDesc": "Receive reminders on Discord, via webhooks, email, and more. Choose your preferred notification method.",
+    "timezoneTitle": "Timezone Support",
+    "timezoneDesc": "Set reminders for any timezone. Perfect for teams and individuals spread across the globe.",
+    "benefitsTitle": "Why Choose Chronos?",
+    "benefitsSubtitle": "Join thousands of users who trust Chronos for their important reminders",
+    "benefit1Title": "Easy to Use",
+    "benefit1Desc": "Create reminders in seconds with our intuitive interface. No complicated setup required.",
+    "benefit2Title": "Reliable & Secure",
+    "benefit2Desc": "Your reminders are safely stored and delivered with 99.9% reliability.",
+    "benefit3Title": "Privacy First",
+    "benefit3Desc": "We respect your privacy. Your data is encrypted and never shared with third parties.",
+    "ctaTitle": "Ready to Stay Organized?",
+    "ctaSubtitle": "Start managing your reminders today. It's free and takes less than a minute to get started.",
+    "startFree": "Start for Free",
+    "viewDocs": "View Documentation",
+    "footerDesc": "Your intelligent reminder assistant powered by advanced scheduling.",
+    "footerProduct": "Product",
+    "footerFeatures": "Features",
+    "footerPricing": "Pricing",
+    "footerResources": "Resources",
+    "footerCommunity": "Community",
+    "footerTwitter": "Twitter"
   }
 }
