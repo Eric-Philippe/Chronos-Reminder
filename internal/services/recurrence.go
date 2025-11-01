@@ -195,36 +195,115 @@ func (r WeekendRecurrence) NextOccurrence(from int64, interval int) int64 {
 	return from + totalSeconds
 }
 
-// findNextFutureOccurrence calculates occurrences until finding one in the future
+// findNextFutureOccurrence calculates the next occurrence that is in the future
 func findNextFutureOccurrence(from time.Time, recurrence Recurrence, loc *time.Location, maxIterations int) time.Time {
-	current := from
 	now := time.Now().In(loc)
 
-	// Store the original time-of-day to preserve across DST transitions
-	hour, minute, second := from.Hour(), from.Minute(), from.Second()
-	nanosecond := from.Nanosecond()
-
-	for i := 0; i < maxIterations; i++ {
-		nextTimestamp := recurrence.NextOccurrence(current.Unix(), 1)
-		nextTime := time.Unix(nextTimestamp, 0).In(loc)
-
-		// Restore the original time-of-day to handle DST transitions
-		nextTime = time.Date(
-			nextTime.Year(), nextTime.Month(), nextTime.Day(),
-			hour, minute, second, nanosecond,
-			loc,
-		)
-
-		// If we've found a future occurrence, return it
-		if nextTime.After(now) {
-			return nextTime
-		}
-
-		current = nextTime
+	// Determine if we should preserve time-of-day (not for hourly recurrence)
+	preserveTimeOfDay := true
+	if _, isHourly := recurrence.(HourlyRecurrence); isHourly {
+		preserveTimeOfDay = false
 	}
 
-	// Fallback: return the last calculated occurrence
-	return current
+	// If 'from' is already in the future, calculate next occurrence from it
+	if from.After(now) {
+		var nextTime time.Time
+		if preserveTimeOfDay {
+			// For daily+ recurrences, add days while preserving time-of-day
+			nextTime = addInterval(from, recurrence, 1, loc)
+		} else {
+			// For hourly, just add the fixed seconds
+			nextTimestamp := recurrence.NextOccurrence(from.Unix(), 1)
+			nextTime = time.Unix(nextTimestamp, 0).In(loc)
+		}
+		return nextTime
+	}
+
+	// If 'from' is in the past or equal to now, calculate how many intervals to skip
+	var nextTime time.Time
+
+	if preserveTimeOfDay {
+		// For daily+ recurrences, calculate approximate intervals to skip
+		var intervalsToSkip int
+		switch recurrence.(type) {
+		case DailyRecurrence:
+			days := int(now.Sub(from).Hours() / 24)
+			intervalsToSkip = days + 1
+		case WeeklyRecurrence:
+			days := int(now.Sub(from).Hours() / 24)
+			intervalsToSkip = (days / 7) + 1
+		case MonthlyRecurrence:
+			months := (now.Year()-from.Year())*12 + int(now.Month()-from.Month())
+			intervalsToSkip = months + 1
+		case YearlyRecurrence:
+			years := now.Year() - from.Year()
+			intervalsToSkip = years + 1
+		default:
+			// For workdays/weekend, approximate with days
+			days := int(now.Sub(from).Hours() / 24)
+			intervalsToSkip = days + 1
+		}
+		
+		// Jump ahead by the calculated intervals
+		nextTime = addInterval(from, recurrence, intervalsToSkip, loc)
+		
+		// Fine-tune: if we're still in the past, keep adding intervals
+		maxAttempts := 10
+		for attempt := 0; attempt < maxAttempts && !nextTime.After(now); attempt++ {
+			nextTime = addInterval(nextTime, recurrence, 1, loc)
+		}
+	} else {
+		// For hourly recurrence, use fixed seconds calculation
+		secondsDiff := now.Unix() - from.Unix()
+		intervalSeconds := int64(3600)
+		intervalsToSkip := int(secondsDiff/intervalSeconds) + 2
+
+		nextTimestamp := recurrence.NextOccurrence(from.Unix(), intervalsToSkip)
+		nextTime = time.Unix(nextTimestamp, 0).In(loc)
+
+		// Safety check
+		maxAttempts := 10
+		for attempt := 0; !nextTime.After(now) && attempt < maxAttempts; attempt++ {
+			nextTimestamp = recurrence.NextOccurrence(nextTime.Unix(), 1)
+			nextTime = time.Unix(nextTimestamp, 0).In(loc)
+		}
+	}
+
+	return nextTime
+}
+
+// addInterval adds one interval to the given time while preserving time-of-day and handling DST
+func addInterval(t time.Time, recurrence Recurrence, intervals int, loc *time.Location) time.Time {
+	// Preserve the time-of-day components
+	hour, minute, second := t.Hour(), t.Minute(), t.Second()
+	nanosecond := t.Nanosecond()
+
+	var nextTime time.Time
+	switch recurrence.(type) {
+	case DailyRecurrence:
+		nextTime = t.AddDate(0, 0, intervals)
+	case WeeklyRecurrence:
+		nextTime = t.AddDate(0, 0, 7*intervals)
+	case MonthlyRecurrence:
+		nextTime = t.AddDate(0, intervals, 0)
+	case YearlyRecurrence:
+		nextTime = t.AddDate(intervals, 0, 0)
+	case WorkdaysRecurrence, WeekendRecurrence:
+		// For these, fall back to adding days
+		nextTime = t.AddDate(0, 0, intervals)
+	default:
+		// Fallback
+		nextTime = t.AddDate(0, 0, intervals)
+	}
+
+	// Restore the original time-of-day to handle DST properly
+	nextTime = time.Date(
+		nextTime.Year(), nextTime.Month(), nextTime.Day(),
+		hour, minute, second, nanosecond,
+		loc,
+	)
+
+	return nextTime
 }
 
 // GetNextOccurrence calculates the next occurrence timestamp based on recurrence state (with bits) and interval
