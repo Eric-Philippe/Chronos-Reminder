@@ -57,7 +57,8 @@ func reminderHandler(session *discordgo.Session, interaction *discordgo.Interact
 	// If the parsed reminder time is before the current time, return an error
 	if parsedTime.Before(now) {
 		return utils.SendError(session, interaction, "Invalid Date/Time", 
-			"The specified date and time is in the past. Please provide a future date and time for the reminder.")
+			"The specified date and time is in the past. Please provide a future date and time for the reminder. You entered: " + parsedTime.Format(time.RFC3339) +
+			". Current time is: " + now.Format(time.RFC3339))
 	}
 
 	// Get recurrence type value
