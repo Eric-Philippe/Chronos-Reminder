@@ -24,6 +24,8 @@ func TimezoneHandler(session *discordgo.Session, interaction *discordgo.Interact
 		return TimezoneListHandler(session, interaction, account)
 	case "change":
 		return timezoneChangeHandler(session, interaction, account)
+	case "display":
+		return timezoneDisplayHandler(session, interaction, account)
 	default:
 		return TimezoneListHandler(session, interaction, account)
 	}
@@ -149,6 +151,24 @@ func timezoneChangeHandler(session *discordgo.Session, interaction *discordgo.In
 			},
 		},
 	})
+}
+
+func timezoneDisplayHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error {
+	// Get the user's current timezone
+	if account.Timezone == nil {
+		return utils.SendError(session, interaction, "No Timezone Set", "You currently do not have a timezone set. Please use `/timezone change` to select one.")
+	}
+
+	gmtOffsetStr := ""
+	if account.Timezone.GMTOffset >= 0 {
+		gmtOffsetStr = fmt.Sprintf("GMT+%.1f", account.Timezone.GMTOffset)
+	} else {
+		gmtOffsetStr = fmt.Sprintf("GMT%.1f", account.Timezone.GMTOffset)
+	}
+
+	message := fmt.Sprintf("Your current timezone is **%s** (%s).", account.Timezone.Name, gmtOffsetStr)
+
+	return utils.SendSuccess(session, interaction, "Current Timezone", message, nil)
 }
 
 // HandleTimezoneSelectMenu handles the timezone selection from the dropdown

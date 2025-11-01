@@ -31,6 +31,11 @@ func init() {
 					Name:        "change",
 					Description: "Change your current timezone",
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "display",
+					Description: "Display your current timezone",
+				},
 			},
 		},
 		NeedsAccount: true,
