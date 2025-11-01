@@ -81,3 +81,4 @@
 - [ ] Forbid the user to create reminders in the past
 - [ ] Clean components directory
 - [ ] Being able to display the next month for the next reminder
+- [ ] API Key will be a new identity

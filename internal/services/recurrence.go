@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -196,24 +195,56 @@ func (r WeekendRecurrence) NextOccurrence(from int64, interval int) int64 {
 	return from + totalSeconds
 }
 
+// findNextFutureOccurrence calculates occurrences until finding one in the future
+func findNextFutureOccurrence(from time.Time, recurrence Recurrence, loc *time.Location, maxIterations int) time.Time {
+	current := from
+	now := time.Now().In(loc)
+
+	// Store the original time-of-day to preserve across DST transitions
+	hour, minute, second := from.Hour(), from.Minute(), from.Second()
+	nanosecond := from.Nanosecond()
+
+	for i := 0; i < maxIterations; i++ {
+		nextTimestamp := recurrence.NextOccurrence(current.Unix(), 1)
+		nextTime := time.Unix(nextTimestamp, 0).In(loc)
+
+		// Restore the original time-of-day to handle DST transitions
+		nextTime = time.Date(
+			nextTime.Year(), nextTime.Month(), nextTime.Day(),
+			hour, minute, second, nanosecond,
+			loc,
+		)
+
+		// If we've found a future occurrence, return it
+		if nextTime.After(now) {
+			return nextTime
+		}
+
+		current = nextTime
+	}
+
+	// Fallback: return the last calculated occurrence
+	return current
+}
+
 // GetNextOccurrence calculates the next occurrence timestamp based on recurrence state (with bits) and interval
 // ianaLocation is the IANA timezone identifier for the user (e.g., "Europe/Paris")
 func GetNextOccurrence(from time.Time, recurrenceState int, ianaLocation string) (time.Time, error) {
 	// Extract the actual recurrence type from the bit-encoded state
 	recurrenceType := GetRecurrenceType(recurrenceState)
 	isPaused := IsPaused(recurrenceState)
-	
+
 	// If the recurrence is paused, return the same time
 	if isPaused {
 		return from, nil
 	}
-	
+
 	// Load the user's timezone to properly handle DST transitions
 	loc, err := time.LoadLocation(ianaLocation)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", ianaLocation, err)
 	}
-	
+
 	// Interpret 'from' as a local time in the user's timezone
 	// from is stored with UTC location, but represents local time
 	fromLocal := time.Date(
@@ -221,86 +252,14 @@ func GetNextOccurrence(from time.Time, recurrenceState int, ianaLocation string)
 		from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
 		loc,
 	)
-	
+
 	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
 	if recurrence == nil {
 		return time.Time{}, fmt.Errorf("invalid recurrence type: %d (extracted from state: %d)", recurrenceType, recurrenceState)
 	}
 
-	nextTimestamp := recurrence.NextOccurrence(fromLocal.Unix(), 1)
-	nextTimeLocal := time.Unix(nextTimestamp, 0).In(loc)
+	// Find the next future occurrence by iterating through past ones if needed
+	// maxIterations prevents infinite loops for edge cases (set to 1000 as safety limit)
+	nextTimeLocal := findNextFutureOccurrence(fromLocal, recurrence, loc, 1000)
 	return nextTimeLocal, nil
-}
-
-// RecalculateNextOccurrence is a helper to recalculate the next occurrence for a reminder that has been paused and then unpaused
-// ianaLocation is the IANA timezone identifier for the user (e.g., "Europe/Paris")
-func RecalculateNextOccurrence(from time.Time, recurrenceState int, ianaLocation string) (time.Time, error) {
-	// Extract the actual recurrence type from the bit-encoded state
-	recurrenceType := GetRecurrenceType(recurrenceState)
-	isPaused := IsPaused(recurrenceState)
-
-	// If the recurrence is still paused, return the same time
-	if isPaused {
-		return from, nil
-	}
-
-	// Load the user's timezone to properly handle DST transitions
-	loc, err := time.LoadLocation(ianaLocation)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", ianaLocation, err)
-	}
-
-	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
-	if recurrence == nil {
-		return time.Time{}, fmt.Errorf("invalid recurrence type: %d (extracted from state: %d)", recurrenceType, recurrenceState)
-	}
-
-	// Get current time in the user's timezone
-	now := time.Now().In(loc)
-	
-	// For special recurrence types (workdays, weekend), we need to ensure we land on the correct day type
-	switch recurrenceType {
-	case RecurrenceWorkdays:
-		// Find the next workday (Monday-Friday)
-		for {
-			weekday := now.Weekday()
-			if weekday >= time.Monday && weekday <= time.Friday {
-				break
-			}
-			now = now.AddDate(0, 0, 1)
-		}
-	case RecurrenceWeekend:
-		// Find the next weekend day (Saturday-Sunday)
-		for {
-			weekday := now.Weekday()
-			if weekday == time.Saturday || weekday == time.Sunday {
-				break
-			}
-			now = now.AddDate(0, 0, 1)
-		}
-	}
-	
-	// Use the original reminder time for hour/minute/second precision
-	nextTime := time.Date(
-		now.Year(), now.Month(), now.Day(),
-		from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
-		loc,
-	)
-	
-	// If the calculated time is in the past (same day but earlier time), move to next occurrence
-	if nextTime.Before(now) {
-		// Create a local time version of 'from' for the calculation
-		fromLocal := time.Date(
-			from.Year(), from.Month(), from.Day(),
-			from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
-			loc,
-		)
-		nextTimestamp := recurrence.NextOccurrence(fromLocal.Unix(), 1)
-		nextTime = time.Unix(nextTimestamp, 0).In(loc)
-	}
-	
-	log.Printf("[RECURRENCE] - Recalculated next occurrence from %v to %v for recurrence type %s", 
-		from, nextTime, GetRecurrenceTypeName(recurrenceType))
-	
-	return nextTime, nil
 }

@@ -128,7 +128,11 @@ func HandleUnpauseReminder(session *discordgo.Session, interaction *discordgo.In
 	}
 
 	// Recalculate the next occurrence from now to avoid catching up
-	nextTime, err := services.RecalculateNextOccurrence(reminder.RemindAtUTC, int(reminder.Recurrence), ianaLocation)
+	nextTime, err := services.GetNextOccurrence(
+		reminder.RemindAtUTC,
+		int(reminder.Recurrence),
+		ianaLocation,
+	)
 	if err != nil {
 		return utils.SendError(session, interaction, "Calculation Error", "Failed to recalculate the next reminder time.")
 	}
