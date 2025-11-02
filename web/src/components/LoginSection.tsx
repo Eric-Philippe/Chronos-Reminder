@@ -161,6 +161,9 @@ export function LoginSection({
             const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
             const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
 
+            console.log("OAuth Client ID:", clientId);
+            console.log("OAuth Redirect URI:", redirectUri);
+
             if (!clientId || !redirectUri) {
               console.error(
                 "Discord OAuth configuration is missing. Please check your environment variables."

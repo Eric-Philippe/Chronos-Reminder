@@ -19,7 +19,8 @@ export class HttpClient {
   private refreshSubscribers: Array<() => void> = [];
 
   constructor(
-    baseURL: string = import.meta.env.VITE_API_URL || "http://localhost:8080"
+    baseURL: string = import.meta.env.VITE_API_URL ||
+      "https://api.chronosrmdr.com"
   ) {
     this.axiosInstance = axios.create({
       baseURL,

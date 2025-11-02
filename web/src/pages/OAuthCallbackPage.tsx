@@ -53,7 +53,8 @@ export function OAuthCallbackPage() {
 
       try {
         // Get the API URL from environment or use localhost as default
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+        const apiUrl =
+          import.meta.env.VITE_API_URL || "https://api.chronosrmdr.com";
 
         // Send code to backend
         const response = await fetch(`${apiUrl}/api/auth/discord/callback`, {
@@ -137,7 +138,8 @@ export function OAuthCallbackPage() {
 
     try {
       setIsCompletingSetup(true);
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "https://api.chronosrmdr.com";
 
       const response = await fetch(`${apiUrl}/api/auth/discord/setup`, {
         method: "POST",
