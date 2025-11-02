@@ -618,10 +618,10 @@ export function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* App Identity */}
-                <div className="p-4 bg-secondary/20 rounded-lg border border-border flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
-                      <Lock className="w-5 h-5 text-accent" />
+                <div className="p-4 bg-secondary/20 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
+                      <Lock className="w-5 h-5 flex-shrink-0 text-accent" />
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">
@@ -632,13 +632,13 @@ export function AccountPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end flex-shrink-0">
                     {appIdentity ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30">
+                      <span className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 whitespace-nowrap">
                         {t("account.connected")}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400 border border-gray-500/30">
+                      <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400 border border-gray-500/30">
                         {t("account.notConnected")}
                       </span>
                     )}
@@ -646,11 +646,11 @@ export function AccountPage() {
                 </div>
 
                 {/* Discord Identity */}
-                <div className="p-4 bg-secondary/20 rounded-lg border border-border flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/20">
+                <div className="p-4 bg-secondary/20 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/20">
                       <svg
-                        className="w-5 h-5 text-indigo-500"
+                        className="w-5 h-5 flex-shrink-0 text-indigo-500"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -666,9 +666,9 @@ export function AccountPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end flex-shrink-0">
                     {discordIdentity ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30">
+                      <span className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 whitespace-nowrap">
                         {t("account.connected")}
                       </span>
                     ) : (
