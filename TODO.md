@@ -32,9 +32,7 @@
 
 #### Reminder CRUD
 
-- [ ] When creating a reminder, all the date/time inputs should use the user's timezone
-- [ ] Automatically disable reminder destinations that can't be used (e.g., Channel reminders if the user hasn't linked any Discord servers)
-- [ ] Implement the whole channel fetch / bot invite flow to allow users to select channel for reminders from the web app
+- [ ] When creating a reminder, all the date/time inputs should use the user's timezones
 - [ ] Prevent user from creating a reminder in the past
 
 ### Account Management
@@ -72,9 +70,6 @@
 
 ## Reminder engine
 
-- [ ] Implement WEBHOOK dispatcher
-- - [ ] Discord webhook support
-- - [ ] Generic webhook support
 - [ ] Implement a purge system for deleting discord account not linked without activity for more than 3 months with no reminders
 - [ ] Logging system for sent reminders
 - - [ ] Only purge a failing reminder if it has only one destination

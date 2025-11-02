@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+dist
+.git
+.env
+.env.local
+.DS_Store
+*.pem
+*.key
+.vscode
+.idea
+coverage
+.eslintcache
+bun.lockb

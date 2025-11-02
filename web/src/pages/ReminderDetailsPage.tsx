@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { getRecurrenceTypeI18nKey } from "@/lib/recurrenceUtils";
 import type { Reminder } from "@/services";
 import { remindersService } from "@/services/reminders";
+import { accountService } from "@/services/account";
 import { Footer } from "@/components/common/footer";
 
 interface EditableReminderData {
@@ -44,6 +45,7 @@ export function ReminderDetailsPage() {
   const { t } = useTranslation();
 
   const [reminder, setReminder] = useState<Reminder | null>(null);
+  const [userTimezone, setUserTimezone] = useState<string>("UTC");
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -64,6 +66,12 @@ export function ReminderDetailsPage() {
 
     const loadReminder = async () => {
       try {
+        // Fetch user account to get timezone
+        const account = await accountService.getAccount();
+        if (account) {
+          setUserTimezone(account.timezone);
+        }
+
         const data = await remindersService.getReminder(reminderId);
         if (!data) {
           toast.error("Reminder not found");
@@ -83,13 +91,37 @@ export function ReminderDetailsPage() {
           }));
         };
 
+        // Convert UTC time to user's timezone for display
+        const utcDate = new Date(data.remind_at_utc);
+        const timezone = account?.timezone || "UTC";
+
+        // Get the time in the user's timezone using Intl API
+        const formatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        });
+
+        const parts = formatter.formatToParts(utcDate);
+        const timeParts = parts.reduce((acc, part) => {
+          acc[part.type] = part.value;
+          return acc;
+        }, {} as Record<string, string>);
+
+        const userTime = `${timeParts.hour}:${timeParts.minute}`;
+        const userDate = new Date(
+          `${timeParts.year}-${timeParts.month}-${timeParts.day}T${timeParts.hour}:${timeParts.minute}:${timeParts.second}`
+        );
+
         setEditData({
           message: data.message,
-          date: new Date(data.remind_at_utc),
-          time: new Date(data.remind_at_utc)
-            .toISOString()
-            .split("T")[1]
-            .substring(0, 5),
+          date: userDate,
+          time: userTime,
           recurrence: data.recurrence_type,
           destinations: convertToPickerDestinations(data.destinations),
         });
@@ -117,13 +149,36 @@ export function ReminderDetailsPage() {
         }));
       };
 
+      // Convert UTC time to user's timezone for display
+      const utcDate = new Date(reminder.remind_at_utc);
+
+      // Get the time in the user's timezone using Intl API
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: userTimezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+
+      const parts = formatter.formatToParts(utcDate);
+      const timeParts = parts.reduce((acc, part) => {
+        acc[part.type] = part.value;
+        return acc;
+      }, {} as Record<string, string>);
+
+      const userTime = `${timeParts.hour}:${timeParts.minute}`;
+      const userDate = new Date(
+        `${timeParts.year}-${timeParts.month}-${timeParts.day}T${userTime}:${timeParts.second}`
+      );
+
       setEditData({
         message: reminder.message,
-        date: new Date(reminder.remind_at_utc),
-        time: new Date(reminder.remind_at_utc)
-          .toISOString()
-          .split("T")[1]
-          .substring(0, 5),
+        date: userDate,
+        time: userTime,
         recurrence: reminder.recurrence_type,
         destinations: convertToPickerDestinations(reminder.destinations),
       });
@@ -463,7 +518,7 @@ export function ReminderDetailsPage() {
                     />
                   ) : (
                     <p className="text-lg font-semibold text-foreground">
-                      {formatDisplayDate(new Date(reminder.remind_at_utc))}
+                      {formatDisplayDate(editData.date)}
                     </p>
                   )}
                 </CardContent>
@@ -493,12 +548,14 @@ export function ReminderDetailsPage() {
                       className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
                     />
                   ) : (
-                    <p className="text-lg font-semibold text-foreground">
-                      {new Date(reminder.remind_at_utc)
-                        .toISOString()
-                        .split("T")[1]
-                        .substring(0, 5)}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-lg font-semibold text-foreground">
+                        {editData.time}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {userTimezone}
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>

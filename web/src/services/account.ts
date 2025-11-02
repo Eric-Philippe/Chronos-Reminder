@@ -56,6 +56,96 @@ class AccountService {
       return null;
     }
   }
+
+  /**
+   * Update app identity password
+   */
+  async updateAppIdentityPassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    try {
+      await httpClient.post<ApiResponse<{ message: string }>>(
+        "/api/account/identity/app/change-password",
+        {
+          current_password: currentPassword,
+          new_password: newPassword,
+        }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to update password");
+    }
+  }
+
+  /**
+   * Update account timezone
+   */
+  async updateTimezone(timezone: string): Promise<void> {
+    try {
+      await httpClient.put<ApiResponse<{ message: string }>>(
+        "/api/account/timezone",
+        {
+          timezone,
+        }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to update timezone");
+    }
+  }
+
+  /**
+   * Update app identity username
+   */
+  async updateAppIdentityUsername(username: string): Promise<void> {
+    try {
+      await httpClient.put<ApiResponse<{ message: string }>>(
+        "/api/account/identity/app/username",
+        { username }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to update username");
+    }
+  }
+
+  /**
+   * Update app identity email
+   */
+  async updateAppIdentityEmail(email: string): Promise<void> {
+    try {
+      await httpClient.put<ApiResponse<{ message: string }>>(
+        "/api/account/identity/app/email",
+        { email }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to update email");
+    }
+  }
+
+  /**
+   * Delete the current account
+   */
+  async deleteAccount(): Promise<void> {
+    try {
+      await httpClient.delete<ApiResponse<{ message: string }>>("/api/account");
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to delete account");
+    }
+  }
 }
 
 // Export singleton instance

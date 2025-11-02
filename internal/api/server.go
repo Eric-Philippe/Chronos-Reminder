@@ -51,6 +51,8 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	discordGuildHandler := NewDiscordGuildHandler(discordOAuthService)
 	userHandler := NewUserHandler(repos.Reminder, repos.ReminderError, repos.Account, sessionService)
 	userHandler.SetReminderDestinationRepository(repos.ReminderDestination)
+	userHandler.SetIdentityRepository(repos.Identity)
+	userHandler.SetTimezoneRepository(repos.Timezone)
 
 	// Initialize reminder handler
 	reminderHandler := NewReminderHandler(
@@ -126,6 +128,11 @@ func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionServic
 	mux.Handle("POST /api/reminders", authMiddleware(http.HandlerFunc(userHandler.CreateReminder)))
 	mux.Handle("GET /api/reminders/errors", authMiddleware(http.HandlerFunc(userHandler.GetReminderErrors)))
 	mux.Handle("GET /api/account", authMiddleware(http.HandlerFunc(userHandler.GetAccount)))
+	mux.Handle("POST /api/account/identity/app/change-password", authMiddleware(http.HandlerFunc(userHandler.ChangeAppIdentityPassword)))
+	mux.Handle("PUT /api/account/timezone", authMiddleware(http.HandlerFunc(userHandler.UpdateAccountTimezone)))
+	mux.Handle("PUT /api/account/identity/app/username", authMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityUsername)))
+	mux.Handle("PUT /api/account/identity/app/email", authMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityEmail)))
+	mux.Handle("DELETE /api/account", authMiddleware(http.HandlerFunc(userHandler.DeleteAccount)))
 }
 
 // registerReminderRoutes registers reminder-specific routes with auth middleware

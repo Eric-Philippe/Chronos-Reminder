@@ -64,7 +64,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *RegisterUserRequest
 	}
 
 	// Hash the password
-	hashedPassword, err := hashPassword(req.Password)
+	hashedPassword, err := HashPassword(req.Password)
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %w", err)
 	}
@@ -103,7 +103,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *RegisterUserRequest
 }
 
 // hashPassword hashes a password using bcrypt
-func hashPassword(password string) (string, error) {
+func HashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err

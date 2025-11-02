@@ -183,7 +183,7 @@ export function HomePage() {
                       <h3 className="text-2xl font-bold text-foreground mb-1">
                         {t("reminders.title")}
                       </h3>
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-muted-foreground text-sm mb-9">
                         {t("reminders.subtitle")}
                       </p>
                     </div>
@@ -314,7 +314,7 @@ export function HomePage() {
                         <h3 className="text-2xl font-bold text-foreground mb-1">
                           {t("reminders.title")}
                         </h3>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-muted-foreground text-sm mb-9">
                           {t("reminders.subtitle")}
                         </p>
                       </div>

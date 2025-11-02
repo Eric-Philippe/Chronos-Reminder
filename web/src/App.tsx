@@ -7,6 +7,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { HomePage } from "./pages/HomePage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
+import { AccountPage } from "./pages/AccountPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { useAuth } from "./hooks/useAuth";
 import { ROUTES } from "./config/routes";
@@ -66,6 +67,18 @@ function AppRoutes() {
         element={
           isAuthenticated ? (
             <ReminderDetailsPage />
+          ) : (
+            <Navigate to={ROUTES.VITRINE.path} replace />
+          )
+        }
+      />
+
+      {/* Protected route: Account page requires authentication */}
+      <Route
+        path={ROUTES.ACCOUNT.path}
+        element={
+          isAuthenticated ? (
+            <AccountPage />
           ) : (
             <Navigate to={ROUTES.VITRINE.path} replace />
           )

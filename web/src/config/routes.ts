@@ -51,13 +51,6 @@ export const ROUTES = {
     showInNav: true,
   } as Route,
 
-  SETTINGS: {
-    path: "/settings",
-    requiresAuth: true,
-    name: "settings",
-    showInNav: true,
-  } as Route,
-
   CONTACT: {
     path: "/contact",
     requiresAuth: false,

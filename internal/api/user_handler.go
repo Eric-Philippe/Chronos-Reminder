@@ -75,6 +75,8 @@ type UserHandler struct {
 	reminderErrorRepo       repositories.ReminderErrorRepository
 	reminderDestinationRepo repositories.ReminderDestinationRepository
 	accountRepo             repositories.AccountRepository
+	identityRepo            repositories.IdentityRepository
+	timezoneRepo            repositories.TimezoneRepository
 	sessionService          *services.SessionService
 }
 
@@ -96,6 +98,16 @@ func NewUserHandler(
 // SetReminderDestinationRepository sets the reminder destination repository
 func (h *UserHandler) SetReminderDestinationRepository(repo repositories.ReminderDestinationRepository) {
 	h.reminderDestinationRepo = repo
+}
+
+// SetIdentityRepository sets the identity repository
+func (h *UserHandler) SetIdentityRepository(repo repositories.IdentityRepository) {
+	h.identityRepo = repo
+}
+
+// SetTimezoneRepository sets the timezone repository
+func (h *UserHandler) SetTimezoneRepository(repo repositories.TimezoneRepository) {
+	h.timezoneRepo = repo
 }
 
 // CreateReminder creates a new reminder for the authenticated user
@@ -456,6 +468,348 @@ func (h *UserHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSON(w, http.StatusOK, account)
+}
+
+// ChangeAppIdentityPassword changes the password for the app identity
+// @Route: POST /api/account/identity/app/change-password
+func (h *UserHandler) ChangeAppIdentityPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	// Validate inputs
+	if req.CurrentPassword == "" || req.NewPassword == "" {
+		WriteError(w, http.StatusBadRequest, "Current and new passwords are required")
+		return
+	}
+
+	if len(req.NewPassword) < 8 {
+		WriteError(w, http.StatusBadRequest, "New password must be at least 8 characters long")
+		return
+	}
+
+	// Get the account with identities
+	account, err := h.accountRepo.GetWithIdentities(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	// Find the app identity
+	var appIdentity *models.Identity
+	for i := range account.Identities {
+		if account.Identities[i].Provider == models.ProviderApp {
+			appIdentity = &account.Identities[i]
+			break
+		}
+	}
+
+	if appIdentity == nil {
+		WriteError(w, http.StatusNotFound, "App identity not found")
+		return
+	}
+
+	if appIdentity.PasswordHash == nil {
+		WriteError(w, http.StatusBadRequest, "App identity does not have a password set")
+		return
+	}
+
+	// Verify current password
+	if err := services.VerifyPassword(*appIdentity.PasswordHash, req.CurrentPassword); err != nil {
+		WriteError(w, http.StatusUnauthorized, "Current password is incorrect")
+		return
+	}
+
+	// Hash the new password
+	hashedPassword, err := services.HashPassword(req.NewPassword)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to hash password")
+		return
+	}
+
+	// Update the identity with new password hash
+	appIdentity.PasswordHash = &hashedPassword
+	if err := h.identityRepo.Update(appIdentity); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to update password")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Password updated successfully",
+	})
+}
+
+// UpdateAccountTimezone updates the timezone for the authenticated user's account
+// @Route: PUT /api/account/timezone
+func (h *UserHandler) UpdateAccountTimezone(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Timezone string `json:"timezone"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	// Validate timezone is not empty
+	if req.Timezone == "" {
+		WriteError(w, http.StatusBadRequest, "Timezone is required")
+		return
+	}
+
+	// Validate timezone is a valid IANA location
+	if _, err := time.LoadLocation(req.Timezone); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid timezone")
+		return
+	}
+
+	// Get the timezone from database
+	timezone, err := h.timezoneRepo.GetByIANALocation(req.Timezone)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve timezone")
+		return
+	}
+
+	if timezone == nil {
+		WriteError(w, http.StatusBadRequest, "Timezone not found in database")
+		return
+	}
+
+	// Get the account
+	account, err := h.accountRepo.GetByID(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	// Update the timezone ID
+	account.TimezoneID = &timezone.ID
+
+	if err := h.accountRepo.Update(account); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to update timezone")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Timezone updated successfully",
+	})
+}
+
+// UpdateAppIdentityUsername updates the username for the app identity
+// @Route: PUT /api/account/identity/app/username
+func (h *UserHandler) UpdateAppIdentityUsername(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Username string `json:"username"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	// Validate username is not empty
+	if req.Username == "" {
+		WriteError(w, http.StatusBadRequest, "Username is required")
+		return
+	}
+
+	// Get the account with identities
+	account, err := h.accountRepo.GetWithIdentities(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	// Find the app identity
+	var appIdentity *models.Identity
+	for i := range account.Identities {
+		if account.Identities[i].Provider == models.ProviderApp {
+			appIdentity = &account.Identities[i]
+			break
+		}
+	}
+
+	if appIdentity == nil {
+		WriteError(w, http.StatusNotFound, "App identity not found")
+		return
+	}
+
+	// Update the username
+	appIdentity.Username = &req.Username
+	if err := h.identityRepo.Update(appIdentity); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to update username")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Username updated successfully",
+	})
+}
+
+// UpdateAppIdentityEmail updates the email for the app identity
+// @Route: PUT /api/account/identity/app/email
+func (h *UserHandler) UpdateAppIdentityEmail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	// Validate email is not empty
+	if req.Email == "" {
+		WriteError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	// Get the account with identities
+	account, err := h.accountRepo.GetWithIdentities(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	// Find the app identity
+	var appIdentity *models.Identity
+	for i := range account.Identities {
+		if account.Identities[i].Provider == models.ProviderApp {
+			appIdentity = &account.Identities[i]
+			break
+		}
+	}
+
+	if appIdentity == nil {
+		WriteError(w, http.StatusNotFound, "App identity not found")
+		return
+	}
+
+	// Update the external_id (email)
+	appIdentity.ExternalID = req.Email
+	if err := h.identityRepo.Update(appIdentity); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to update email")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Email updated successfully",
+	})
+}
+
+// DeleteAccount deletes the authenticated user's account and all associated data
+// @Route: DELETE /api/account
+func (h *UserHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Get the account to verify it exists
+	account, err := h.accountRepo.GetByID(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	// Delete the account (cascade deletes should handle related data)
+	if err := h.accountRepo.Delete(accountID); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to delete account")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Account deleted successfully",
+	})
 }
 
 // DeleteReminder deletes a reminder for the authenticated user

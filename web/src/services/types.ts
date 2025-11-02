@@ -92,7 +92,10 @@ export interface AccountIdentity {
   id: string;
   account_id: string;
   provider: string;
-  provider_id: string;
+  provider_id?: string;
+  external_id: string;
+  username?: string;
+  avatar?: string;
   created_at: string;
 }
 

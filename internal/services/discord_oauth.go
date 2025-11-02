@@ -398,7 +398,7 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 	}
 
 	// Hash password
-	hashedPassword, err := hashPassword(password)
+	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return "", fmt.Errorf("error hashing password: %w", err)
 	}

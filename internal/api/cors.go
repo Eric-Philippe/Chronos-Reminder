@@ -11,15 +11,15 @@ var RestrictedRoutes = map[string]bool{
 	"/api/auth/register": true, // Website only
 	"/api/auth/login":    true, // Website only
 	"/api/auth/logout":   true, // Website only
-	// Add more website-restricted routes here
 }
 
 // ProtectedRoutes defines routes that require authentication
 var ProtectedRoutes = map[string]bool{
-	"/api/reminders":       true, // Get all reminders
-	"/api/reminders/{id}":  true, // Get single reminder
-	"/api/reminders/errors": true, // Get reminders with errors
-	"/api/account":         true, // Get account info
+	"/api/reminders":                             true, // Get all reminders
+	"/api/reminders/{id}":                        true, // Get single reminder
+	"/api/reminders/errors":                      true, // Get reminders with errors
+	"/api/account":                               true, // Get account info
+	"/api/account/identity/app/change-password": true, // Change app identity password
 	// Add more authenticated routes here
 }
 
