@@ -63,3 +63,4 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             NODE_ENV=production
+            VITE_API_URL=https://api.chronosrmd.com

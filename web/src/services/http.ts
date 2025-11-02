@@ -20,7 +20,7 @@ export class HttpClient {
 
   constructor(
     baseURL: string = import.meta.env.VITE_API_URL ||
-      "https://api.chronosrmdr.com"
+      "https://api.chronosrmd.com"
   ) {
     this.axiosInstance = axios.create({
       baseURL,
