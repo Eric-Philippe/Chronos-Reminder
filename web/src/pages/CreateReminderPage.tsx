@@ -280,6 +280,12 @@ export function CreateReminderPage() {
                                 <>
                                   <Link2 className="w-4 h-4 flex-shrink-0" />
                                   {t("reminderCreation.destinations.webhook")}
+                                  {dest.metadata.platform &&
+                                    dest.metadata.platform !== "generic" && (
+                                      <span className="text-xs text-muted-foreground ml-1 capitalize">
+                                        ({dest.metadata.platform as string})
+                                      </span>
+                                    )}
                                 </>
                               )}
                             </div>

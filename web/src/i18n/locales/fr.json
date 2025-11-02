@@ -171,15 +171,22 @@
       "addedDestinations": "Destinations Ajoutées",
       "addDestination": "Ajouter une Destination",
       "discordDM": "Message Direct Discord",
-      "discordDMDesc": "Le rappel sera envoyé en tant que MD",
-      "discordGuild": "Serveur de Guilde Discord",
-      "discordGuildDesc": "Envoyer à un canal de guilde Discord",
+      "discordDMDesc": "Le rappel sera envoyé en DM",
+      "discordGuild": "Serveur Discord",
+      "discordGuildDesc": "Envoyer vers un canal de serveur Discord",
       "webhook": "Webhook",
-      "webhookDesc": "Envoyer à une URL webhook personnalisée",
-      "webhookPlaceholder": "https://votre-webhook-url.com",
-      "guildId": "ID de Guilde",
-      "channelId": "ID de Canal",
-      "sendAsDM": "Envoyer en tant que MD à votre compte Discord",
+      "webhookDesc": "Envoyer vers une URL webhook personnalisée",
+      "webhookPlaceholder": "https://votre-url-webhook.com",
+      "webhookUsername": "Nom d'utilisateur (optionnel)",
+      "webhookPlatforms": {
+        "generic": "Webhook Générique",
+        "discord": "Webhook Discord",
+        "slack": "Webhook Slack"
+      },
+      "addWebhook": "Ajouter un Webhook",
+      "guildId": "ID du Serveur",
+      "channelId": "ID du Canal",
+      "sendAsDM": "Envoyer en DM à votre compte Discord",
       "connectDiscordFirst": "Connectez d'abord votre compte Discord"
     },
     "review": {
@@ -206,6 +213,28 @@
     "errors": {
       "failed": "Échec de la création du rappel. Veuillez réessayer.",
       "selectDate": "Veuillez sélectionner une date"
+    },
+    "discord": {
+      "selectGuild": "Sélectionner le Serveur Discord",
+      "selectGuildDescription": "Choisissez le serveur Discord où vous souhaitez envoyer des rappels",
+      "selectGuildPlaceholder": "Sélectionner un serveur...",
+      "selectChannel": "Sélectionner le Canal",
+      "selectChannelDescription": "Choisissez le canal pour vos rappels",
+      "selectChannelPlaceholder": "Sélectionner un canal...",
+      "selectRole": "Sélectionner un Rôle (Optionnel)",
+      "selectRoleDescription": "Sélectionnez éventuellement un rôle à mentionner dans le rappel",
+      "selectRolePlaceholder": "Sélectionner un rôle...",
+      "guild": "Serveur",
+      "channel": "Canal",
+      "role": "Rôle",
+      "optional": "optionnel",
+      "selectedGuild": "Serveur sélectionné",
+      "selectedChannel": "Canal sélectionné",
+      "botNotInGuild": "Le bot n'est pas sur ce serveur. Veuillez d'abord inviter le bot pour envoyer des rappels à ce serveur.",
+      "inviteBot": "Inviter le Bot sur le Serveur",
+      "skipRole": "Ignorer le Rôle",
+      "addRole": "Ajouter un Rôle",
+      "confirm": "Confirmer"
     }
   },
   "reminderDetails": {

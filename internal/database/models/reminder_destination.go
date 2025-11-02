@@ -23,6 +23,26 @@ const (
 	DestinationWebhook        DestinationType = "webhook"
 )
 
+// WebhookPlatform represents the optional platform for webhook destinations
+type WebhookPlatform string
+
+// Webhook platform types
+const (
+	WebhookPlatformGeneric WebhookPlatform = "generic"
+	WebhookPlatformDiscord WebhookPlatform = "discord"
+	WebhookPlatformSlack   WebhookPlatform = "slack"
+)
+
+// IsValid checks if the webhook platform is valid
+func (w WebhookPlatform) IsValid() bool {
+	return w == WebhookPlatformGeneric || w == WebhookPlatformDiscord || w == WebhookPlatformSlack
+}
+
+// String returns the string representation of WebhookPlatform
+func (w WebhookPlatform) String() string {
+	return string(w)
+}
+
 // Value implements the driver.Valuer interface for database storage
 func (d DestinationType) Value() (driver.Value, error) {
 	return string(d), nil
@@ -129,6 +149,30 @@ func (rd *ReminderDestination) ValidateMetadata() error {
 	case DestinationWebhook:
 		if _, exists := rd.Metadata["url"]; !exists {
 			return fmt.Errorf("webhook destination requires url in metadata")
+		}
+		
+		// Validate optional platform field
+		if platformVal, exists := rd.Metadata["platform"]; exists {
+			platformStr, ok := platformVal.(string)
+			if !ok {
+				return fmt.Errorf("webhook platform must be a string")
+			}
+			platform := WebhookPlatform(platformStr)
+			if !platform.IsValid() {
+				return fmt.Errorf("invalid webhook platform: %s (must be 'generic', 'discord', or 'slack')", platformStr)
+			}
+			
+			// Platform-specific validation
+			switch platform {
+			case WebhookPlatformDiscord:
+				// Discord webhooks can optionally have username and avatar_url
+				// No strict requirements beyond the URL
+			case WebhookPlatformSlack:
+				// Slack webhooks can optionally have channel override
+				// No strict requirements beyond the URL
+			case WebhookPlatformGeneric:
+				// Generic webhooks have no additional requirements
+			}
 		}
 	default:
 		return fmt.Errorf("invalid destination type: %s", rd.Type)

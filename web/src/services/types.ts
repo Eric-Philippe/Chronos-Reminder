@@ -119,3 +119,48 @@ export interface ReminderErrorsResponse {
   errors: ReminderError[];
   count: number;
 }
+
+/**
+ * Discord Guild Types
+ */
+export interface DiscordGuild {
+  id: string;
+  name: string;
+  icon: string;
+  owner: boolean;
+  permissions: number;
+  features: string[];
+}
+
+export interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number;
+  position: number;
+  topic?: string | null;
+}
+
+export interface DiscordRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+  permissions: number;
+  managed: boolean;
+  mentionable: boolean;
+}
+
+export interface GetUserGuildsResponse {
+  guilds: DiscordGuild[];
+  error?: string;
+}
+
+export interface GetGuildChannelsResponse {
+  channels: DiscordChannel[];
+  error?: string;
+}
+
+export interface GetGuildRolesResponse {
+  roles: DiscordRole[];
+  error?: string;
+}

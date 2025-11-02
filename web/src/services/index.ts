@@ -7,6 +7,8 @@ export { httpClient } from "./http";
 export { authService } from "./auth";
 export { remindersService } from "./reminders";
 export { accountService } from "./account";
+export { discordService } from "./discord";
+export { identityService } from "./identity";
 
 // Export all types
 export type {
@@ -24,4 +26,10 @@ export type {
   AccountResponse,
   ReminderError,
   ReminderErrorsResponse,
+  DiscordGuild,
+  DiscordChannel,
+  DiscordRole,
+  GetUserGuildsResponse,
+  GetGuildChannelsResponse,
+  GetGuildRolesResponse,
 } from "./types";

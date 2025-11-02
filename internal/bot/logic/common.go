@@ -148,6 +148,13 @@ func buildDestinationField(dest models.ReminderDestination, index int) *discordg
 			fieldValue = "**Type:** Webhook\n**URL:** Invalid configuration"
 		}
 
+		// Add platform information if specified
+		if platform, exists := dest.Metadata["platform"]; exists {
+			if platformStr, ok := platform.(string); ok && platformStr != "" && platformStr != "generic" {
+				fieldValue += fmt.Sprintf("\n**Platform:** %s", platformStr)
+			}
+		}
+
 		// Add any additional webhook metadata
 		if name, exists := dest.Metadata["name"]; exists {
 			if nameStr, ok := name.(string); ok {

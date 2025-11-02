@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trash2, Plus, MessageCircle, Megaphone, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
+import { identityService } from "@/services/identity";
+import { DiscordGuildSelectionModal } from "./DiscordGuildSelectionModal";
 
 export type ReminderDestinationType =
   | "discord_dm"
   | "discord_channel"
   | "webhook";
+
+export type WebhookPlatform = "generic" | "discord" | "slack";
 
 export interface ReminderDestination {
   type: ReminderDestinationType;
@@ -31,8 +35,41 @@ export function DestinationPicker({
 }: DestinationPickerProps) {
   const { t } = useTranslation();
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookPlatform, setWebhookPlatform] =
+    useState<WebhookPlatform>("generic");
+  const [webhookUsername, setWebhookUsername] = useState("");
+  const [isGuildModalOpen, setIsGuildModalOpen] = useState(false);
+  const [hasDiscordIdentity, setHasDiscordIdentity] = useState(false);
+
+  // Load user identities on component mount
+  useEffect(() => {
+    const loadIdentities = async () => {
+      try {
+        const capabilities = await identityService.getIdentityCapabilities();
+        setHasDiscordIdentity(capabilities.hasDiscordIdentity);
+      } catch (error) {
+        console.error("Failed to load identity capabilities:", error);
+        setHasDiscordIdentity(false);
+      }
+    };
+
+    loadIdentities();
+  }, []);
+
+  // Count destinations by type
+  const dmCount = destinations.filter((d) => d.type === "discord_dm").length;
+  const channelCount = destinations.filter(
+    (d) => d.type === "discord_channel"
+  ).length;
+  const webhookCount = destinations.filter((d) => d.type === "webhook").length;
+
+  // Destination limits
+  const MAX_DM = 1;
+  const MAX_CHANNELS = 5;
+  const MAX_WEBHOOKS = 5;
 
   const handleAddDiscordDM = () => {
+    if (dmCount >= MAX_DM) return;
     const newDest = {
       type: "discord_dm" as const,
       metadata: {},
@@ -41,49 +78,75 @@ export function DestinationPicker({
   };
 
   const handleAddDiscordGuild = () => {
+    if (channelCount >= MAX_CHANNELS) return;
+    setIsGuildModalOpen(true);
+  };
+
+  const handleGuildModalConfirm = (
+    guildId: string,
+    channelId: string,
+    roleId?: string
+  ) => {
+    const metadata: Record<string, unknown> = {
+      guild_id: guildId,
+      channel_id: channelId,
+    };
+
+    if (roleId) {
+      metadata.mention_role_id = roleId;
+    }
+
     const newDest = {
       type: "discord_channel" as const,
-      metadata: {
-        guild_id: "",
-        channel_id: "",
-      },
+      metadata,
     };
     onDestinationsChange([...destinations, newDest]);
   };
 
   const handleAddWebhook = () => {
     if (!webhookUrl.trim()) return;
+    if (webhookCount >= MAX_WEBHOOKS) return;
+
+    const metadata: Record<string, unknown> = {
+      url: webhookUrl,
+      platform: webhookPlatform,
+    };
+
+    // Add optional fields based on platform
+    if (webhookUsername.trim()) {
+      metadata.username = webhookUsername;
+    }
+
     const newDest = {
       type: "webhook" as const,
-      metadata: {
-        url: webhookUrl,
-      },
+      metadata,
     };
     onDestinationsChange([...destinations, newDest]);
     setWebhookUrl("");
+    setWebhookPlatform("generic");
+    setWebhookUsername("");
   };
 
   const handleRemoveDestination = (index: number) => {
     onDestinationsChange(destinations.filter((_, i) => i !== index));
   };
 
-  const handleUpdateWebhookMetadata = (index: number, url: string) => {
-    const updated = [...destinations];
-    updated[index].metadata = { url };
-    onDestinationsChange(updated);
-  };
-
-  const handleUpdateGuildMetadata = (
+  const handleUpdateWebhookMetadata = (
     index: number,
-    guildId: string,
-    channelId: string
+    url: string,
+    platform?: WebhookPlatform,
+    username?: string
   ) => {
     const updated = [...destinations];
-    updated[index].metadata = { guild_id: guildId, channel_id: channelId };
+    const currentMetadata = updated[index].metadata;
+    updated[index].metadata = {
+      ...currentMetadata,
+      url,
+      ...(platform && { platform }),
+      ...(username !== undefined && { username }),
+    };
     onDestinationsChange(updated);
   };
-
-  const hasDiscordIdentity = true; // TODO: Get from context/props
 
   return (
     <div className="space-y-4">
@@ -148,10 +211,10 @@ export function DestinationPicker({
               )}
 
               {dest.type === "discord_channel" && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Megaphone className="w-4 h-4 text-accent flex-shrink-0" />
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Megaphone className="w-4 h-4 text-accent flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
                       <p
                         className={`font-semibold text-foreground truncate ${
                           compact ? "text-xs" : "text-sm"
@@ -159,52 +222,34 @@ export function DestinationPicker({
                       >
                         {t("reminderCreation.destinations.discordGuild")}
                       </p>
+                      {!compact && (
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          <p>
+                            Channel:{" "}
+                            <span className="text-foreground">
+                              #{dest.metadata.channel_id as string}
+                            </span>
+                          </p>
+                          {(dest.metadata.mention_role_id as string) && (
+                            <p>
+                              Role:{" "}
+                              <span className="text-foreground">
+                                @{dest.metadata.mention_role_id as string}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <Button
-                      onClick={() => handleRemoveDestination(idx)}
-                      variant="outline"
-                      size="sm"
-                      className="border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
                   </div>
-                  <div
-                    className={`grid gap-2 ${
-                      compact ? "grid-cols-1" : "grid-cols-2"
-                    }`}
+                  <Button
+                    onClick={() => handleRemoveDestination(idx)}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0"
                   >
-                    <input
-                      type="text"
-                      placeholder={t("reminderCreation.destinations.guildId")}
-                      value={(dest.metadata.guild_id as string) || ""}
-                      onChange={(e) =>
-                        handleUpdateGuildMetadata(
-                          idx,
-                          e.target.value,
-                          (dest.metadata.channel_id as string) || ""
-                        )
-                      }
-                      className={`px-3 py-2 rounded border border-border bg-background text-foreground placeholder-muted-foreground ${
-                        compact ? "text-xs" : "text-sm"
-                      }`}
-                    />
-                    <input
-                      type="text"
-                      placeholder={t("reminderCreation.destinations.channelId")}
-                      value={(dest.metadata.channel_id as string) || ""}
-                      onChange={(e) =>
-                        handleUpdateGuildMetadata(
-                          idx,
-                          (dest.metadata.guild_id as string) || "",
-                          e.target.value
-                        )
-                      }
-                      className={`px-3 py-2 rounded border border-border bg-background text-foreground placeholder-muted-foreground ${
-                        compact ? "text-xs" : "text-sm"
-                      }`}
-                    />
-                  </div>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
                 </div>
               )}
 
@@ -213,13 +258,24 @@ export function DestinationPicker({
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Link2 className="w-4 h-4 text-accent flex-shrink-0" />
-                      <p
-                        className={`font-semibold text-foreground truncate ${
-                          compact ? "text-xs" : "text-sm"
-                        }`}
-                      >
-                        {t("reminderCreation.destinations.webhook")}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`font-medium text-foreground truncate ${
+                            compact ? "text-xs" : "text-sm"
+                          }`}
+                        >
+                          {t("reminderCreation.destinations.webhook")}
+                        </p>
+                        {(dest.metadata.platform as string) &&
+                          dest.metadata.platform !== "generic" && (
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {dest.metadata.platform as string}
+                            </p>
+                          )}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {idx + 1}/{webhookCount}
+                      </span>
                     </div>
                     <Button
                       onClick={() => handleRemoveDestination(idx)}
@@ -230,19 +286,79 @@ export function DestinationPicker({
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder={t(
-                      "reminderCreation.destinations.webhookPlaceholder"
+                  <div className="space-y-2">
+                    <select
+                      value={(dest.metadata.platform as string) || "generic"}
+                      onChange={(e) =>
+                        handleUpdateWebhookMetadata(
+                          idx,
+                          (dest.metadata.url as string) || "",
+                          e.target.value as WebhookPlatform,
+                          (dest.metadata.username as string) || ""
+                        )
+                      }
+                      className={`w-full px-3 py-2 rounded border border-border bg-background text-foreground ${
+                        compact ? "text-xs" : "text-sm"
+                      }`}
+                    >
+                      <option value="generic">
+                        {t(
+                          "reminderCreation.destinations.webhookPlatforms.generic"
+                        )}
+                      </option>
+                      <option value="discord">
+                        {t(
+                          "reminderCreation.destinations.webhookPlatforms.discord"
+                        )}
+                      </option>
+                      <option value="slack">
+                        {t(
+                          "reminderCreation.destinations.webhookPlatforms.slack"
+                        )}
+                      </option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder={t(
+                        "reminderCreation.destinations.webhookPlaceholder"
+                      )}
+                      value={(dest.metadata.url as string) || ""}
+                      onChange={(e) =>
+                        handleUpdateWebhookMetadata(
+                          idx,
+                          e.target.value,
+                          (dest.metadata.platform as WebhookPlatform) ||
+                            "generic",
+                          (dest.metadata.username as string) || ""
+                        )
+                      }
+                      className={`w-full px-3 py-2 rounded border border-border bg-background text-foreground placeholder-muted-foreground ${
+                        compact ? "text-xs" : "text-sm"
+                      }`}
+                    />
+                    {((dest.metadata.platform as string) === "discord" ||
+                      (dest.metadata.platform as string) === "slack") && (
+                      <input
+                        type="text"
+                        placeholder={t(
+                          "reminderCreation.destinations.webhookUsername"
+                        )}
+                        value={(dest.metadata.username as string) || ""}
+                        onChange={(e) =>
+                          handleUpdateWebhookMetadata(
+                            idx,
+                            (dest.metadata.url as string) || "",
+                            (dest.metadata.platform as WebhookPlatform) ||
+                              "generic",
+                            e.target.value
+                          )
+                        }
+                        className={`w-full px-3 py-2 rounded border border-border bg-background text-foreground placeholder-muted-foreground ${
+                          compact ? "text-xs" : "text-sm"
+                        }`}
+                      />
                     )}
-                    value={(dest.metadata.url as string) || ""}
-                    onChange={(e) =>
-                      handleUpdateWebhookMetadata(idx, e.target.value)
-                    }
-                    className={`w-full px-3 py-2 rounded border border-border bg-background text-foreground placeholder-muted-foreground ${
-                      compact ? "text-xs" : "text-sm"
-                    }`}
-                  />
+                  </div>
                 </div>
               )}
             </div>
@@ -261,8 +377,16 @@ export function DestinationPicker({
 
           {/* Discord DM Option */}
           <Card
-            className="border-border bg-secondary/20 hover:border-accent/50 cursor-pointer transition-colors"
-            onClick={handleAddDiscordDM}
+            className={`border-border bg-secondary/20 transition-colors ${
+              hasDiscordIdentity && dmCount < MAX_DM
+                ? "hover:border-accent/50 cursor-pointer"
+                : "opacity-60 cursor-not-allowed"
+            }`}
+            onClick={
+              hasDiscordIdentity && dmCount < MAX_DM
+                ? handleAddDiscordDM
+                : undefined
+            }
           >
             <div className="p-3 flex items-center justify-between">
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -275,14 +399,17 @@ export function DestinationPicker({
                   </p>
                   {!compact && (
                     <p className="text-xs text-muted-foreground">
-                      {hasDiscordIdentity
-                        ? t("reminderCreation.destinations.sendAsDM")
-                        : t(
-                            "reminderCreation.destinations.connectDiscordFirst"
-                          )}
+                      {!hasDiscordIdentity
+                        ? t("reminderCreation.destinations.connectDiscordFirst")
+                        : dmCount >= MAX_DM
+                        ? "Limit reached"
+                        : t("reminderCreation.destinations.sendAsDM")}
                     </p>
                   )}
                 </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                  {dmCount}/{MAX_DM}
+                </span>
               </div>
               <Button
                 onClick={(e) => {
@@ -291,9 +418,9 @@ export function DestinationPicker({
                 }}
                 variant="outline"
                 size="sm"
-                disabled={!hasDiscordIdentity}
+                disabled={!hasDiscordIdentity || dmCount >= MAX_DM}
                 className={`border-accent/50 flex-shrink-0 ${
-                  hasDiscordIdentity
+                  hasDiscordIdentity && dmCount < MAX_DM
                     ? "text-accent hover:bg-accent/10"
                     : "text-muted-foreground opacity-50 cursor-not-allowed"
                 }`}
@@ -304,9 +431,19 @@ export function DestinationPicker({
           </Card>
 
           {/* Discord Guild Option */}
-          <Card className="border-border bg-secondary/20 hover:border-accent/50 cursor-pointer transition-colors">
+          <Card
+            className={`border-border bg-secondary/20 transition-colors ${
+              hasDiscordIdentity && channelCount < MAX_CHANNELS
+                ? "hover:border-accent/50 cursor-pointer"
+                : "opacity-60 cursor-not-allowed"
+            }`}
+          >
             <div
-              onClick={handleAddDiscordGuild}
+              onClick={
+                hasDiscordIdentity && channelCount < MAX_CHANNELS
+                  ? handleAddDiscordGuild
+                  : undefined
+              }
               className="p-3 flex items-center justify-between"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -319,10 +456,17 @@ export function DestinationPicker({
                   </p>
                   {!compact && (
                     <p className="text-xs text-muted-foreground">
-                      {t("reminderCreation.destinations.discordGuildDesc")}
+                      {!hasDiscordIdentity
+                        ? t("reminderCreation.destinations.connectDiscordFirst")
+                        : channelCount >= MAX_CHANNELS
+                        ? "Limit reached"
+                        : t("reminderCreation.destinations.discordGuildDesc")}
                     </p>
                   )}
                 </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                  {channelCount}/{MAX_CHANNELS}
+                </span>
               </div>
               <Button
                 onClick={(e) => {
@@ -331,7 +475,12 @@ export function DestinationPicker({
                 }}
                 variant="outline"
                 size="sm"
-                className="border-accent/50 text-accent hover:bg-accent/10 flex-shrink-0"
+                disabled={!hasDiscordIdentity || channelCount >= MAX_CHANNELS}
+                className={`border-accent/50 flex-shrink-0 ${
+                  hasDiscordIdentity && channelCount < MAX_CHANNELS
+                    ? "text-accent hover:bg-accent/10"
+                    : "text-muted-foreground opacity-50 cursor-not-allowed"
+                }`}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -340,23 +489,44 @@ export function DestinationPicker({
 
           {/* Webhook Option */}
           <Card className="border-border bg-secondary/20">
-            <div className="p-3 space-y-2">
+            <div className="p-3 space-y-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <Link2 className="w-4 h-4 text-accent" />
-                </div>
+                <Link2 className="w-4 h-4 text-accent flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
+                  <p className="text-sm font-medium text-foreground">
                     {t("reminderCreation.destinations.webhook")}
                   </p>
-                  {!compact && (
-                    <p className="text-xs text-muted-foreground">
-                      {t("reminderCreation.destinations.webhookDesc")}
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {t("reminderCreation.destinations.webhookDesc")}
+                  </p>
                 </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0">
+                  {webhookCount}/{MAX_WEBHOOKS}
+                </span>
               </div>
-              <div className="flex gap-2">
+              <div className="space-y-2">
+                <select
+                  value={webhookPlatform}
+                  onChange={(e) =>
+                    setWebhookPlatform(e.target.value as WebhookPlatform)
+                  }
+                  disabled={webhookCount >= MAX_WEBHOOKS}
+                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="generic">
+                    {t(
+                      "reminderCreation.destinations.webhookPlatforms.generic"
+                    )}
+                  </option>
+                  <option value="discord">
+                    {t(
+                      "reminderCreation.destinations.webhookPlatforms.discord"
+                    )}
+                  </option>
+                  <option value="slack">
+                    {t("reminderCreation.destinations.webhookPlatforms.slack")}
+                  </option>
+                </select>
                 <input
                   type="text"
                   placeholder={t(
@@ -364,20 +534,44 @@ export function DestinationPicker({
                   )}
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground"
+                  disabled={webhookCount >= MAX_WEBHOOKS}
+                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 />
+                {(webhookPlatform === "discord" ||
+                  webhookPlatform === "slack") && (
+                  <input
+                    type="text"
+                    placeholder={t(
+                      "reminderCreation.destinations.webhookUsername"
+                    )}
+                    value={webhookUsername}
+                    onChange={(e) => setWebhookUsername(e.target.value)}
+                    disabled={webhookCount >= MAX_WEBHOOKS}
+                    className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                )}
                 <Button
                   onClick={handleAddWebhook}
-                  disabled={!webhookUrl.trim()}
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground flex-shrink-0"
+                  variant="outline"
+                  size="sm"
+                  disabled={!webhookUrl.trim() || webhookCount >= MAX_WEBHOOKS}
+                  className="w-full border-accent/50 text-accent hover:bg-accent/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t("reminderCreation.destinations.addWebhook")}
                 </Button>
               </div>
             </div>
           </Card>
         </div>
       )}
+
+      {/* Discord Guild Selection Modal */}
+      <DiscordGuildSelectionModal
+        open={isGuildModalOpen}
+        onOpenChange={setIsGuildModalOpen}
+        onConfirm={handleGuildModalConfirm}
+      />
     </div>
   );
 }

@@ -178,6 +178,13 @@
       "webhook": "Webhook",
       "webhookDesc": "Send to a custom webhook URL",
       "webhookPlaceholder": "https://your-webhook-url.com",
+      "webhookUsername": "Username (optional)",
+      "webhookPlatforms": {
+        "generic": "Generic Webhook",
+        "discord": "Discord Webhook",
+        "slack": "Slack Webhook"
+      },
+      "addWebhook": "Add Webhook",
       "guildId": "Guild ID",
       "channelId": "Channel ID",
       "sendAsDM": "Send as DM to your Discord account",
@@ -207,6 +214,28 @@
     "errors": {
       "failed": "Failed to create reminder. Please try again.",
       "selectDate": "Please select a date"
+    },
+    "discord": {
+      "selectGuild": "Select Discord Server",
+      "selectGuildDescription": "Choose the Discord server where you want to send reminders",
+      "selectGuildPlaceholder": "Select a server...",
+      "selectChannel": "Select Channel",
+      "selectChannelDescription": "Choose the channel for your reminders",
+      "selectChannelPlaceholder": "Select a channel...",
+      "selectRole": "Select Role (Optional)",
+      "selectRoleDescription": "Optionally select a role to mention in the reminder",
+      "selectRolePlaceholder": "Select a role...",
+      "guild": "Server",
+      "channel": "Channel",
+      "role": "Role",
+      "optional": "optional",
+      "selectedGuild": "Selected server",
+      "selectedChannel": "Selected channel",
+      "botNotInGuild": "The bot is not in this server. Please invite the bot first to send reminders to this server.",
+      "inviteBot": "Invite Bot to Server",
+      "skipRole": "Skip Role",
+      "addRole": "Add Role",
+      "confirm": "Confirm"
     }
   },
   "reminderDetails": {

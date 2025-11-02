@@ -183,22 +183,64 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Process destinations (for now, only discord_dm, skip others)
+	// Process destinations
 	var destinations []interface{}
 	for _, dest := range req.Destinations {
 		destType := models.DestinationType(dest.Type)
 
-		// Skip unsupported destination types for now
-		if destType != models.DestinationDiscordDM {
+		// Validate destination type
+		if !destType.IsValid() {
 			continue
 		}
 
-		// Validate discord_dm destination
+		// Handle discord_dm destination
 		if destType == models.DestinationDiscordDM {
+			// If user_id not provided, get it from the Discord identity
 			if _, exists := dest.Metadata["user_id"]; !exists {
-				// If user_id not provided, use the authenticated user's ID from the Discord identity
-				// For now, we'll skip this destination
+				account, err := h.accountRepo.GetWithIdentities(accountID)
+				if err == nil && account != nil {
+					for _, identity := range account.Identities {
+						if identity.Provider == "discord" {
+							dest.Metadata["user_id"] = identity.ExternalID
+							break
+						}
+					}
+				}
+				// Skip if still no user_id
+				if _, exists := dest.Metadata["user_id"]; !exists {
+					continue
+				}
+			}
+		}
+
+		// Handle discord_channel destination
+		if destType == models.DestinationDiscordChannel {
+			// Validate required fields
+			if _, hasGuild := dest.Metadata["guild_id"]; !hasGuild {
 				continue
+			}
+			if _, hasChannel := dest.Metadata["channel_id"]; !hasChannel {
+				continue
+			}
+			// mention_role_id is optional
+		}
+
+		// Handle webhook destination
+		if destType == models.DestinationWebhook {
+			// Validate required fields
+			if _, hasURL := dest.Metadata["url"]; !hasURL {
+				continue
+			}
+			
+			// Validate optional platform field
+			if platformVal, exists := dest.Metadata["platform"]; exists {
+				if platformStr, ok := platformVal.(string); ok {
+					platform := models.WebhookPlatform(platformStr)
+					if !platform.IsValid() {
+						// Invalid platform, skip this destination
+						continue
+					}
+				}
 			}
 		}
 
@@ -211,6 +253,7 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 
 		if err := h.reminderDestinationRepo.Create(reminderDest); err != nil {
 			// Log error but continue - don't fail the entire operation
+			fmt.Printf("[CREATE_REMINDER] Failed to create destination: %v\n", err)
 			continue
 		}
 

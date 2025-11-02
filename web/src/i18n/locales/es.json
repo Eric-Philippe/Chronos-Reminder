@@ -172,15 +172,22 @@
       "addedDestinations": "Destinos Añadidos",
       "addDestination": "Añadir Destino",
       "discordDM": "Mensaje Directo de Discord",
-      "discordDMDesc": "El recordatorio será enviado como MD",
-      "discordGuild": "Servidor de Gremio Discord",
-      "discordGuildDesc": "Enviar a un canal de gremio Discord",
+      "discordDMDesc": "El recordatorio se enviará como DM",
+      "discordGuild": "Servidor de Discord",
+      "discordGuildDesc": "Enviar a un canal de servidor de Discord",
       "webhook": "Webhook",
-      "webhookDesc": "Enviar a una URL de webhook personalizada",
-      "webhookPlaceholder": "https://tu-webhook-url.com",
-      "guildId": "ID del Gremio",
+      "webhookDesc": "Enviar a una URL webhook personalizada",
+      "webhookPlaceholder": "https://tu-url-webhook.com",
+      "webhookUsername": "Nombre de usuario (opcional)",
+      "webhookPlatforms": {
+        "generic": "Webhook Genérico",
+        "discord": "Webhook de Discord",
+        "slack": "Webhook de Slack"
+      },
+      "addWebhook": "Añadir Webhook",
+      "guildId": "ID del Servidor",
       "channelId": "ID del Canal",
-      "sendAsDM": "Enviar como MD a tu cuenta de Discord",
+      "sendAsDM": "Enviar como DM a tu cuenta de Discord",
       "connectDiscordFirst": "Conecta primero tu cuenta de Discord"
     },
     "review": {
@@ -207,6 +214,28 @@
     "errors": {
       "failed": "Error al crear el recordatorio. Por favor, inténtalo de nuevo.",
       "selectDate": "Por favor, selecciona una fecha"
+    },
+    "discord": {
+      "selectGuild": "Seleccionar Servidor de Discord",
+      "selectGuildDescription": "Elige el servidor de Discord donde quieres enviar recordatorios",
+      "selectGuildPlaceholder": "Seleccionar un servidor...",
+      "selectChannel": "Seleccionar Canal",
+      "selectChannelDescription": "Elige el canal para tus recordatorios",
+      "selectChannelPlaceholder": "Seleccionar un canal...",
+      "selectRole": "Seleccionar Rol (Opcional)",
+      "selectRoleDescription": "Opcionalmente selecciona un rol para mencionar en el recordatorio",
+      "selectRolePlaceholder": "Seleccionar un rol...",
+      "guild": "Servidor",
+      "channel": "Canal",
+      "role": "Rol",
+      "optional": "opcional",
+      "selectedGuild": "Servidor seleccionado",
+      "selectedChannel": "Canal seleccionado",
+      "botNotInGuild": "El bot no está en este servidor. Por favor, invita al bot primero para enviar recordatorios a este servidor.",
+      "inviteBot": "Invitar Bot al Servidor",
+      "skipRole": "Omitir Rol",
+      "addRole": "Añadir Rol",
+      "confirm": "Confirmar"
     }
   },
   "reminderDetails": {
