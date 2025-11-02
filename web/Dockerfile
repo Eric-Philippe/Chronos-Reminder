@@ -3,6 +3,12 @@ FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
+# Allow injecting build-time variables (e.g. VITE_API_URL) via build-args
+ARG NODE_ENV=production
+ARG VITE_API_URL
+ENV NODE_ENV=${NODE_ENV}
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Copy package files
 COPY package.json bun.lockb* ./
 
