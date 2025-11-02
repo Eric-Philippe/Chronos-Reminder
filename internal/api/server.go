@@ -60,6 +60,8 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		repos.ReminderDestination,
 		repos.ReminderError,
 	)
+	reminderHandler.SetAccountRepository(repos.Account)
+	reminderHandler.SetTimezoneRepository(repos.Timezone)
 
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()

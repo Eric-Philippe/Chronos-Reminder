@@ -35,6 +35,26 @@ export function getRecurrenceTypeI18nKey(recurrenceType: number): string {
 }
 
 /**
+ * Gets the i18n translation key for a recurrence type from string
+ * Maps uppercase recurrence names to i18n keys
+ */
+export function getRecurrenceTypeI18nKeyFromString(
+  recurrenceType: string
+): string {
+  const keys: Record<string, string> = {
+    ONCE: "recurrence.once",
+    YEARLY: "recurrence.yearly",
+    MONTHLY: "recurrence.monthly",
+    WEEKLY: "recurrence.weekly",
+    DAILY: "recurrence.daily",
+    HOURLY: "recurrence.hourly",
+    WORKDAYS: "recurrence.workdays",
+    WEEKEND: "recurrence.weekend",
+  };
+  return keys[recurrenceType.toUpperCase()] || "recurrence.unknown";
+}
+
+/**
  * Gets the label for a recurrence type (fallback, non-translated)
  * Prefer using getRecurrenceTypeI18nKey with useTranslation() for translated labels
  */

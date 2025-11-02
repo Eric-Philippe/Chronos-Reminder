@@ -2,8 +2,6 @@
 
 ## Fixes
 
-- [ ] (WebApp) On reminder detail display, the time is not correct
-
 ## Database
 
 - [ ] Add a `last_notified_at` column to the `reminders` table to store the last time a reminder was sent

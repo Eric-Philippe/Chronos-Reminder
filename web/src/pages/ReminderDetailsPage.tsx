@@ -25,7 +25,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { getRecurrenceTypeI18nKey } from "@/lib/recurrenceUtils";
+import { getRecurrenceTypeI18nKeyFromString } from "@/lib/recurrenceUtils";
 import type { Reminder } from "@/services";
 import { remindersService } from "@/services/reminders";
 import { accountService } from "@/services/account";
@@ -33,9 +33,9 @@ import { Footer } from "@/components/common/footer";
 
 interface EditableReminderData {
   message: string;
-  date: Date;
-  time: string;
-  recurrence: number;
+  date: string; // Store as YYYY-MM-DD string
+  time: string; // Store as HH:mm string
+  recurrence: string; // Store as uppercase string (e.g., "DAILY")
   destinations: PickerDestination[];
 }
 
@@ -51,9 +51,9 @@ export function ReminderDetailsPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [editData, setEditData] = useState<EditableReminderData>({
     message: "",
-    date: new Date(),
+    date: "",
     time: "10:00",
-    recurrence: 0,
+    recurrence: "ONCE",
     destinations: [],
   });
 
@@ -114,13 +114,11 @@ export function ReminderDetailsPage() {
         }, {} as Record<string, string>);
 
         const userTime = `${timeParts.hour}:${timeParts.minute}`;
-        const userDate = new Date(
-          `${timeParts.year}-${timeParts.month}-${timeParts.day}T${timeParts.hour}:${timeParts.minute}:${timeParts.second}`
-        );
+        const userDateString = `${timeParts.year}-${timeParts.month}-${timeParts.day}`;
 
         setEditData({
           message: data.message,
-          date: userDate,
+          date: userDateString,
           time: userTime,
           recurrence: data.recurrence_type,
           destinations: convertToPickerDestinations(data.destinations),
@@ -138,8 +136,8 @@ export function ReminderDetailsPage() {
   }, [reminderId, navigate]);
 
   const handleEditToggle = () => {
-    if (isEditing && reminder) {
-      // Discard changes - reset to original data
+    if (!isEditing && reminder) {
+      // Entering edit mode - initialize editData with current reminder data
       const convertToPickerDestinations = (
         destinations: typeof reminder.destinations
       ): PickerDestination[] => {
@@ -171,13 +169,11 @@ export function ReminderDetailsPage() {
       }, {} as Record<string, string>);
 
       const userTime = `${timeParts.hour}:${timeParts.minute}`;
-      const userDate = new Date(
-        `${timeParts.year}-${timeParts.month}-${timeParts.day}T${userTime}:${timeParts.second}`
-      );
+      const userDateString = `${timeParts.year}-${timeParts.month}-${timeParts.day}`;
 
       setEditData({
         message: reminder.message,
-        date: userDate,
+        date: userDateString,
         time: userTime,
         recurrence: reminder.recurrence_type,
         destinations: convertToPickerDestinations(reminder.destinations),
@@ -190,10 +186,9 @@ export function ReminderDetailsPage() {
     if (!reminder || !reminderId) return;
 
     try {
-      const dateStr = editData.date.toISOString().split("T")[0];
       await remindersService.updateReminder(reminderId, {
         message: editData.message,
-        date: dateStr,
+        date: editData.date,
         time: editData.time,
         recurrence: editData.recurrence,
         destinations: editData.destinations.map((d) => ({
@@ -503,22 +498,20 @@ export function ReminderDetailsPage() {
                   {isEditing ? (
                     <input
                       type="date"
-                      value={
-                        editData.date
-                          ? editData.date.toISOString().split("T")[0]
-                          : ""
-                      }
+                      value={editData.date}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
-                          date: new Date(e.target.value),
+                          date: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
                     />
                   ) : (
                     <p className="text-lg font-semibold text-foreground">
-                      {formatDisplayDate(editData.date)}
+                      {editData.date
+                        ? formatDisplayDate(new Date(editData.date))
+                        : "N/A"}
                     </p>
                   )}
                 </CardContent>
@@ -577,30 +570,29 @@ export function ReminderDetailsPage() {
 
                 {isEditing ? (
                   <div className="grid grid-cols-2 gap-2">
-                    {/* Recurrence options would go here - simplified for now */}
                     <select
                       value={editData.recurrence}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
-                          recurrence: Number(e.target.value),
+                          recurrence: e.target.value,
                         })
                       }
                       className="col-span-2 px-3 py-2 rounded border border-border bg-background text-foreground"
                     >
-                      <option value={0}>Once</option>
-                      <option value={1}>Daily</option>
-                      <option value={2}>Weekly</option>
-                      <option value={3}>Monthly</option>
-                      <option value={4}>Yearly</option>
-                      <option value={5}>Hourly</option>
-                      <option value={6}>Workdays</option>
-                      <option value={7}>Weekend</option>
+                      <option value="ONCE">Once</option>
+                      <option value="YEARLY">Yearly</option>
+                      <option value="MONTHLY">Monthly</option>
+                      <option value="WEEKLY">Weekly</option>
+                      <option value="DAILY">Daily</option>
+                      <option value="HOURLY">Hourly</option>
+                      <option value="WORKDAYS">Workdays</option>
+                      <option value="WEEKEND">Weekend</option>
                     </select>
                   </div>
                 ) : (
                   <p className="text-lg font-semibold text-foreground">
-                    {t(getRecurrenceTypeI18nKey(reminder.recurrence_type))}
+                    {t(getRecurrenceTypeI18nKeyFromString(editData.recurrence))}
                   </p>
                 )}
               </CardContent>

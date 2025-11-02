@@ -59,7 +59,7 @@ export interface Reminder {
   next_fire_utc?: string | null;
   message: string;
   created_at: string;
-  recurrence_type: number;
+  recurrence_type: string; // Stored as uppercase string (e.g., "DAILY")
   is_paused: boolean;
   destinations?: ReminderDestination[];
 }

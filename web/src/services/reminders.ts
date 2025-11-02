@@ -14,7 +14,7 @@ import type {
 class RemindersService {
   /**
    * Normalize reminder data from API response
-   * Ensures all date fields are strings and handles new recurrence_type/is_paused fields
+   * Ensures all date fields are strings and keeps recurrence_type as uppercase string
    */
   private normalizeReminder(
     reminder: Record<string, unknown> & Partial<Reminder>
@@ -31,9 +31,7 @@ class RemindersService {
         : null,
       message: String(reminder.message || ""),
       created_at: String(reminder.created_at || ""),
-      recurrence_type: Number(
-        reminder.recurrence_type ?? reminder.recurrence ?? 0
-      ),
+      recurrence_type: String(reminder.recurrence_type || "ONCE"),
       is_paused: Boolean(reminder.is_paused || false),
       destinations: Array.isArray(reminder.destinations)
         ? reminder.destinations
@@ -113,7 +111,7 @@ class RemindersService {
     date: string; // ISO 8601 date format
     time: string; // HH:mm format
     message: string;
-    recurrence: number;
+    recurrence: string; // Uppercase string (e.g., "DAILY")
     destinations: Array<{
       type: "discord_dm" | "discord_channel" | "webhook";
       metadata: Record<string, unknown>;
@@ -143,7 +141,7 @@ class RemindersService {
       message?: string;
       date?: string;
       time?: string;
-      recurrence?: number;
+      recurrence?: string; // Uppercase string (e.g., "DAILY")
       destinations?: Array<{
         type: "discord_dm" | "discord_channel" | "webhook";
         metadata: Record<string, unknown>;

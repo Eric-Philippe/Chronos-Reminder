@@ -7,14 +7,17 @@ import (
 
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
+	"github.com/ericp/chronos-bot-reminder/internal/services"
 	"github.com/google/uuid"
 )
 
 // ReminderHandler handles reminder-related HTTP requests
 type ReminderHandler struct {
-	reminderRepo    repositories.ReminderRepository
-	destinationRepo repositories.ReminderDestinationRepository
+	reminderRepo      repositories.ReminderRepository
+	destinationRepo   repositories.ReminderDestinationRepository
 	reminderErrorRepo repositories.ReminderErrorRepository
+	accountRepo       repositories.AccountRepository
+	timezoneRepo      repositories.TimezoneRepository
 }
 
 // NewReminderHandler creates a new reminder handler
@@ -28,6 +31,16 @@ func NewReminderHandler(
 		destinationRepo:   destinationRepo,
 		reminderErrorRepo: reminderErrorRepo,
 	}
+}
+
+// SetAccountRepository sets the account repository
+func (h *ReminderHandler) SetAccountRepository(repo repositories.AccountRepository) {
+	h.accountRepo = repo
+}
+
+// SetTimezoneRepository sets the timezone repository
+func (h *ReminderHandler) SetTimezoneRepository(repo repositories.TimezoneRepository) {
+	h.timezoneRepo = repo
 }
 
 // GetReminder retrieves a single reminder by ID
@@ -78,12 +91,29 @@ func (h *ReminderHandler) UpdateReminder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Fetch account with timezone for date/time conversion
+	account, err := h.accountRepo.GetWithTimezone(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	if account.Timezone == nil {
+		WriteError(w, http.StatusBadRequest, "Account timezone not set")
+		return
+	}
+
 	// Parse request body
 	var updateData struct {
-		Message      string `json:"message"`
-		Date         string `json:"date"`
-		Time         string `json:"time"`
-		Recurrence   int    `json:"recurrence"`
+		Message      string          `json:"message"`
+		Date         string          `json:"date"`
+		Time         string          `json:"time"`
+		Recurrence   json.RawMessage `json:"recurrence"`
 		Destinations []struct {
 			Type     string                 `json:"type"`
 			Metadata map[string]interface{} `json:"metadata"`
@@ -101,17 +131,41 @@ func (h *ReminderHandler) UpdateReminder(w http.ResponseWriter, r *http.Request)
 	}
 
 	if updateData.Date != "" && updateData.Time != "" {
-		remindAtUTC, err := time.Parse(time.RFC3339, updateData.Date+"T"+updateData.Time+":00Z")
+		// Parse the reminder date and time in user's timezone (same as CreateReminder)
+		parsedTime, err := services.ParseReminderDateTimeInTimezone(updateData.Date, updateData.Time, account.Timezone.IANALocation)
 		if err != nil {
 			WriteError(w, http.StatusBadRequest, "Invalid date/time format")
 			return
 		}
-		reminder.RemindAtUTC = remindAtUTC
-		reminder.NextFireUTC = &remindAtUTC
+		reminder.RemindAtUTC = parsedTime.UTC()
+		reminder.NextFireUTC = &parsedTime
 	}
 
-	if updateData.Recurrence >= 0 {
-		reminder.Recurrence = int16(updateData.Recurrence)
+	// Handle recurrence - can be string or int
+	if len(updateData.Recurrence) > 0 {
+		var recurrenceValue int
+
+		// Try to parse as string first (new format: "DAILY", "WEEKLY", etc.)
+		var recurrenceStr string
+		if err := json.Unmarshal(updateData.Recurrence, &recurrenceStr); err == nil {
+			// It's a string, convert using the map
+			if val, exists := services.RecurrenceTypeMap[recurrenceStr]; exists {
+				recurrenceValue = val
+			} else {
+				WriteError(w, http.StatusBadRequest, "Invalid recurrence type")
+				return
+			}
+		} else {
+			// Try to parse as int (legacy format)
+			if err := json.Unmarshal(updateData.Recurrence, &recurrenceValue); err != nil {
+				WriteError(w, http.StatusBadRequest, "Invalid recurrence format")
+				return
+			}
+		}
+
+		if recurrenceValue >= 0 {
+			reminder.Recurrence = int16(recurrenceValue)
+		}
 	}
 
 	// Update destinations if provided

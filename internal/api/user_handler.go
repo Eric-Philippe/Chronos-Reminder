@@ -34,7 +34,7 @@ type CreateReminderResponse struct {
 	ID              uuid.UUID         `json:"id"`
 	Message         string            `json:"message"`
 	RemindAtUTC     time.Time         `json:"remind_at_utc"`
-	RecurrenceType  int               `json:"recurrence_type"`
+	RecurrenceType  string            `json:"recurrence_type"`
 	IsPaused        bool              `json:"is_paused"`
 	Destinations    []interface{}     `json:"destinations"`
 }
@@ -48,13 +48,14 @@ type ReminderResponse struct {
 	NextFireUTC     *time.Time             `json:"next_fire_utc,omitempty"`
 	Message         string                 `json:"message"`
 	CreatedAt       time.Time              `json:"created_at"`
-	RecurrenceType  int                    `json:"recurrence_type"`
+	RecurrenceType  string                 `json:"recurrence_type"`
 	IsPaused        bool                   `json:"is_paused"`
 	Destinations    []models.ReminderDestination `json:"destinations,omitempty"`
 }
 
 // ToReminderResponse converts a Reminder model to ReminderResponse with decoded recurrence
 func ToReminderResponse(reminder *models.Reminder) *ReminderResponse {
+	recurrenceType := services.GetRecurrenceType(int(reminder.Recurrence))
 	return &ReminderResponse{
 		ID:             reminder.ID,
 		AccountID:      reminder.AccountID,
@@ -63,7 +64,7 @@ func ToReminderResponse(reminder *models.Reminder) *ReminderResponse {
 		NextFireUTC:    reminder.NextFireUTC,
 		Message:        reminder.Message,
 		CreatedAt:      reminder.CreatedAt,
-		RecurrenceType: services.GetRecurrenceType(int(reminder.Recurrence)),
+		RecurrenceType: services.GetRecurrenceTypeName(recurrenceType),
 		IsPaused:       services.IsPaused(int(reminder.Recurrence)),
 		Destinations:   reminder.Destinations,
 	}
@@ -305,7 +306,7 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 		ID:             reminder.ID,
 		Message:        reminder.Message,
 		RemindAtUTC:    reminder.RemindAtUTC,
-		RecurrenceType: recurrenceType,
+		RecurrenceType: services.GetRecurrenceTypeName(recurrenceType),
 		IsPaused:       isPaused,
 		Destinations:   destinations,
 	}
