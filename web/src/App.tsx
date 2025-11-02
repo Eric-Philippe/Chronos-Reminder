@@ -16,6 +16,14 @@ import "./i18n/config";
 function AppRoutes() {
   const { isAuthenticated, isCheckingAuth } = useAuth();
 
+  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
+  const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
+  const API_URL = import.meta.env.VITE_API_URL || "https://api.chronosrmdr.com";
+
+  console.log("API URL:", API_URL);
+  console.log("DISCORD CLIENT ID:", clientId);
+  console.log("DISCORD REDIRECT URI:", redirectUri);
+
   // Don't render routes while checking initial auth status
   // isCheckingAuth is only true during the initial mount auth check
   if (isCheckingAuth) {
