@@ -3,14 +3,6 @@ FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
-# Accept build arguments for environment configuration
-ARG VITE_API_URL=http://localhost:8080
-ARG NODE_ENV=production
-
-# Set environment variables for build
-ENV VITE_API_URL=$VITE_API_URL
-ENV NODE_ENV=$NODE_ENV
-
 # Copy package files
 COPY package.json bun.lockb* ./
 
@@ -44,6 +36,8 @@ RUN mv /etc/nginx/conf.d/default.conf.template /etc/nginx/conf.d/default.conf &&
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check - using 127.0.0.1 instead of localhost to avoid IPv6 issues
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
