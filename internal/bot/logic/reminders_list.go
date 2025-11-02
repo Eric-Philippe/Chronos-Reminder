@@ -3,11 +3,13 @@ package logic
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
+	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
 
 
@@ -94,6 +96,9 @@ func BuildRemindersListEmbed(reminders []*models.Reminder, page, total int) *dis
 	for i, reminder := range reminders {
 		// Status emoji
 		statusEmoji := "✅"
+		if services.IsPaused(int(reminder.Recurrence)) {
+			statusEmoji = "⏸️"
+		}
 
 		// Truncate message if too long
 		message := reminder.Message
@@ -103,9 +108,19 @@ func BuildRemindersListEmbed(reminders []*models.Reminder, page, total int) *dis
 
 		description.WriteString(fmt.Sprintf("%s **%d.** %s\n", statusEmoji, i+1, message))
 		
-		// Add schedule info - adjust field name based on actual model
-		// For now, assume it's a one-time reminder
-		description.WriteString("    🕐 One-time reminder\n")
+		// Add schedule info with correct recurrence type
+		recurrenceType := services.GetRecurrenceType(int(reminder.Recurrence))
+		recurrenceLabel := services.GetRecurrenceTypeLabel(recurrenceType)
+		description.WriteString(fmt.Sprintf("    🕐 %s\n", recurrenceLabel))
+		
+		// Add time in user's timezone
+		if reminder.Account != nil && reminder.Account.Timezone != nil {
+			loc, err := time.LoadLocation(reminder.Account.Timezone.IANALocation)
+			if err == nil {
+				userTime := reminder.RemindAtUTC.In(loc)
+				description.WriteString(fmt.Sprintf("    � %s\n", userTime.Format("Jan 02, 15:04 MST")))
+			}
+		}
 		
 		description.WriteString("\n")
 	}

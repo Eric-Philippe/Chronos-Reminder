@@ -106,3 +106,8 @@ func SetExpireCache(key string, expiration time.Duration) error {
 func CloseRedis() error {
 	return RedisClient.Close()
 }
+
+// FlushCache flushes all keys from the current Redis database
+func FlushCache() error {
+	return RedisClient.FlushDB(redisCtx).Err()
+}

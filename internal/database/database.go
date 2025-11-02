@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	appConfig "github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
 	"gorm.io/driver/postgres"
@@ -38,6 +39,15 @@ func Initialize() error {
 	// Initialize Redis connection
 	if err := InitializeRedis(); err != nil {
 		return fmt.Errorf("failed to initialize Redis: %w", err)
+	}
+
+	// Flush cache in development mode to avoid stale data after restarts
+	if appConfig.IsDebugMode() {
+		if err := FlushCache(); err != nil {
+			log.Printf("[REDIS] - ⚠️ Failed to flush cache: %v", err)
+		} else {
+			log.Println("[REDIS] - ✅ Cache flushed in development mode")
+		}
 	}
 
 	// Run auto migrations
