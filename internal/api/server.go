@@ -91,7 +91,7 @@ func registerSwaggerRoutes(mux *WrappedMux) {
 
 	// Swagger UI handler - handles all swagger UI requests including assets
 	swaggerHandler := httpSwagger.Handler(
-		httpSwagger.URL("https://api.chronosrmdr.com/swagger/doc.json"),
+		httpSwagger.URL("https://api.chronosrmd.com/swagger/doc.json"),
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	)
 

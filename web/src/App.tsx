@@ -18,7 +18,7 @@ function AppRoutes() {
 
   const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
   const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
-  const API_URL = import.meta.env.VITE_API_URL || "https://api.chronosrmdr.com";
+  const API_URL = import.meta.env.VITE_API_URL || "https://api.chronosrmd.com";
 
   console.log("API URL:", API_URL);
   console.log("DISCORD CLIENT ID:", clientId);
