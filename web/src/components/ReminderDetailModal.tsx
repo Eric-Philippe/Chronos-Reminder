@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { remindersService } from "@/services";
 import type { Reminder } from "@/services";
-import { getRecurrenceTypeI18nKey } from "@/lib/recurrenceUtils";
+import { getRecurrenceTypeI18nKeyFromString } from "@/lib/recurrenceUtils";
 
 interface ReminderDetailModalProps {
   isOpen: boolean;
@@ -125,7 +125,7 @@ export function ReminderDetailModal({
                         <div className="flex items-center gap-2">
                           <span className="inline-block px-2 py-1 rounded bg-accent/10 text-accent">
                             {t(
-                              getRecurrenceTypeI18nKey(reminder.recurrence_type)
+                              getRecurrenceTypeI18nKeyFromString(reminder.recurrence_type)
                             )}
                           </span>
                           {reminder.is_paused && (
