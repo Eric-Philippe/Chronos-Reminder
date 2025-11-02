@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import type { ReminderFormData } from "@/pages/CreateReminderPage";
 import { useTranslation } from "react-i18next";
 import {
-  RecurrenceDaily,
-  RecurrenceHourly,
-  RecurrenceMonthly,
-  RecurrenceOnce,
-  RecurrenceWorkdays,
-  RecurrenceWeekend,
-  RecurrenceWeekly,
-  RecurrenceYearly,
-  getRecurrenceTypeI18nKey,
+  RecurrenceDailyStr,
+  RecurrenceHourlyStr,
+  RecurrenceMonthlyStr,
+  RecurrenceOnceStr,
+  RecurrenceWorkdaysStr,
+  RecurrenceWeekendStr,
+  RecurrenceWeeklyStr,
+  RecurrenceYearlyStr,
+  getRecurrenceTypeI18nKeyFromString,
 } from "@/lib/recurrenceUtils";
 
 interface ReminderDetailsStepProps {
@@ -39,42 +39,42 @@ export function ReminderDetailsStep({
     onFormChange({ ...formData, message: e.target.value });
   };
 
-  const handleRecurrenceChange = (recurrence: number) => {
+  const handleRecurrenceChange = (recurrence: string) => {
     onFormChange({ ...formData, recurrence });
   };
 
   const recurrenceOptions = [
     {
-      value: RecurrenceOnce,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceOnce)),
+      value: RecurrenceOnceStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceOnceStr)),
     },
     {
-      value: RecurrenceDaily,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceDaily)),
+      value: RecurrenceDailyStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceDailyStr)),
     },
     {
-      value: RecurrenceWeekly,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceWeekly)),
+      value: RecurrenceWeeklyStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceWeeklyStr)),
     },
     {
-      value: RecurrenceMonthly,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceMonthly)),
+      value: RecurrenceMonthlyStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceMonthlyStr)),
     },
     {
-      value: RecurrenceYearly,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceYearly)),
+      value: RecurrenceYearlyStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceYearlyStr)),
     },
     {
-      value: RecurrenceHourly,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceHourly)),
+      value: RecurrenceHourlyStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceHourlyStr)),
     },
     {
-      value: RecurrenceWorkdays,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceWorkdays)),
+      value: RecurrenceWorkdaysStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceWorkdaysStr)),
     },
     {
-      value: RecurrenceWeekend,
-      label: t(getRecurrenceTypeI18nKey(RecurrenceWeekend)),
+      value: RecurrenceWeekendStr,
+      label: t(getRecurrenceTypeI18nKeyFromString(RecurrenceWeekendStr)),
     },
   ];
 

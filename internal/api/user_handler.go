@@ -16,10 +16,10 @@ import (
 
 // CreateReminderRequest represents the request body for creating a reminder
 type CreateReminderRequest struct {
-	Date         string                       `json:"date"`         // ISO 8601 date format
-	Time         string                       `json:"time"`         // HH:mm format
-	Message      string                       `json:"message"`
-	Recurrence   int16                        `json:"recurrence"`
+	Date         string          `json:"date"`         // ISO 8601 date format
+	Time         string          `json:"time"`         // HH:mm format
+	Message      string          `json:"message"`
+	Recurrence   json.RawMessage `json:"recurrence"`   // Can be string ("DAILY") or int (4)
 	Destinations []CreateDestinationRequest   `json:"destinations"`
 }
 
@@ -182,12 +182,35 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Handle recurrence - can be string or int
+	var recurrenceValue int16
+	if len(req.Recurrence) > 0 {
+		var recurrenceStr string
+		if err := json.Unmarshal(req.Recurrence, &recurrenceStr); err == nil {
+			// It's a string, convert using the map
+			if val, exists := services.RecurrenceTypeMap[recurrenceStr]; exists {
+				recurrenceValue = int16(val)
+			} else {
+				WriteError(w, http.StatusBadRequest, "Invalid recurrence type")
+				return
+			}
+		} else {
+			// Try to parse as int (legacy format)
+			var recurrenceInt int
+			if err := json.Unmarshal(req.Recurrence, &recurrenceInt); err != nil {
+				WriteError(w, http.StatusBadRequest, "Invalid recurrence format")
+				return
+			}
+			recurrenceValue = int16(recurrenceInt)
+		}
+	}
+
 	// Create the reminder with UTC time
 	reminder := &models.Reminder{
 		AccountID:   accountID,
 		RemindAtUTC: parsedTime.UTC(),
 		Message:     req.Message,
-		Recurrence:  req.Recurrence,
+		Recurrence:  recurrenceValue,
 	}
 
 	// Save the reminder to database

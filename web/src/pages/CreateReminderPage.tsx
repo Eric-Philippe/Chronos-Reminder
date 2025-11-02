@@ -15,7 +15,10 @@ import { useTranslation } from "react-i18next";
 import { ReminderDetailsStep } from "@/components/reminder-wizard/ReminderDetailsStep";
 import { DestinationsStep } from "@/components/reminder-wizard/DestinationsStep";
 import { remindersService } from "@/services";
-import { getRecurrenceTypeI18nKey } from "@/lib/recurrenceUtils";
+import {
+  getRecurrenceTypeI18nKeyFromString,
+  RecurrenceOnceStr,
+} from "@/lib/recurrenceUtils";
 
 export type ReminderStep = "details" | "destinations" | "review";
 
@@ -23,7 +26,7 @@ export interface ReminderFormData {
   date: Date | null;
   time: string; // HH:mm format
   message: string;
-  recurrence: number;
+  recurrence: string; // Uppercase string (e.g., "DAILY", "WEEKLY")
   destinations: Array<{
     type: "discord_dm" | "discord_channel" | "webhook";
     metadata: Record<string, unknown>;
@@ -45,7 +48,7 @@ export function CreateReminderPage() {
       date: now,
       time: `${hours}:${minutes}`,
       message: "",
-      recurrence: 0, // RecurrenceOnce
+      recurrence: RecurrenceOnceStr,
       destinations: [],
     };
   };
@@ -245,7 +248,11 @@ export function CreateReminderPage() {
                         {t("reminderCreation.review.recurrence")}
                       </p>
                       <p className="text-foreground font-semibold">
-                        {t(getRecurrenceTypeI18nKey(formData.recurrence))}
+                        {t(
+                          getRecurrenceTypeI18nKeyFromString(
+                            formData.recurrence
+                          )
+                        )}
                       </p>
                     </div>
 

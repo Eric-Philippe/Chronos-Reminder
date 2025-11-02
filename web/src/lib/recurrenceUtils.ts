@@ -6,7 +6,7 @@
  * These constants represent only the recurrence type values (0-7).
  */
 
-// Recurrence type constants
+// Numeric recurrence type constants (kept for backward compatibility)
 export const RecurrenceOnce = 0;
 export const RecurrenceYearly = 1;
 export const RecurrenceMonthly = 2;
@@ -15,6 +15,16 @@ export const RecurrenceDaily = 4;
 export const RecurrenceHourly = 5;
 export const RecurrenceWorkdays = 6;
 export const RecurrenceWeekend = 7;
+
+// String recurrence type constants (preferred for API and new code)
+export const RecurrenceOnceStr = "ONCE";
+export const RecurrenceYearlyStr = "YEARLY";
+export const RecurrenceMonthlyStr = "MONTHLY";
+export const RecurrenceWeeklyStr = "WEEKLY";
+export const RecurrenceDailyStr = "DAILY";
+export const RecurrenceHourlyStr = "HOURLY";
+export const RecurrenceWorkdaysStr = "WORKDAYS";
+export const RecurrenceWeekendStr = "WEEKEND";
 
 /**
  * Gets the i18n translation key for a recurrence type label
