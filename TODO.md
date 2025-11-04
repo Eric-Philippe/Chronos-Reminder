@@ -12,51 +12,42 @@
 - [ ] Test behavior when the bot can't send the reminder DM/CHANNEL (user blocked the bot, user left the server, bot kicked from the server, no permission to send messages in the channel...)
 - [ ] Prevent snoozing a reminder after its next recurrence time
 - [ ] Add emote support in reminders display
+- [ ] Add embed footer with the webapp link
 
 ## Server API
 
 - [ ] Create API endpoints for the web application to interact with the reminder engine
 - [ ] API Key for third-party integrations (As a new identity)
+- [ ] Add mailing system for account verification and password reset
 
 ## Web Application
 
-### Reminders Management
-
-#### Main Dashboard
+### Dashboard
 
 - [ ] List view
 - - [ ] Pagination
 - - [ ] Search and filter reminders
+- [ ] Put reminders first on smaller screens (mobile)
 
-#### Reminder CRUD
+#### Create new Reminder Page
 
 - [ ] When creating a reminder, all the date/time inputs should use the user's timezones
 - [ ] Prevent user from creating a reminder in the past
 
-### Account Management
-
-- [ ] Profile Page
-- - [ ] View and edit user information
-- - [ ] Change timezone preferences
-
-### Main "Vitrine" Page
+### Home
 
 - [ ] Add more information about the service and its features
 - [ ] Add screenshots or demo videos of the web application and Discord bot
 
-### Installation Guide
+### Help
 
-- [ ] Basic documentation on how to use Chronos
-- [ ] Create a detailed installation guide for self-hosting the Chronos system
-
-### Settings and preferences
-
-- [ ] Integrations management page
-- [ ] Delete account
-
-### Contact and Support
-
-- [ ] Create a contact form for user support and feedback
+- [ ] Dropdown menu
+- - [ ] Use Chronos Bot
+- - [ ] Use Web Application
+- - [ ] Use API Key
+- - [ ] Self-hosting guide
+- - [ ] Contact support and Feedback
+- - [ ] What's New
 
 ### Authentication
 
@@ -64,7 +55,7 @@
 
 ### Layout
 
-- [ ] Add proper footer links and information
+- [ ] Add proper footer links and information, github, version, privacy policy, terms of service...
 
 ## Reminder engine
 
@@ -75,11 +66,12 @@
 
 ## System
 
+- [ ] Should log all the errors/exceptions to a logging system
 - [ ] Better CI/CD pipeline
 - - [ ] Add unit and integration tests
 - - [ ] Add code linting and formatting checks
-- - [ ] Better handling CI/CD (Only when touching the web/ folder then build/deploy the web app, only when touching the bot/ folder then build/deploy the bot...)
 - [ ] Make a migration script from Kairos to Chronos
+- [ ] Backup the database regularly
 
 ## 1.0 Launch
 

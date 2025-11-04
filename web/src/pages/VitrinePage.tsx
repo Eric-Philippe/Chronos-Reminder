@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/common/header";
 import { Button } from "@/components/ui/button";
+import { Hourglass3D } from "@/components/Hourglass3D";
 
 export function VitrinePage() {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export function VitrinePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden pt-12 pb-20 px-4 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden pt-4 pb-40 px-4 sm:px-6 lg:px-8">
           {/* Decorative Background Elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-20 right-10 w-72 h-72 bg-accent/10 rounded-full blur-3xl dark:bg-accent/5"></div>
@@ -29,9 +30,16 @@ export function VitrinePage() {
           </div>
 
           <div className="max-w-7xl mx-auto relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+              {/* Mobile Hourglass - shown on small screens, ordered first */}
+              <div className="lg:hidden flex flex-col items-center justify-center mb-2 order-first">
+                <div className="relative w-full h-[250px]">
+                  <Hourglass3D />
+                </div>
+              </div>
+
               {/* Left Column - Hero Text */}
-              <div className="space-y-8">
+              <div className="space-y-2 lg:pt-16 lg:mt-16">
                 <div>
                   <h1 className="text-5xl sm:text-6xl font-bold text-foreground leading-tight mb-6">
                     {t("vitrine.heroTitle")}
@@ -91,11 +99,11 @@ export function VitrinePage() {
               </div>
 
               {/* Right Column - Hero Image/Illustration */}
-              <div className="relative h-full min-h-[400px] hidden lg:flex items-center justify-center">
-                <div className="relative w-full h-full">
-                  {/* Decorative Box with Clock Icon */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20 flex items-center justify-center">
-                    <Clock className="w-32 h-32 text-accent/40" />
+              <div className="relative h-full hidden lg:flex items-center justify-center">
+                <div className="relative w-full h-[800px]">
+                  {/* 3D Hourglass */}
+                  <div className="w-full h-full rounded-2xl overflow-hidden">
+                    <Hourglass3D />
                   </div>
                 </div>
               </div>
