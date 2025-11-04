@@ -1,0 +1,108 @@
+/* Swipe animations for dropdown content ONLY */
+
+@keyframes swipeInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes swipeInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Header wrapper - ensure proper stacking context */
+.header-wrapper {
+  width: 100%;
+  z-index: 50;
+}
+
+/* Mobile menu slide-in animation */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+/* Make header fixed to viewport - always on top of screen */
+.header-wrapper header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  width: 100%;
+}
+
+/* Dropdown container - NO ANIMATION, just appears/disappears */
+.dropdown-container {
+  pointer-events: none;
+}
+
+.dropdown-container > div {
+  pointer-events: all;
+  /* Glassmorphism - light and transparent for both modes */
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Content wrapper gets the animation */
+.dropdown-container > div > div.animation-right {
+  animation: swipeInFromRight 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dropdown-container > div > div.animation-left {
+  animation: swipeInFromLeft 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dropdown-container > div > div.animation-none {
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* Smooth transitions for menu items */
+.dropdown-container a {
+  display: block;
+  transition: all 0.2s ease-out;
+}
+
+.dropdown-container a:hover {
+  transform: translateX(4px);
+}
+
+/* Showcase grid items hover effect */
+.dropdown-container > div > div:last-child > div > div {
+  transition: all 0.2s ease-out;
+}
+
+.dropdown-container > div > div:last-child > div > div:hover {
+  transform: translateY(-2px);
+}

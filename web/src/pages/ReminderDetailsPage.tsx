@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/common/header";
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import {
   DestinationPicker,
   type ReminderDestination as PickerDestination,
@@ -49,6 +50,8 @@ export function ReminderDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editData, setEditData] = useState<EditableReminderData>({
     message: "",
     date: "",
@@ -240,24 +243,28 @@ export function ReminderDetailsPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
     if (!reminder || !reminderId) return;
 
-    if (
-      window.confirm(
-        t("reminderDetails.deleteConfirm") ||
-          "Are you sure you want to delete this reminder?"
-      )
-    ) {
-      try {
-        await remindersService.deleteReminder(reminderId);
-        toast.success(t("reminderDetails.deletedSuccessfully"));
-        navigate("/home");
-      } catch (err) {
-        console.error("Failed to delete reminder:", err);
-        toast.error(t("reminderDetails.deleteFailed"));
-      }
+    setIsDeleting(true);
+    try {
+      await remindersService.deleteReminder(reminderId);
+      toast.success(t("reminderDetails.deletedSuccessfully"));
+      navigate("/home");
+    } catch (err) {
+      console.error("Failed to delete reminder:", err);
+      toast.error(t("reminderDetails.deleteFailed"));
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
   };
 
   const handleDuplicate = async () => {
@@ -347,7 +354,7 @@ export function ReminderDetailsPage() {
 
       <Header />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24 relative z-10">
         {/* Back Button */}
         <Button
           onClick={() => navigate("/home")}
@@ -741,7 +748,7 @@ export function ReminderDetailsPage() {
                     {t("reminderDetails.dangerZone")}
                   </h3>
                   <Button
-                    onClick={handleDelete}
+                    onClick={handleDeleteClick}
                     variant="outline"
                     className="w-full border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 gap-2"
                   >
@@ -754,6 +761,18 @@ export function ReminderDetailsPage() {
           </div>
         </div>
       </main>
+
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        title={t("reminderDetails.deleteConfirmTitle") || "Delete Reminder?"}
+        description={
+          t("reminderDetails.deleteConfirm") ||
+          "This action cannot be undone. Are you sure you want to delete this reminder?"
+        }
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={isDeleting}
+      />
 
       <Footer />
     </div>

@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/common/theme-provider";
 import { AuthProvider } from "./hooks/AuthContext";
-import { VitrinePage } from "./pages/VitrinePage";
+import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RemindersPage } from "./pages/RemindersPage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
@@ -43,7 +43,7 @@ function AppRoutes() {
       />
 
       {/* Vitrine route: Public route at root for all users */}
-      <Route path={ROUTES.VITRINE.path} element={<VitrinePage />} />
+      <Route path={ROUTES.HOME.path} element={<HomePage />} />
 
       {/* Protected route: Dashboard page requires authentication */}
       <Route
@@ -52,19 +52,19 @@ function AppRoutes() {
           isAuthenticated ? (
             <RemindersPage />
           ) : (
-            <Navigate to={ROUTES.VITRINE.path} replace />
+            <Navigate to={ROUTES.HOME.path} replace />
           )
         }
       />
 
       {/* Protected route: Create Reminder page requires authentication */}
       <Route
-        path={ROUTES.CREATE_REMINDER.path}
+        path={ROUTES.REMINDERS_CREATE.path}
         element={
           isAuthenticated ? (
             <CreateReminderPage />
           ) : (
-            <Navigate to={ROUTES.VITRINE.path} replace />
+            <Navigate to={ROUTES.HOME.path} replace />
           )
         }
       />
@@ -76,7 +76,7 @@ function AppRoutes() {
           isAuthenticated ? (
             <ReminderDetailsPage />
           ) : (
-            <Navigate to={ROUTES.VITRINE.path} replace />
+            <Navigate to={ROUTES.HOME.path} replace />
           )
         }
       />
@@ -88,7 +88,7 @@ function AppRoutes() {
           isAuthenticated ? (
             <AccountPage />
           ) : (
-            <Navigate to={ROUTES.VITRINE.path} replace />
+            <Navigate to={ROUTES.HOME.path} replace />
           )
         }
       />
@@ -110,7 +110,7 @@ function AppRoutes() {
         path="*"
         element={
           <Navigate
-            to={isAuthenticated ? ROUTES.REMINDERS.path : ROUTES.VITRINE.path}
+            to={isAuthenticated ? ROUTES.REMINDERS.path : ROUTES.HOME.path}
             replace
           />
         }

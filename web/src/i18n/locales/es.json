@@ -2,18 +2,27 @@
   "common": {
     "close": "Cerrar",
     "cancel": "Cancelar",
-    "loading": "Cargando..."
+    "delete": "Eliminar",
+    "deleting": "Eliminando...",
+    "loading": "Cargando...",
+    "back": "Atrás"
   },
   "header": {
     "home": "Inicio",
     "myReminders": "Mis Recordatorios",
     "createReminder": "Crear Recordatorio",
-    "settings": "Configuración",
-    "installation": "Instalación",
+    "resources": "Recursos",
+    "changelog": "Registro de Cambios",
+    "selfHost": "Auto-Alojado",
+    "help": "Ayuda",
     "contact": "Contacto",
+    "status": "Estado del Servicio",
+    "settings": "Configuración",
     "myAccount": "Mi Cuenta",
     "logout": "Cerrar Sesión",
-    "startNow": "Comienza Ahora"
+    "startNow": "Comienza Ahora",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse"
   },
   "welcome": {
     "title": "Bienvenido a Chronos",
@@ -42,7 +51,18 @@
     "daily": "Diariamente",
     "weekly": "Semanalmente",
     "monthly": "Mensualmente",
-    "custom": "Personalizado"
+    "custom": "Personalizado",
+    "search": "Buscar recordatorios...",
+    "filterYear": "Todos los Años",
+    "filterDestination": "Todos los Destinos",
+    "discordDM": "Discord MD",
+    "discordChannel": "Canal de Discord",
+    "webhook": "Webhook",
+    "resultsCounter": "recordatorios",
+    "noResults": "Ningún recordatorio coincide con tus filtros",
+    "pagination": "Página {{current}} de {{total}}",
+    "previous": "Anterior",
+    "next": "Siguiente"
   },
   "footer": {
     "copyright": "© 2025 Chronos. Nunca pierdas un momento.",
@@ -266,6 +286,7 @@
     "delete": "Eliminar",
     "dangerZone": "Zona de Peligro",
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este recordatorio? Esta acción no se puede deshacer.",
+    "deleteConfirmTitle": "¿Eliminar recordatorio?",
     "updatedSuccessfully": "¡Recordatorio actualizado exitosamente!",
     "pausedSuccessfully": "¡Recordatorio pausado exitosamente!",
     "resumedSuccessfully": "¡Recordatorio reanudado exitosamente!",

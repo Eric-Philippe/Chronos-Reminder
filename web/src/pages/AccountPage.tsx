@@ -319,7 +319,7 @@ export function AccountPage() {
       // Logout and redirect to home
       logout();
       setTimeout(() => {
-        navigate(ROUTES.VITRINE.path);
+        navigate(ROUTES.HOME.path);
       }, 1000);
     } catch (err) {
       const errorMsg =
@@ -344,7 +344,7 @@ export function AccountPage() {
       <Header />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
         {/* Page Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-2">

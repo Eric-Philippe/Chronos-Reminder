@@ -151,7 +151,7 @@ export function CreateReminderPage() {
     <div className="min-h-screen bg-background-main dark:bg-background-main">
       <Header />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
         {/* Back Button */}
         <Button
           onClick={() => navigate("/reminders")}

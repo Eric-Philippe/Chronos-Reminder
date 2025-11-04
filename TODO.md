@@ -22,13 +22,6 @@
 
 ## Web Application
 
-### Dashboard
-
-- [ ] List view
-- - [ ] Pagination
-- - [ ] Search and filter reminders
-- [ ] Put reminders first on smaller screens (mobile)
-
 #### Create new Reminder Page
 
 - [ ] When creating a reminder, all the date/time inputs should use the user's timezones
@@ -41,7 +34,6 @@
 
 ### Help
 
-- [ ] Dropdown menu
 - - [ ] Use Chronos Bot
 - - [ ] Use Web Application
 - - [ ] Use API Key

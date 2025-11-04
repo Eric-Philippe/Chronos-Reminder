@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ModeToggle } from "@/components/common/mode-toggle";
 import { LoginSection } from "@/components/LoginSection";
@@ -10,9 +10,23 @@ import { useAuth } from "@/hooks/useAuth";
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, register, isLoading, error } = useAuth();
 
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(() => {
+    const mode = searchParams.get("mode");
+    return mode === "signup";
+  });
+
+  // Update isSignUp when URL query param changes
+  useEffect(() => {
+    const mode = searchParams.get("mode");
+    if (mode === "signup") {
+      setIsSignUp(true);
+    } else if (mode === "login") {
+      setIsSignUp(false);
+    }
+  }, [searchParams]);
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Login state
@@ -83,6 +97,14 @@ export function LoginPage() {
         <LanguageSwitcher />
         <ModeToggle />
       </div>
+
+      {/* Back to Home Button */}
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 z-50 px-4 py-2 rounded-md text-foreground dark:text-white hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-400/10 transition-colors border border-border dark:border-white/10"
+      >
+        ← {t("common.back") || "Back"}
+      </button>
 
       <div className="w-full max-w-6xl relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[90vh]">
