@@ -190,12 +190,7 @@ export function DiscordSetupSection({
             >
               {t("login.discordSetup.timezoneLabel")}
             </label>
-            <TimezoneSelect
-              value={timezone}
-              onChange={setTimezone}
-              searchPlaceholder={t("login.discordSetup.searchTimezone")}
-              noResultsText={t("login.discordSetup.noTimezones")}
-            />
+            <TimezoneSelect value={timezone} onChange={setTimezone} />
           </div>
 
           {/* Submit Button */}
