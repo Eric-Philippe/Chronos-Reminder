@@ -14,7 +14,7 @@ import {
 } from "@/services";
 import { Footer } from "@/components/common/footer";
 
-export function HomePage() {
+export function RemindersPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [reminders, setReminders] = useState<Reminder[]>([]);

@@ -23,8 +23,8 @@ export const ROUTES = {
     showInNav: true,
   } as Route,
 
-  DASHBOARD: {
-    path: "/home",
+  REMINDERS: {
+    path: "/reminders",
     requiresAuth: true,
     name: "myReminders",
     showInNav: true,

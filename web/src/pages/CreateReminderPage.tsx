@@ -113,8 +113,8 @@ export function CreateReminderPage() {
           duration: 3000,
         });
 
-        // After successful creation, navigate back to dashboard
-        navigate("/dashboard");
+        // After successful creation, navigate back to reminders
+        navigate("/reminders");
       } else {
         setError(t("reminderCreation.errors.failed"));
         toast.error(t("reminderCreation.errors.failed"));
@@ -154,7 +154,7 @@ export function CreateReminderPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Button */}
         <Button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/reminders")}
           variant="ghost"
           className="mb-8 text-foreground hover:bg-secondary/50 gap-2"
         >

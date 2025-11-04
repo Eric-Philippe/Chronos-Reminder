@@ -4,7 +4,7 @@ import { ThemeProvider } from "./components/common/theme-provider";
 import { AuthProvider } from "./hooks/AuthContext";
 import { VitrinePage } from "./pages/VitrinePage";
 import { LoginPage } from "./pages/LoginPage";
-import { HomePage } from "./pages/HomePage";
+import { RemindersPage } from "./pages/RemindersPage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
 import { AccountPage } from "./pages/AccountPage";
@@ -47,10 +47,10 @@ function AppRoutes() {
 
       {/* Protected route: Dashboard page requires authentication */}
       <Route
-        path={ROUTES.DASHBOARD.path}
+        path={ROUTES.REMINDERS.path}
         element={
           isAuthenticated ? (
-            <HomePage />
+            <RemindersPage />
           ) : (
             <Navigate to={ROUTES.VITRINE.path} replace />
           )
@@ -98,7 +98,7 @@ function AppRoutes() {
         path={ROUTES.LOGIN.path}
         element={
           isAuthenticated ? (
-            <Navigate to={ROUTES.DASHBOARD.path} replace />
+            <Navigate to={ROUTES.REMINDERS.path} replace />
           ) : (
             <LoginPage />
           )
@@ -110,7 +110,7 @@ function AppRoutes() {
         path="*"
         element={
           <Navigate
-            to={isAuthenticated ? ROUTES.DASHBOARD.path : ROUTES.VITRINE.path}
+            to={isAuthenticated ? ROUTES.REMINDERS.path : ROUTES.VITRINE.path}
             replace
           />
         }
