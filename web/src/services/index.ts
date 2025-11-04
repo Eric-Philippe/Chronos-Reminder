@@ -10,6 +10,7 @@ export { accountService } from "./account";
 export { discordService } from "./discord";
 export { identityService } from "./identity";
 export { timezoneService } from "./timezone";
+export { apiKeyService } from "./api-keys";
 
 // Export all types
 export type {
@@ -34,4 +35,7 @@ export type {
   GetGuildChannelsResponse,
   GetGuildRolesResponse,
   Timezone,
+  APIKey,
+  CreateAPIKeyResponse,
+  ListAPIKeysResponse,
 } from "./types";

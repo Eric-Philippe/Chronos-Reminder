@@ -220,3 +220,26 @@ export interface Timezone {
   gmt_offset: number;
   iana_location: string;
 }
+
+/**
+ * API Key Types
+ */
+export interface APIKey {
+  id: string;
+  name: string;
+  scopes: string;
+  created_at: string;
+  key?: string; // Only present on creation
+}
+
+export interface CreateAPIKeyResponse {
+  id: string;
+  name: string;
+  scopes: string;
+  created_at: string;
+  key: string; // The plain text key (only shown once)
+}
+
+export interface ListAPIKeysResponse {
+  keys: APIKey[];
+}

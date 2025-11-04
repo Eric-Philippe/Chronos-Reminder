@@ -115,6 +115,14 @@ export const ROUTES = {
     group: "settings",
   } as Route,
 
+  API_KEYS: {
+    path: "/api-keys",
+    requiresAuth: true,
+    name: "apiKeys",
+    submenu: true,
+    group: "settings",
+  } as Route,
+
   LOGIN: {
     path: "/login",
     requiresAuth: false,
@@ -175,7 +183,7 @@ export const MENU_GROUPS: MenuGroup[] = [
     name: "settings",
     label: "settings",
     requiresAuth: true,
-    items: [ROUTES.ACCOUNT],
+    items: [ROUTES.ACCOUNT, ROUTES.API_KEYS],
   },
 ];
 

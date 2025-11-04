@@ -35,6 +35,7 @@ type IdentityRepository interface {
 	GetByAccountID(accountID uuid.UUID) ([]models.Identity, error)
 	Update(identity *models.Identity) error
 	Delete(id uuid.UUID) error
+	GetByAccessToken(hashedToken string) (*models.Identity, error)
 }
 
 // ReminderRepository interface defines operations for reminder data

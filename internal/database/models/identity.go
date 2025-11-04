@@ -20,6 +20,7 @@ type ProviderType string
 const (
 	ProviderDiscord ProviderType = "discord"
 	ProviderApp     ProviderType = "app"
+	ProviderAPIKey  ProviderType = "api_key"
 )
 
 // Value implements the driver.Valuer interface for database storage
@@ -44,7 +45,7 @@ func (p *ProviderType) Scan(value interface{}) error {
 	}
 	
 	// Validate the scanned value
-	if *p != ProviderDiscord && *p != ProviderApp {
+	if *p != ProviderDiscord && *p != ProviderApp && *p != ProviderAPIKey {
 		return fmt.Errorf("invalid provider type: %s", *p)
 	}
 	
@@ -58,7 +59,7 @@ func (p ProviderType) String() string {
 
 // IsValid checks if the provider type is valid
 func (p ProviderType) IsValid() bool {
-	return p == ProviderDiscord || p == ProviderApp
+	return p == ProviderDiscord || p == ProviderApp || p == ProviderAPIKey
 }
 
 // Identity represents the identities table
@@ -70,8 +71,9 @@ type Identity struct {
 	Username     *string   `json:"username"`                     // snapshot for display purposes
 	Avatar       *string   `json:"avatar"`                       // optional, snapshot of Discord avatar
 	PasswordHash *string   `json:"-"`                            // only for app identities, hidden in JSON
-	AccessToken  *string   `json:"-"`                            // Discord OAuth access token, hidden in JSON
+	AccessToken  *string   `json:"-"`                            // Discord OAuth access token or API key hash, hidden in JSON
 	RefreshToken *string   `json:"-"`                            // Discord OAuth refresh token, hidden in JSON
+	Scopes       *string   `gorm:"type:text" json:"scopes,omitempty"`        // comma-separated scopes for API keys (e.g., "reminders.read")
 	CreatedAt    time.Time `gorm:"not null;default:now()" json:"created_at"`
 	
 	// Relationships

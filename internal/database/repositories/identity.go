@@ -60,3 +60,15 @@ func (r *identityRepository) Update(identity *models.Identity) error {
 func (r *identityRepository) Delete(id uuid.UUID) error {
 	return r.db.Delete(&models.Identity{}, "id = ?", id).Error
 }
+
+func (r *identityRepository) GetByAccessToken(hashedToken string) (*models.Identity, error) {
+	var identity models.Identity
+	err := r.db.Where("access_token = ?", hashedToken).First(&identity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &identity, nil
+}

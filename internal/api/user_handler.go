@@ -886,8 +886,13 @@ func (h *UserHandler) DeleteReminder(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// extractAccountIDFromToken extracts the account ID from the JWT token in the request
+// extractAccountIDFromToken extracts the account ID from the JWT token in the request or context
 func (h *UserHandler) extractAccountIDFromToken(r *http.Request) (uuid.UUID, error) {
+	// First, check if account ID is already in context (set by API key middleware)
+	if accountID, ok := r.Context().Value(AccountIDKey).(uuid.UUID); ok {
+		return accountID, nil
+	}
+
 	// Try to get token from Authorization header first
 	authHeader := r.Header.Get("Authorization")
 	var token string
@@ -928,8 +933,8 @@ func (h *UserHandler) extractAccountIDFromToken(r *http.Request) (uuid.UUID, err
 	return accountID, nil
 }
 
-// AuthMiddleware creates a middleware that validates JWT tokens
-func AuthMiddleware(sessionService *services.SessionService) func(http.Handler) http.Handler {
+// AuthMiddleware creates a middleware that validates JWT tokens or API keys
+func AuthMiddleware(sessionService *services.SessionService, apiKeyService *services.APIKeyService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Try to get token from Authorization header first
@@ -956,6 +961,25 @@ func AuthMiddleware(sessionService *services.SessionService) func(http.Handler) 
 
 			if token == "" {
 				WriteError(w, http.StatusUnauthorized, "No authentication token found")
+				return
+			}
+
+			// Check if this is an API key (starts with "ck_")
+			if strings.HasPrefix(token, "ck_") {
+				// Validate API key
+				accountID, err := apiKeyService.ValidateAPIKey(token)
+				if err != nil {
+					WriteError(w, http.StatusUnauthorized, "Invalid API key")
+					return
+				}
+				if accountID == uuid.Nil {
+					WriteError(w, http.StatusUnauthorized, "Invalid API key")
+					return
+				}
+				// Add account ID to request context
+				ctx := context.WithValue(r.Context(), AccountIDKey, accountID)
+				*r = *r.WithContext(ctx)
+				next.ServeHTTP(w, r)
 				return
 			}
 

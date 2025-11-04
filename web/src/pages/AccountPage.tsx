@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
+  Key,
 } from "lucide-react";
 import { accountService, type Account } from "@/services";
 import { TimezoneSelect } from "@/components/common/TimezoneSelect";
@@ -677,6 +678,35 @@ export function AccountPage() {
                     )}
                   </div>
                 </div>
+
+                {/* API Key Identity */}
+                <div className="p-4 bg-secondary/20 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20">
+                      <Key className="w-5 h-5 flex-shrink-0 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {t("account.apiKeyIdentity")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("account.apiKeyIdentityDesc")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end flex-shrink-0">
+                    <Button
+                      type="button"
+                      onClick={() => navigate(ROUTES.API_KEYS.path)}
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                    >
+                      <Key className="w-4 h-4 mr-2" />
+                      {t("account.manageKeys")}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -859,6 +889,28 @@ export function AccountPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Delete Account Section - Danger Zone */}
+            <Card className="border-blue-500/30 bg-blue-500/5 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                  <Key className="w-5 h-5" />
+                  {t("account.apiKeys")}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t("account.apiKeysDesc")}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => navigate(ROUTES.API_KEYS.path)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2"
+                >
+                  <Key className="w-4 h-4" />
+                  {t("account.manageAPIKeys")}
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Delete Account Section - Danger Zone */}
             <Card className="border-red-500/30 bg-red-500/5 backdrop-blur">

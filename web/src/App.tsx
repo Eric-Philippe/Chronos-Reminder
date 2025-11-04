@@ -11,6 +11,7 @@ import { RemindersPage } from "./pages/RemindersPage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
 import { AccountPage } from "./pages/AccountPage";
+import { APIKeysPage } from "./pages/APIKeysPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { useAuth } from "./hooks/useAuth";
 import { ROUTES } from "./config/routes";
@@ -18,14 +19,6 @@ import "./i18n/config";
 
 function AppRoutes() {
   const { isAuthenticated, isCheckingAuth } = useAuth();
-
-  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-  const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
-  const API_URL = import.meta.env.VITE_API_URL || "https://api.chronosrmd.com";
-
-  console.log("API URL:", API_URL);
-  console.log("DISCORD CLIENT ID:", clientId);
-  console.log("DISCORD REDIRECT URI:", redirectUri);
 
   // Don't render routes while checking initial auth status
   // isCheckingAuth is only true during the initial mount auth check
@@ -105,6 +98,18 @@ function AppRoutes() {
         element={
           isAuthenticated ? (
             <AccountPage />
+          ) : (
+            <Navigate to={ROUTES.HOME.path} replace />
+          )
+        }
+      />
+
+      {/* Protected route: API Keys page requires authentication */}
+      <Route
+        path={ROUTES.API_KEYS.path}
+        element={
+          isAuthenticated ? (
+            <APIKeysPage />
           ) : (
             <Navigate to={ROUTES.HOME.path} replace />
           )

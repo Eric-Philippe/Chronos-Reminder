@@ -72,6 +72,12 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		mailerService,
 	)
 
+	// Initialize API key service
+	apiKeyService := services.NewAPIKeyService(
+		repos.Identity,
+		repos.Account,
+	)
+
 	// Initialize handlers
 	authHandler := NewAuthHandler(authService, sessionService, verificationService, passwordResetService, cfg.WebAppURL)
 	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
@@ -92,6 +98,9 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 
 	// Initialize timezone handler
 	timezoneHandler := NewTimezoneHandler(repos.Timezone)
+
+	// Initialize API key handler
+	apiKeyHandler := NewAPIKeyHandler(apiKeyService)
 
 	// Initialize health handler
 	healthHandler := NewHealthHandler()
@@ -118,9 +127,10 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerAuthRoutes(wrappedMux, authHandler)
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
-	registerUserRoutes(wrappedMux, userHandler, sessionService, rateLimitMiddleware)
-	registerReminderRoutes(wrappedMux, reminderHandler, sessionService, rateLimitMiddleware)
+	registerUserRoutes(wrappedMux, userHandler, sessionService, apiKeyService, rateLimitMiddleware)
+	registerReminderRoutes(wrappedMux, reminderHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerTimezoneRoutes(wrappedMux, timezoneHandler)
+	registerAPIKeyRoutes(wrappedMux, apiKeyHandler, sessionService, apiKeyService, rateLimitMiddleware)
 
 	return &Server{
 		mux:           wrappedMux,
@@ -179,15 +189,15 @@ func registerDiscordGuildRoutes(mux *WrappedMux, discordGuildHandler *DiscordGui
 }
 
 // registerUserRoutes registers authenticated user routes with auth and rate limit middleware
-func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionService *services.SessionService, rateLimitMiddleware func(http.Handler) http.Handler) {
+func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
 	// Apply auth middleware to user routes
-	authMiddleware := AuthMiddleware(sessionService)
-	
+	authMiddleware := AuthMiddleware(sessionService, apiKeyService)
+
 	// Chain middlewares: rate limit -> auth
 	chainMiddleware := func(handler http.Handler) http.Handler {
 		return rateLimitMiddleware(authMiddleware(handler))
 	}
-	
+
 	// Wrap each user route handler with both middlewares
 	mux.Handle("GET /api/reminders", chainMiddleware(http.HandlerFunc(userHandler.GetReminders)))
 	mux.Handle("POST /api/reminders", chainMiddleware(http.HandlerFunc(userHandler.CreateReminder)))
@@ -201,8 +211,8 @@ func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionServic
 }
 
 // registerReminderRoutes registers reminder-specific routes with auth and rate limit middleware
-func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, sessionService *services.SessionService, rateLimitMiddleware func(http.Handler) http.Handler) {
-	authMiddleware := AuthMiddleware(sessionService)
+func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
+	authMiddleware := AuthMiddleware(sessionService, apiKeyService)
 
 	// Chain middlewares: rate limit -> auth
 	chainMiddleware := func(handler http.Handler) http.Handler {
@@ -213,7 +223,7 @@ func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, s
 	mux.Handle("GET /api/reminders/{id}", chainMiddleware(http.HandlerFunc(reminderHandler.GetReminder)))
 	mux.Handle("PUT /api/reminders/{id}", chainMiddleware(http.HandlerFunc(reminderHandler.UpdateReminder)))
 	mux.Handle("DELETE /api/reminders/{id}", chainMiddleware(http.HandlerFunc(reminderHandler.DeleteReminder)))
-	
+
 	// Reminder state operations
 	mux.Handle("POST /api/reminders/{id}/pause", chainMiddleware(http.HandlerFunc(reminderHandler.PauseReminder)))
 	mux.Handle("POST /api/reminders/{id}/resume", chainMiddleware(http.HandlerFunc(reminderHandler.ResumeReminder)))
@@ -223,6 +233,21 @@ func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, s
 // registerTimezoneRoutes registers timezone routes (public, no auth required)
 func registerTimezoneRoutes(mux *WrappedMux, timezoneHandler *TimezoneHandler) {
 	mux.HandleFunc("GET /api/timezones", timezoneHandler.GetAvailableTimezones)
+}
+
+// registerAPIKeyRoutes registers API key management routes with auth and rate limit middleware
+func registerAPIKeyRoutes(mux *WrappedMux, apiKeyHandler *APIKeyHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
+	authMiddleware := AuthMiddleware(sessionService, apiKeyService)
+
+	// Chain middlewares: rate limit -> auth
+	chainMiddleware := func(handler http.Handler) http.Handler {
+		return rateLimitMiddleware(authMiddleware(handler))
+	}
+
+	// API key management routes
+	mux.Handle("POST /api/api-keys", chainMiddleware(http.HandlerFunc(apiKeyHandler.CreateAPIKey)))
+	mux.Handle("GET /api/api-keys", chainMiddleware(http.HandlerFunc(apiKeyHandler.GetAPIKeys)))
+	mux.Handle("DELETE /api/api-keys/{id}", chainMiddleware(http.HandlerFunc(apiKeyHandler.RevokeAPIKey)))
 }
 
 // Start starts the API server and listens for incoming requests

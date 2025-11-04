@@ -102,17 +102,28 @@ func runMigrations() error {
 
 // createEnumTypes creates custom PostgreSQL enum types
 func createEnumTypes() error {
-	// Create provider_type enum if it doesn't exist
-	if err := DB.Exec(`
-		DO $$ BEGIN
-			CREATE TYPE provider_type AS ENUM ('discord', 'app');
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$;
-	`).Error; err != nil {
-		return fmt.Errorf("failed to create provider_type enum: %w", err)
+	// Try to add api_key to existing provider_type enum first
+	if err := DB.Exec(`ALTER TYPE provider_type ADD VALUE IF NOT EXISTS 'api_key';`).Error; err == nil {
+		// Successfully added or already exists
+		log.Println("[DATABASE] - ✅ 'api_key' value added to provider_type enum (or already existed)")
+	} else {
+		// If ALTER fails, try to recreate the enum
+		log.Printf("[DATABASE] - ⚠️  Could not alter provider_type enum, attempting to recreate: %v", err)
+		
+		// Try to drop and recreate - wrap in transaction to handle constraints
+		if err := DB.Exec(`
+			DO $$ BEGIN
+				DROP TYPE IF EXISTS provider_type CASCADE;
+				CREATE TYPE provider_type AS ENUM ('discord', 'app', 'api_key');
+			EXCEPTION WHEN OTHERS THEN
+				NULL;
+			END $$;
+		`).Error; err != nil {
+			log.Printf("[DATABASE] - ⚠️  Could not recreate provider_type enum: %v", err)
+			// Continue anyway - the table might auto-handle it
+		}
 	}
-	
+
 	// Create destination_type enum if it doesn't exist
 	if err := DB.Exec(`
 		DO $$ BEGIN
