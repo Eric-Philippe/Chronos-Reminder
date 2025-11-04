@@ -18,7 +18,6 @@
 
 - [ ] Create API endpoints for the web application to interact with the reminder engine
 - [ ] API Key for third-party integrations (As a new identity)
-- [ ] Add mailing system for account verification and password reset
 
 ## Web Application
 
@@ -40,10 +39,6 @@
 - - [ ] Self-hosting guide
 - - [ ] Contact support and Feedback
 - - [ ] What's New
-
-### Authentication
-
-- [ ] Password reset
 
 ### Layout
 

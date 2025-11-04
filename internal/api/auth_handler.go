@@ -16,6 +16,7 @@ type AuthHandler struct {
 	authService         *services.AuthService
 	sessionService      *services.SessionService
 	verificationService *services.VerificationService
+	passwordResetService *services.PasswordResetService
 	webAppURL           string
 }
 
@@ -24,12 +25,14 @@ func NewAuthHandler(
 	authService *services.AuthService,
 	sessionService *services.SessionService,
 	verificationService *services.VerificationService,
+	passwordResetService *services.PasswordResetService,
 	webAppURL string,
 ) *AuthHandler {
 	return &AuthHandler{
 		authService:         authService,
 		sessionService:      sessionService,
 		verificationService: verificationService,
+		passwordResetService: passwordResetService,
 		webAppURL:           webAppURL,
 	}
 }
@@ -64,6 +67,40 @@ type VerifyEmailResponse struct {
 	Token     string `json:"token"`
 	ExpiresAt string `json:"expires_at"`
 	Message   string `json:"message"`
+}
+
+// RequestPasswordResetRequest represents the request to initiate password reset
+type RequestPasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+// RequestPasswordResetResponse represents the response to password reset request
+type RequestPasswordResetResponse struct {
+	Message string `json:"message"`
+}
+
+// ResetPasswordRequest represents the request to reset password with token
+type ResetPasswordRequest struct {
+	Email    string `json:"email"`
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+// ResetPasswordResponse represents the response to password reset
+type ResetPasswordResponse struct {
+	Message string `json:"message"`
+}
+
+// VerifyResetTokenRequest represents the request to verify a reset token
+type VerifyResetTokenRequest struct {
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
+// VerifyResetTokenResponse represents the response to token verification
+type VerifyResetTokenResponse struct {
+	Valid   bool   `json:"valid"`
+	Message string `json:"message"`
 }
 
 // LoginRequest represents the login request payload
@@ -422,4 +459,128 @@ func isValidEmail(email string) bool {
 		return false
 	}
 	return true
+}
+
+// RequestPasswordReset handles password reset requests (forgot password)
+func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req RequestPasswordResetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	// Validate input
+	if strings.TrimSpace(req.Email) == "" {
+		WriteError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	if !isValidEmail(req.Email) {
+		WriteError(w, http.StatusBadRequest, "Invalid email format")
+		return
+	}
+
+	// Request password reset
+	err := h.passwordResetService.RequestPasswordReset(req.Email)
+	if err != nil {
+		// Don't reveal if email exists or not for security reasons
+		WriteJSON(w, http.StatusOK, RequestPasswordResetResponse{
+			Message: "If an account with this email exists, you will receive a password reset link.",
+		})
+		return
+	}
+
+	resp := RequestPasswordResetResponse{
+		Message: "If an account with this email exists, you will receive a password reset link.",
+	}
+
+	WriteJSON(w, http.StatusOK, resp)
+}
+
+// VerifyResetToken verifies that a password reset token is valid
+func (h *AuthHandler) VerifyResetToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req VerifyResetTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	// Validate input
+	if strings.TrimSpace(req.Email) == "" {
+		WriteError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	if strings.TrimSpace(req.Token) == "" {
+		WriteError(w, http.StatusBadRequest, "Token is required")
+		return
+	}
+
+	// Verify token
+	isValid := h.passwordResetService.IsResetTokenValid(req.Email, req.Token)
+
+	resp := VerifyResetTokenResponse{
+		Valid:   isValid,
+		Message: "Token validity check complete",
+	}
+
+	WriteJSON(w, http.StatusOK, resp)
+}
+
+// ResetPassword handles the actual password reset with a valid token
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	// Validate input
+	if strings.TrimSpace(req.Email) == "" {
+		WriteError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	if strings.TrimSpace(req.Token) == "" {
+		WriteError(w, http.StatusBadRequest, "Token is required")
+		return
+	}
+
+	if strings.TrimSpace(req.Password) == "" {
+		WriteError(w, http.StatusBadRequest, "Password is required")
+		return
+	}
+
+	if len(req.Password) < 8 {
+		WriteError(w, http.StatusBadRequest, "Password must be at least 8 characters long")
+		return
+	}
+
+	// Reset password
+	err := h.passwordResetService.ResetPassword(req.Email, req.Token, req.Password)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, "Invalid or expired reset token")
+		return
+	}
+
+	resp := ResetPasswordResponse{
+		Message: "Password reset successfully. You can now login with your new password.",
+	}
+
+	WriteJSON(w, http.StatusOK, resp)
 }

@@ -135,6 +135,20 @@ export const ROUTES = {
     name: "verifyEmail",
     showInNav: false,
   } as Route,
+
+  FORGOT_PASSWORD: {
+    path: "/forgot-password",
+    requiresAuth: false,
+    name: "forgotPassword",
+    showInNav: false,
+  } as Route,
+
+  RESET_PASSWORD: {
+    path: "/reset-password",
+    requiresAuth: false,
+    name: "resetPassword",
+    showInNav: false,
+  } as Route,
 } as const;
 
 // Menu groups configuration

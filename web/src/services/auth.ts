@@ -6,6 +6,12 @@ import type {
   RegisterResponse,
   SessionData,
   ApiResponse,
+  RequestPasswordResetRequest,
+  RequestPasswordResetResponse,
+  VerifyResetTokenRequest,
+  VerifyResetTokenResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
 } from "./types";
 
 // User data storage key
@@ -102,6 +108,43 @@ class AuthService {
   ): void {
     httpClient.setToken(token, new Date(expiresAtStr));
     this.setUserData(userData);
+  }
+
+  /**
+   * Request a password reset email
+   */
+  async requestPasswordReset(
+    data: RequestPasswordResetRequest
+  ): Promise<RequestPasswordResetResponse> {
+    const response = await httpClient.post<
+      ApiResponse<RequestPasswordResetResponse>
+    >("/api/auth/password-reset/request", data);
+    return (response.data || response) as RequestPasswordResetResponse;
+  }
+
+  /**
+   * Verify a password reset token
+   */
+  async verifyResetToken(
+    data: VerifyResetTokenRequest
+  ): Promise<VerifyResetTokenResponse> {
+    const response = await httpClient.post<
+      ApiResponse<VerifyResetTokenResponse>
+    >("/api/auth/password-reset/verify-token", data);
+    return (response.data || response) as VerifyResetTokenResponse;
+  }
+
+  /**
+   * Reset password with valid token
+   */
+  async resetPassword(
+    data: ResetPasswordRequest
+  ): Promise<ResetPasswordResponse> {
+    const response = await httpClient.post<ApiResponse<ResetPasswordResponse>>(
+      "/api/auth/password-reset/reset",
+      data
+    );
+    return (response.data || response) as ResetPasswordResponse;
   }
 }
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ export function LoginSection({
   authError,
 }: LoginSectionProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -123,12 +125,13 @@ export function LoginSection({
                 {t("login.rememberMe")}
               </span>
             </label>
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
               className="text-accent hover:text-accent/80 transition-colors"
             >
               {t("login.forgotPassword")}
-            </a>
+            </button>
           </div>
 
           {/* Login Button */}

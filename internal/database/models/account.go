@@ -13,10 +13,11 @@ func (Account) TableName() string {
 
 // Account represents the accounts table
 type Account struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	TimezoneID *uint     `gorm:"index" json:"timezone_id"`
-	CreatedAt  time.Time `gorm:"not null;default:now()" json:"created_at"`
-	UpdatedAt  time.Time `gorm:"not null;default:now()" json:"updated_at"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	TimezoneID    *uint     `gorm:"index" json:"timezone_id"`
+	EmailVerified bool      `gorm:"type:boolean;default:false" json:"email_verified"`
+	CreatedAt     time.Time `gorm:"not null;default:now()" json:"created_at"`
+	UpdatedAt     time.Time `gorm:"not null;default:now()" json:"updated_at"`
 	
 	// Relationships
 	Timezone   *Timezone  `gorm:"foreignKey:TimezoneID" json:"timezone,omitempty"`

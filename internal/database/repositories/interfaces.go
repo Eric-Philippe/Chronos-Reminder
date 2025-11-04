@@ -96,3 +96,16 @@ type EmailVerificationRepository interface {
 	DeleteByEmail(email string) error
 	Delete(id uuid.UUID) error
 }
+
+// PasswordResetRepository interface defines operations for password reset data
+type PasswordResetRepository interface {
+	Create(reset *models.PasswordReset) error
+	GetByID(id uuid.UUID) (*models.PasswordReset, error)
+	GetByToken(token string) (*models.PasswordReset, error)
+	GetByEmail(email string) (*models.PasswordReset, error)
+	GetByAccountID(accountID uuid.UUID) (*models.PasswordReset, error)
+	MarkAsUsed(id uuid.UUID) error
+	DeleteByEmail(email string) error
+	Delete(id uuid.UUID) error
+	DeleteExpiredTokens() error
+}

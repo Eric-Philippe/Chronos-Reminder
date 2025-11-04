@@ -28,21 +28,18 @@ const (
 
 // SessionService handles session and authentication operations
 type SessionService struct {
-	identityRepo      repositories.IdentityRepository
-	accountRepo       repositories.AccountRepository
-	verificationRepo  repositories.EmailVerificationRepository
+	identityRepo repositories.IdentityRepository
+	accountRepo  repositories.AccountRepository
 }
 
 // NewSessionService creates a new session service instance
 func NewSessionService(
 	identityRepo repositories.IdentityRepository,
 	accountRepo repositories.AccountRepository,
-	verificationRepo repositories.EmailVerificationRepository,
 ) *SessionService {
 	return &SessionService{
-		identityRepo:     identityRepo,
-		accountRepo:      accountRepo,
-		verificationRepo: verificationRepo,
+		identityRepo: identityRepo,
+		accountRepo:  accountRepo,
 	}
 }
 
@@ -113,13 +110,8 @@ func (s *SessionService) LoginUser(ctx context.Context, req *LoginRequest) (*Ses
 		return nil, "", errors.New("account not found")
 	}
 
-	// Check if email has been verified
-	isVerified, err := s.verificationRepo.IsVerified(req.Email)
-	if err != nil {
-		return nil, "", fmt.Errorf("error checking email verification: %w", err)
-	}
-
-	if !isVerified {
+	// Check if email has been verified on the account
+	if !account.EmailVerified {
 		return nil, "", errors.New("email not verified")
 	}
 
@@ -269,13 +261,8 @@ func (s *SessionService) LoginUserWithID(ctx context.Context, req *LoginWithIDRe
 		return nil, "", errors.New("identity not found")
 	}
 
-	// Check if email has been verified
-	isVerified, err := s.verificationRepo.IsVerified(identity.ExternalID)
-	if err != nil {
-		return nil, "", fmt.Errorf("error checking email verification: %w", err)
-	}
-
-	if !isVerified {
+	// Check if email has been verified on the account
+	if !account.EmailVerified {
 		return nil, "", errors.New("email not verified")
 	}
 

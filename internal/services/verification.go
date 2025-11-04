@@ -9,11 +9,13 @@ import (
 
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
+	"github.com/google/uuid"
 )
 
 // VerificationService handles email verification codes
 type VerificationService struct {
 	verificationRepo repositories.EmailVerificationRepository
+	accountRepo      repositories.AccountRepository
 	mailerService    *MailerService
 	verificationTTL  time.Duration // Time-to-live for verification codes (default 24 hours)
 }
@@ -21,10 +23,12 @@ type VerificationService struct {
 // NewVerificationService creates a new verification service instance
 func NewVerificationService(
 	verificationRepo repositories.EmailVerificationRepository,
+	accountRepo repositories.AccountRepository,
 	mailerService *MailerService,
 ) *VerificationService {
 	return &VerificationService{
 		verificationRepo: verificationRepo,
+		accountRepo:      accountRepo,
 		mailerService:    mailerService,
 		verificationTTL:  24 * time.Hour, // Codes expire after 24 hours
 	}
@@ -138,9 +142,30 @@ func (v *VerificationService) VerifyEmail(email string, code string) (string, er
 		return "", fmt.Errorf("verification code has expired")
 	}
 
-	// Mark as verified
+	// Mark verification record as verified
 	if err := v.verificationRepo.MarkAsVerified(verification.ID); err != nil {
 		return "", fmt.Errorf("failed to mark email as verified: %w", err)
+	}
+
+	// Parse account ID and mark account as email verified
+	accountID, err := uuid.Parse(verification.AccountID)
+	if err != nil {
+		return "", fmt.Errorf("invalid account ID: %w", err)
+	}
+
+	// Get account and update EmailVerified flag
+	account, err := v.accountRepo.GetByID(accountID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get account: %w", err)
+	}
+
+	if account == nil {
+		return "", fmt.Errorf("account not found")
+	}
+
+	account.EmailVerified = true
+	if err := v.accountRepo.Update(account); err != nil {
+		return "", fmt.Errorf("failed to update account verification status: %w", err)
 	}
 
 	return verification.AccountID, nil

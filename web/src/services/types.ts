@@ -58,6 +58,40 @@ export interface LoginRequest {
 }
 
 /**
+ * Password Reset Types
+ */
+export interface RequestPasswordResetRequest {
+  email: string;
+  [key: string]: unknown;
+}
+
+export interface RequestPasswordResetResponse {
+  message: string;
+}
+
+export interface VerifyResetTokenRequest {
+  email: string;
+  token: string;
+  [key: string]: unknown;
+}
+
+export interface VerifyResetTokenResponse {
+  valid: boolean;
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  password: string;
+  [key: string]: unknown;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+/**
  * Reminder Types
  */
 export interface Reminder {

@@ -5,7 +5,18 @@
     "delete": "Delete",
     "deleting": "Deleting...",
     "loading": "Loading...",
-    "back": "Back"
+    "back": "Back",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "passwordsDontMatch": "Passwords don't match",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordPlaceholder": "••••••••",
+    "emailAddress": "Email Address",
+    "signIn": "Sign In",
+    "verifying": "Verifying",
+    "resetting": "Resetting",
+    "goToLogin": "Go to Login"
   },
   "header": {
     "home": "Home",
@@ -440,5 +451,39 @@
     "successDesc": "Your email has been verified successfully!",
     "redirecting": "You will be redirected shortly...",
     "checkEmail": "Check your email for verification code"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "description": "No worries! We'll help you recover your account.",
+    "enterEmail": "Enter Your Email",
+    "weWillSendLink": "We'll send you a link to reset your password",
+    "sendResetLink": "Send Reset Link",
+    "sending": "Sending...",
+    "emailSent": "Reset link sent to your email!",
+    "checkYourEmail": "Check Your Email",
+    "linkSentTo": "We sent a password reset link to",
+    "linkExpires": "The link will expire in 24 hours",
+    "rememberPassword": "Remember your password?",
+    "error": "Failed to send reset link",
+    "backToLogin": "Back to Login"
+  },
+  "resetPassword": {
+    "title": "Reset Password",
+    "enterNewPassword": "Create New Password",
+    "passwordRequirements": "Your password must be at least 8 characters long",
+    "resetPassword": "Reset Password",
+    "passwordReset": "Password Reset",
+    "youCanNowLogin": "Your password has been successfully reset.",
+    "invalidLink": "Invalid Reset Link",
+    "invalidLinkMessage": "The password reset link is invalid or has expired.",
+    "linkExpired": "Link Expired",
+    "linkExpiredMessage": "The password reset link has expired. Please request a new one.",
+    "requestNewLink": "Request New Link",
+    "success": "Password reset successfully!",
+    "error": "Failed to reset password",
+    "invalidRequest": "Invalid reset request"
+  },
+  "validation": {
+    "passwordTooShort": "Password must be at least 8 characters long"
   }
 }

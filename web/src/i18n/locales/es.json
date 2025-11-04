@@ -5,7 +5,18 @@
     "delete": "Eliminar",
     "deleting": "Eliminando...",
     "loading": "Cargando...",
-    "back": "Atrás"
+    "back": "Atrás",
+    "emailRequired": "El correo electrónico es requerido",
+    "passwordRequired": "La contraseña es requerida",
+    "passwordsDontMatch": "Las contraseñas no coinciden",
+    "newPassword": "Nueva Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "emailAddress": "Correo Electrónico",
+    "signIn": "Iniciar Sesión",
+    "verifying": "Verificando",
+    "resetting": "Restableciendo",
+    "goToLogin": "Ir al Inicio de Sesión"
   },
   "header": {
     "home": "Inicio",
@@ -440,5 +451,39 @@
     "successDesc": "¡Tu correo electrónico ha sido verificado exitosamente!",
     "redirecting": "Serás redirigido en breve...",
     "checkEmail": "Revisa tu correo electrónico para el código de verificación"
+  },
+  "forgotPassword": {
+    "title": "¿Olvidaste tu Contraseña?",
+    "description": "¡No te preocupes! Te ayudaremos a recuperar tu cuenta.",
+    "enterEmail": "Ingresa Tu Correo Electrónico",
+    "weWillSendLink": "Te enviaremos un enlace para restablecer tu contraseña",
+    "sendResetLink": "Enviar Enlace de Restablecimiento",
+    "sending": "Enviando...",
+    "emailSent": "¡Enlace de restablecimiento enviado a tu correo!",
+    "checkYourEmail": "Revisa Tu Correo Electrónico",
+    "linkSentTo": "Enviamos un enlace para restablecer la contraseña a",
+    "linkExpires": "El enlace expirará en 24 horas",
+    "rememberPassword": "¿Recuerdas tu contraseña?",
+    "error": "Error al enviar el enlace de restablecimiento",
+    "backToLogin": "Volver al Inicio de Sesión"
+  },
+  "resetPassword": {
+    "title": "Restablecer Contraseña",
+    "enterNewPassword": "Crear Nueva Contraseña",
+    "passwordRequirements": "Tu contraseña debe tener al menos 8 caracteres",
+    "resetPassword": "Restablecer Contraseña",
+    "passwordReset": "Contraseña Restablecida",
+    "youCanNowLogin": "Tu contraseña ha sido restablecida exitosamente.",
+    "invalidLink": "Enlace de Restablecimiento Inválido",
+    "invalidLinkMessage": "El enlace para restablecer la contraseña es inválido o ha expirado.",
+    "linkExpired": "Enlace Expirado",
+    "linkExpiredMessage": "El enlace para restablecer la contraseña ha expirado. Por favor solicita uno nuevo.",
+    "requestNewLink": "Solicitar Nuevo Enlace",
+    "success": "¡Contraseña restablecida exitosamente!",
+    "error": "Error al restablecer la contraseña",
+    "invalidRequest": "Solicitud de restablecimiento inválida"
+  },
+  "validation": {
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres"
   }
 }

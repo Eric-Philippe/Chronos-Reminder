@@ -5,6 +5,8 @@ import { AuthProvider } from "./hooks/AuthContext";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { VerificationPage } from "./pages/VerificationPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { RemindersPage } from "./pages/RemindersPage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
@@ -39,6 +41,18 @@ function AppRoutes() {
     <Routes>
       {/* Email Verification route: Public route for email verification */}
       <Route path={ROUTES.VERIFY_EMAIL.path} element={<VerificationPage />} />
+
+      {/* Forgot Password route: Public route for password reset request */}
+      <Route
+        path={ROUTES.FORGOT_PASSWORD.path}
+        element={<ForgotPasswordPage />}
+      />
+
+      {/* Reset Password route: Public route for password reset with token */}
+      <Route
+        path={ROUTES.RESET_PASSWORD.path}
+        element={<ResetPasswordPage />}
+      />
 
       {/* OAuth Callback route: Public route for Discord OAuth callback */}
       <Route

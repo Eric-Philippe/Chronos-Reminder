@@ -33,7 +33,6 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	sessionService := services.NewSessionService(
 		repos.Identity,
 		repos.Account,
-		repos.EmailVerification,
 	)
 
 	discordOAuthService := services.NewDiscordOAuthService(
@@ -56,11 +55,19 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	// Initialize verification service
 	verificationService := services.NewVerificationService(
 		repos.EmailVerification,
+		repos.Account,
+		mailerService,
+	)
+
+	// Initialize password reset service
+	passwordResetService := services.NewPasswordResetService(
+		repos.PasswordReset,
+		repos.Identity,
 		mailerService,
 	)
 
 	// Initialize handlers
-	authHandler := NewAuthHandler(authService, sessionService, verificationService, cfg.WebAppURL)
+	authHandler := NewAuthHandler(authService, sessionService, verificationService, passwordResetService, cfg.WebAppURL)
 	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
 	discordGuildHandler := NewDiscordGuildHandler(discordOAuthService)
 	userHandler := NewUserHandler(repos.Reminder, repos.ReminderError, repos.Account, sessionService)
@@ -135,6 +142,9 @@ func registerAuthRoutes(mux *WrappedMux, authHandler *AuthHandler) {
 	mux.HandleFunc("POST /api/auth/verify", authHandler.VerifyEmail)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
+	mux.HandleFunc("POST /api/auth/password-reset/request", authHandler.RequestPasswordReset)
+	mux.HandleFunc("POST /api/auth/password-reset/verify-token", authHandler.VerifyResetToken)
+	mux.HandleFunc("POST /api/auth/password-reset/reset", authHandler.ResetPassword)
 }
 
 // registerDiscordOAuthRoutes registers Discord OAuth routes

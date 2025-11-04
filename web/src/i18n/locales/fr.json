@@ -5,7 +5,18 @@
     "delete": "Supprimer",
     "deleting": "Suppression...",
     "loading": "Chargement...",
-    "back": "Retour"
+    "back": "Retour",
+    "emailRequired": "L'e-mail est requis",
+    "passwordRequired": "Le mot de passe est requis",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas",
+    "newPassword": "Nouveau Mot de Passe",
+    "confirmPassword": "Confirmer le Mot de Passe",
+    "passwordPlaceholder": "••••••••",
+    "emailAddress": "Adresse E-mail",
+    "signIn": "Se Connecter",
+    "verifying": "Vérification",
+    "resetting": "Réinitialisation",
+    "goToLogin": "Aller à la Connexion"
   },
   "header": {
     "home": "Accueil",
@@ -439,5 +450,39 @@
     "successDesc": "Votre email a été vérifié avec succès !",
     "redirecting": "Vous serez redirigé dans un moment...",
     "checkEmail": "Vérifiez votre email pour le code de vérification"
+  },
+  "forgotPassword": {
+    "title": "Mot de Passe Oublié ?",
+    "description": "Ne vous inquiétez pas ! Nous vous aiderons à récupérer votre compte.",
+    "enterEmail": "Entrez Votre E-mail",
+    "weWillSendLink": "Nous vous enverrons un lien pour réinitialiser votre mot de passe",
+    "sendResetLink": "Envoyer le Lien de Réinitialisation",
+    "sending": "Envoi...",
+    "emailSent": "Lien de réinitialisation envoyé à votre email !",
+    "checkYourEmail": "Vérifiez Votre Email",
+    "linkSentTo": "Nous avons envoyé un lien de réinitialisation de mot de passe à",
+    "linkExpires": "Le lien expirera dans 24 heures",
+    "rememberPassword": "Vous vous souvenez de votre mot de passe ?",
+    "error": "Erreur lors de l'envoi du lien de réinitialisation",
+    "backToLogin": "Retour à la Connexion"
+  },
+  "resetPassword": {
+    "title": "Réinitialiser le Mot de Passe",
+    "enterNewPassword": "Créer un Nouveau Mot de Passe",
+    "passwordRequirements": "Votre mot de passe doit contenir au moins 8 caractères",
+    "resetPassword": "Réinitialiser le Mot de Passe",
+    "passwordReset": "Mot de Passe Réinitialisé",
+    "youCanNowLogin": "Votre mot de passe a été réinitialisé avec succès.",
+    "invalidLink": "Lien de Réinitialisation Invalide",
+    "invalidLinkMessage": "Le lien pour réinitialiser le mot de passe est invalide ou a expiré.",
+    "linkExpired": "Lien Expiré",
+    "linkExpiredMessage": "Le lien pour réinitialiser le mot de passe a expiré. Veuillez en demander un nouveau.",
+    "requestNewLink": "Demander un Nouveau Lien",
+    "success": "Mot de passe réinitialisé avec succès !",
+    "error": "Erreur lors de la réinitialisation du mot de passe",
+    "invalidRequest": "Demande de réinitialisation invalide"
+  },
+  "validation": {
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères"
   }
 }
