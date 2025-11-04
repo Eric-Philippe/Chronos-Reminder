@@ -253,7 +253,9 @@
     },
     "errors": {
       "failed": "Failed to create reminder. Please try again.",
-      "selectDate": "Please select a date"
+      "selectDate": "Please select a date",
+      "dateTimeInPast": "Date and time cannot be in the past",
+      "selectFutureDateTime": "Please select a future date and time"
     },
     "discord": {
       "selectGuild": "Select Discord Server",
@@ -306,6 +308,7 @@
     "dangerZone": "Danger Zone",
     "deleteConfirm": "Are you sure you want to delete this reminder? This action cannot be undone.",
     "deleteConfirmTitle": "Delete Reminder?",
+    "dateTimeInPast": "Date and time cannot be in the past",
     "updatedSuccessfully": "Reminder updated successfully!",
     "pausedSuccessfully": "Reminder paused successfully!",
     "resumedSuccessfully": "Reminder resumed successfully!",

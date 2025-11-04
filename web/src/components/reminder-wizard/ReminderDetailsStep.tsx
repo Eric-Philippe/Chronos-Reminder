@@ -13,6 +13,7 @@ import {
   RecurrenceYearlyStr,
   getRecurrenceTypeI18nKeyFromString,
 } from "@/lib/recurrenceUtils";
+import { isDateTimeInPast } from "@/lib/utils";
 
 interface ReminderDetailsStepProps {
   formData: ReminderFormData;
@@ -126,6 +127,11 @@ export function ReminderDetailsStep({
             onChange={handleTimeChange}
             className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
           />
+          {formData.date && isDateTimeInPast(formData.date, formData.time) && (
+            <p className="text-xs text-red-500 mt-2">
+              {t("reminderCreation.errors.dateTimeInPast")}
+            </p>
+          )}
         </div>
       </div>
 

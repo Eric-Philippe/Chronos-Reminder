@@ -19,6 +19,7 @@ import {
   getRecurrenceTypeI18nKeyFromString,
   RecurrenceOnceStr,
 } from "@/lib/recurrenceUtils";
+import { isDateTimeInPast } from "@/lib/utils";
 
 export type ReminderStep = "details" | "destinations" | "review";
 
@@ -38,14 +39,15 @@ export function CreateReminderPage() {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<ReminderStep>("details");
 
-  // Initialize with current date and time
+  // Initialize with current date and time + 10 minutes
   const getInitialFormData = (): ReminderFormData => {
     const now = new Date();
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const futureTime = new Date(now.getTime() + 10 * 60 * 1000); // Add 10 minutes
+    const hours = String(futureTime.getHours()).padStart(2, "0");
+    const minutes = String(futureTime.getMinutes()).padStart(2, "0");
 
     return {
-      date: now,
+      date: futureTime,
       time: `${hours}:${minutes}`,
       message: "",
       recurrence: RecurrenceOnceStr,
@@ -64,6 +66,11 @@ export function CreateReminderPage() {
       if (!formData.date || !formData.message.trim()) {
         return; // Validation will be handled in the step component
       }
+      if (isDateTimeInPast(formData.date, formData.time)) {
+        setError(t("reminderCreation.errors.selectFutureDateTime"));
+        return;
+      }
+      setError(null);
       setCurrentStep("destinations");
     } else if (currentStep === "destinations") {
       setCurrentStep("review");
@@ -84,6 +91,12 @@ export function CreateReminderPage() {
     try {
       if (!formData.date) {
         setError(t("reminderCreation.errors.selectDate"));
+        setIsLoading(false);
+        return;
+      }
+
+      if (isDateTimeInPast(formData.date, formData.time)) {
+        setError(t("reminderCreation.errors.selectFutureDateTime"));
         setIsLoading(false);
         return;
       }

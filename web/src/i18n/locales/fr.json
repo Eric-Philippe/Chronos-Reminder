@@ -252,7 +252,9 @@
     },
     "errors": {
       "failed": "Échec de la création du rappel. Veuillez réessayer.",
-      "selectDate": "Veuillez sélectionner une date"
+      "selectDate": "Veuillez sélectionner une date",
+      "dateTimeInPast": "La date et l'heure ne peuvent pas être dans le passé",
+      "selectFutureDateTime": "Veuillez sélectionner une date et une heure futures"
     },
     "discord": {
       "selectGuild": "Sélectionner le Serveur Discord",
@@ -305,6 +307,7 @@
     "dangerZone": "Zone de Danger",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce rappel ? Cette action ne peut pas être annulée.",
     "deleteConfirmTitle": "Supprimer le rappel ?",
+    "dateTimeInPast": "La date et l'heure ne peuvent pas être dans le passé",
     "updatedSuccessfully": "Rappel mis à jour avec succès !",
     "pausedSuccessfully": "Rappel mis en pause avec succès !",
     "resumedSuccessfully": "Rappel repris avec succès !",

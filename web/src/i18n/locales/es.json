@@ -253,7 +253,9 @@
     },
     "errors": {
       "failed": "Error al crear el recordatorio. Por favor, inténtalo de nuevo.",
-      "selectDate": "Por favor, selecciona una fecha"
+      "selectDate": "Por favor, selecciona una fecha",
+      "dateTimeInPast": "La fecha y la hora no pueden estar en el pasado",
+      "selectFutureDateTime": "Por favor, selecciona una fecha y hora futuras"
     },
     "discord": {
       "selectGuild": "Seleccionar Servidor de Discord",
@@ -306,6 +308,7 @@
     "dangerZone": "Zona de Peligro",
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este recordatorio? Esta acción no se puede deshacer.",
     "deleteConfirmTitle": "¿Eliminar recordatorio?",
+    "dateTimeInPast": "La fecha y la hora no pueden estar en el pasado",
     "updatedSuccessfully": "¡Recordatorio actualizado exitosamente!",
     "pausedSuccessfully": "¡Recordatorio pausado exitosamente!",
     "resumedSuccessfully": "¡Recordatorio reanudado exitosamente!",

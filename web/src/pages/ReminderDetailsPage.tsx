@@ -27,6 +27,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { getRecurrenceTypeI18nKeyFromString } from "@/lib/recurrenceUtils";
+import { isDateTimeInPast } from "@/lib/utils";
 import type { Reminder } from "@/services";
 import { remindersService } from "@/services/reminders";
 import { accountService } from "@/services/account";
@@ -187,6 +188,13 @@ export function ReminderDetailsPage() {
 
   const handleSave = async () => {
     if (!reminder || !reminderId) return;
+
+    // Convert date string to Date object for validation
+    const dateObj = editData.date ? new Date(editData.date) : null;
+    if (dateObj && isDateTimeInPast(dateObj, editData.time)) {
+      toast.error(t("reminderDetails.dateTimeInPast"));
+      return;
+    }
 
     try {
       await remindersService.updateReminder(reminderId, {
