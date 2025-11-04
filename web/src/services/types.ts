@@ -33,6 +33,7 @@ export interface VerifyEmailResponse {
   token: string;
   expires_at: string;
   message: string;
+  data?: { [key: string]: unknown };
 }
 
 export interface SessionData {
