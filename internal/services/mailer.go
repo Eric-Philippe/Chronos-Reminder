@@ -71,7 +71,6 @@ func (m *MailerService) SendEmail(req *EmailRequest) (string, error) {
 		return "", fmt.Errorf("failed to send email: %w", err)
 	}
 
-	log.Printf("[MAILER] - ✅ Email sent successfully to %s (ID: %s)", req.To, sent.Id)
 	return sent.Id, nil
 }
 

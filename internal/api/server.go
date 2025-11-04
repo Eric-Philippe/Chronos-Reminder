@@ -52,6 +52,12 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		"noreply@noreply.chronosrmd.com",
 	)
 
+	// Initialize rate limiter service
+	rateLimiterService := services.NewRateLimiterService(
+		cfg.RateLimitRequestsPerWindow,
+		cfg.RateLimitWindowSeconds,
+	)
+
 	// Initialize verification service
 	verificationService := services.NewVerificationService(
 		repos.EmailVerification,
@@ -94,14 +100,26 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	wrappedMux := NewWrappedMux()
 	wrappedMux.Use(CORSMiddleware(cfg))
 
+	// Apply rate limiter middleware to protected routes (if enabled)
+	var rateLimitMiddleware func(http.Handler) http.Handler
+	if cfg.RateLimitEnabled {
+		rateLimitMiddleware = RateLimitMiddleware(rateLimiterService)
+		log.Printf("[API] - ⚡ Rate limiting enabled: %d requests per %d seconds\n",
+			cfg.RateLimitRequestsPerWindow, cfg.RateLimitWindowSeconds)
+	} else {
+		// No-op middleware
+		rateLimitMiddleware = func(next http.Handler) http.Handler { return next }
+		log.Println("[API] - ⚡ Rate limiting disabled")
+	}
+
 	// Register all routes
 	registerHealthRoutes(wrappedMux, healthHandler)
 	registerSwaggerRoutes(wrappedMux)
 	registerAuthRoutes(wrappedMux, authHandler)
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
-	registerUserRoutes(wrappedMux, userHandler, sessionService)
-	registerReminderRoutes(wrappedMux, reminderHandler, sessionService)
+	registerUserRoutes(wrappedMux, userHandler, sessionService, rateLimitMiddleware)
+	registerReminderRoutes(wrappedMux, reminderHandler, sessionService, rateLimitMiddleware)
 	registerTimezoneRoutes(wrappedMux, timezoneHandler)
 
 	return &Server{
@@ -160,36 +178,46 @@ func registerDiscordGuildRoutes(mux *WrappedMux, discordGuildHandler *DiscordGui
 	mux.HandleFunc("POST /api/discord/guilds/roles", discordGuildHandler.GetGuildRoles)
 }
 
-// registerUserRoutes registers authenticated user routes with auth middleware
-func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionService *services.SessionService) {
+// registerUserRoutes registers authenticated user routes with auth and rate limit middleware
+func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionService *services.SessionService, rateLimitMiddleware func(http.Handler) http.Handler) {
 	// Apply auth middleware to user routes
 	authMiddleware := AuthMiddleware(sessionService)
 	
-	// Wrap each user route handler with auth middleware
-	mux.Handle("GET /api/reminders", authMiddleware(http.HandlerFunc(userHandler.GetReminders)))
-	mux.Handle("POST /api/reminders", authMiddleware(http.HandlerFunc(userHandler.CreateReminder)))
-	mux.Handle("GET /api/reminders/errors", authMiddleware(http.HandlerFunc(userHandler.GetReminderErrors)))
-	mux.Handle("GET /api/account", authMiddleware(http.HandlerFunc(userHandler.GetAccount)))
-	mux.Handle("POST /api/account/identity/app/change-password", authMiddleware(http.HandlerFunc(userHandler.ChangeAppIdentityPassword)))
-	mux.Handle("PUT /api/account/timezone", authMiddleware(http.HandlerFunc(userHandler.UpdateAccountTimezone)))
-	mux.Handle("PUT /api/account/identity/app/username", authMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityUsername)))
-	mux.Handle("PUT /api/account/identity/app/email", authMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityEmail)))
-	mux.Handle("DELETE /api/account", authMiddleware(http.HandlerFunc(userHandler.DeleteAccount)))
+	// Chain middlewares: rate limit -> auth
+	chainMiddleware := func(handler http.Handler) http.Handler {
+		return rateLimitMiddleware(authMiddleware(handler))
+	}
+	
+	// Wrap each user route handler with both middlewares
+	mux.Handle("GET /api/reminders", chainMiddleware(http.HandlerFunc(userHandler.GetReminders)))
+	mux.Handle("POST /api/reminders", chainMiddleware(http.HandlerFunc(userHandler.CreateReminder)))
+	mux.Handle("GET /api/reminders/errors", chainMiddleware(http.HandlerFunc(userHandler.GetReminderErrors)))
+	mux.Handle("GET /api/account", chainMiddleware(http.HandlerFunc(userHandler.GetAccount)))
+	mux.Handle("POST /api/account/identity/app/change-password", chainMiddleware(http.HandlerFunc(userHandler.ChangeAppIdentityPassword)))
+	mux.Handle("PUT /api/account/timezone", chainMiddleware(http.HandlerFunc(userHandler.UpdateAccountTimezone)))
+	mux.Handle("PUT /api/account/identity/app/username", chainMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityUsername)))
+	mux.Handle("PUT /api/account/identity/app/email", chainMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityEmail)))
+	mux.Handle("DELETE /api/account", chainMiddleware(http.HandlerFunc(userHandler.DeleteAccount)))
 }
 
-// registerReminderRoutes registers reminder-specific routes with auth middleware
-func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, sessionService *services.SessionService) {
+// registerReminderRoutes registers reminder-specific routes with auth and rate limit middleware
+func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, sessionService *services.SessionService, rateLimitMiddleware func(http.Handler) http.Handler) {
 	authMiddleware := AuthMiddleware(sessionService)
 
+	// Chain middlewares: rate limit -> auth
+	chainMiddleware := func(handler http.Handler) http.Handler {
+		return rateLimitMiddleware(authMiddleware(handler))
+	}
+
 	// Reminder CRUD operations
-	mux.Handle("GET /api/reminders/{id}", authMiddleware(http.HandlerFunc(reminderHandler.GetReminder)))
-	mux.Handle("PUT /api/reminders/{id}", authMiddleware(http.HandlerFunc(reminderHandler.UpdateReminder)))
-	mux.Handle("DELETE /api/reminders/{id}", authMiddleware(http.HandlerFunc(reminderHandler.DeleteReminder)))
+	mux.Handle("GET /api/reminders/{id}", chainMiddleware(http.HandlerFunc(reminderHandler.GetReminder)))
+	mux.Handle("PUT /api/reminders/{id}", chainMiddleware(http.HandlerFunc(reminderHandler.UpdateReminder)))
+	mux.Handle("DELETE /api/reminders/{id}", chainMiddleware(http.HandlerFunc(reminderHandler.DeleteReminder)))
 	
 	// Reminder state operations
-	mux.Handle("POST /api/reminders/{id}/pause", authMiddleware(http.HandlerFunc(reminderHandler.PauseReminder)))
-	mux.Handle("POST /api/reminders/{id}/resume", authMiddleware(http.HandlerFunc(reminderHandler.ResumeReminder)))
-	mux.Handle("POST /api/reminders/{id}/duplicate", authMiddleware(http.HandlerFunc(reminderHandler.DuplicateReminder)))
+	mux.Handle("POST /api/reminders/{id}/pause", chainMiddleware(http.HandlerFunc(reminderHandler.PauseReminder)))
+	mux.Handle("POST /api/reminders/{id}/resume", chainMiddleware(http.HandlerFunc(reminderHandler.ResumeReminder)))
+	mux.Handle("POST /api/reminders/{id}/duplicate", chainMiddleware(http.HandlerFunc(reminderHandler.DuplicateReminder)))
 }
 
 // registerTimezoneRoutes registers timezone routes (public, no auth required)

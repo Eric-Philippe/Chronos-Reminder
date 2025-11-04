@@ -39,6 +39,11 @@ type Config struct {
 
 	// Web app configuration
 	WebAppURL string
+
+	// Rate limiting configuration
+	RateLimitRequestsPerWindow int    `env:"RATE_LIMIT_REQUESTS_PER_WINDOW" envDefault:"100"`
+	RateLimitWindowSeconds     int    `env:"RATE_LIMIT_WINDOW_SECONDS" envDefault:"60"`
+	RateLimitEnabled           bool   `env:"RATE_LIMIT_ENABLED" envDefault:"true"`
 }
 
 var (
@@ -81,12 +86,11 @@ func Load() *Config {
 
 		// Web app URL for verification links
 		WebAppURL: getEnv("WEB_APP_URL", "http://localhost:5173"),
-		// ,
 
-		RedisHost:     getEnv("REDIS_HOST", "localhost"),
-		RedisPort:     getEnv("REDIS_PORT", "6379"),
-		RedisPassword: getEnv("REDIS_PASSWORD", ""),
-		RedisDB:       getEnv("REDIS_DB", "0"),
+		// Rate limiting configuration
+		RateLimitRequestsPerWindow: parseInt(getEnv("RATE_LIMIT_REQUESTS_PER_WINDOW", "100")),
+		RateLimitWindowSeconds:     parseInt(getEnv("RATE_LIMIT_WINDOW_SECONDS", "60")),
+		RateLimitEnabled:           getEnv("RATE_LIMIT_ENABLED", "true") == "true",
     }
 
     return cfg
@@ -139,4 +143,13 @@ func getEnv(key, fallback string) string {
         return value
     }
     return fallback
+}
+
+// parseInt parses a string to an integer with a default value on error
+func parseInt(s string) int {
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+	return val
 }
