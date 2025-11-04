@@ -13,6 +13,8 @@ import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
 import { AccountPage } from "./pages/AccountPage";
 import { APIKeysPage } from "./pages/APIKeysPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
+import { ChangelogPage } from "./pages/ChangelogPage";
+import { ContactPage } from "./pages/ContactPage";
 import { useAuth } from "./hooks/useAuth";
 import { ROUTES } from "./config/routes";
 import "./i18n/config";
@@ -52,6 +54,12 @@ function AppRoutes() {
         path={ROUTES.AUTH_CALLBACK_DISCORD.path}
         element={<OAuthCallbackPage />}
       />
+
+      {/* Changelog route: Public route to view changelog */}
+      <Route path={ROUTES.CHANGELOG.path} element={<ChangelogPage />} />
+
+      {/* Contact route: Public route for contact form */}
+      <Route path={ROUTES.CONTACT.path} element={<ContactPage />} />
 
       {/* Vitrine route: Public route at root for all users */}
       <Route path={ROUTES.HOME.path} element={<HomePage />} />

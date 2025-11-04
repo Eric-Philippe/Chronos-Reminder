@@ -105,6 +105,9 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	// Initialize health handler
 	healthHandler := NewHealthHandler()
 
+	// Initialize contact handler
+	contactHandler := NewContactHandler(mailerService)
+
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()
 	wrappedMux.Use(CORSMiddleware(cfg))
@@ -131,6 +134,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerReminderRoutes(wrappedMux, reminderHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerTimezoneRoutes(wrappedMux, timezoneHandler)
 	registerAPIKeyRoutes(wrappedMux, apiKeyHandler, sessionService, apiKeyService, rateLimitMiddleware)
+	registerContactRoutes(wrappedMux, contactHandler)
 
 	return &Server{
 		mux:           wrappedMux,
@@ -248,6 +252,11 @@ func registerAPIKeyRoutes(mux *WrappedMux, apiKeyHandler *APIKeyHandler, session
 	mux.Handle("POST /api/api-keys", chainMiddleware(http.HandlerFunc(apiKeyHandler.CreateAPIKey)))
 	mux.Handle("GET /api/api-keys", chainMiddleware(http.HandlerFunc(apiKeyHandler.GetAPIKeys)))
 	mux.Handle("DELETE /api/api-keys/{id}", chainMiddleware(http.HandlerFunc(apiKeyHandler.RevokeAPIKey)))
+}
+
+// registerContactRoutes registers contact form routes (public, no auth required)
+func registerContactRoutes(mux *WrappedMux, contactHandler *ContactHandler) {
+	mux.HandleFunc("POST /api/contact", contactHandler.SubmitContact)
 }
 
 // Start starts the API server and listens for incoming requests
