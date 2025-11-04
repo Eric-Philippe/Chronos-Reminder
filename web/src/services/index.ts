@@ -9,6 +9,7 @@ export { remindersService } from "./reminders";
 export { accountService } from "./account";
 export { discordService } from "./discord";
 export { identityService } from "./identity";
+export { timezoneService } from "./timezone";
 
 // Export all types
 export type {
@@ -32,4 +33,5 @@ export type {
   GetUserGuildsResponse,
   GetGuildChannelsResponse,
   GetGuildRolesResponse,
+  Timezone,
 } from "./types";

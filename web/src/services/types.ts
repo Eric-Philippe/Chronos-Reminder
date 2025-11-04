@@ -26,6 +26,15 @@ export interface RegisterResponse {
   message: string;
 }
 
+export interface VerifyEmailResponse {
+  id: string;
+  email: string;
+  username: string;
+  token: string;
+  expires_at: string;
+  message: string;
+}
+
 export interface SessionData {
   user_id: string;
   email: string;
@@ -166,4 +175,14 @@ export interface GetGuildChannelsResponse {
 export interface GetGuildRolesResponse {
   roles: DiscordRole[];
   error?: string;
+}
+
+/**
+ * Timezone Types
+ */
+export interface Timezone {
+  id: number;
+  name: string;
+  gmt_offset: number;
+  iana_location: string;
 }

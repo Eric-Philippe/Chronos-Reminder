@@ -421,5 +421,23 @@
     "accountDeleted": "Compte supprimé avec succès",
     "accountDeletedDesc": "Votre compte a été supprimé. Vous êtes en train d'être déconnecté.",
     "deleteAccountFailed": "Échec de la suppression du compte"
+  },
+  "verification": {
+    "success": "Email Vérifié",
+    "failed": "Vérification Échouée",
+    "verifying": "Vérification de l'Email",
+    "verifyingDesc": "Veuillez patienter pendant que nous vérifions votre adresse e-mail...",
+    "enterCode": "Entrez le Code de Vérification",
+    "enterCodeDesc": "Vérifiez votre email pour le code de vérification et entrez-le ci-dessous.",
+    "email": "Adresse E-mail",
+    "code": "Code de Vérification",
+    "verify": "Vérifier Email",
+    "tryAgain": "Réessayer",
+    "backToLogin": "Retour à la Connexion",
+    "invalidCode": "Code de vérification invalide ou expiré",
+    "fillFields": "Veuillez remplir tous les champs",
+    "successDesc": "Votre email a été vérifié avec succès !",
+    "redirecting": "Vous serez redirigé dans un moment...",
+    "checkEmail": "Vérifiez votre email pour le code de vérification"
   }
 }

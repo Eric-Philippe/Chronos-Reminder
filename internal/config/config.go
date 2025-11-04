@@ -33,6 +33,12 @@ type Config struct {
 	RedisPort     string `env:"REDIS_PORT" envDefault:"6379"`
 	RedisPassword string `env:"REDIS_PASSWORD" envDefault:""`
 	RedisDB       string `env:"REDIS_DB" envDefault:"0"`
+
+	// Resend email service configuration
+	ResendAPIKey string
+
+	// Web app configuration
+	WebAppURL string
 }
 
 var (
@@ -69,6 +75,13 @@ func Load() *Config {
 		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", ""),
 		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", ""),
 		DiscordRedirectURI:  getEnv("DISCORD_REDIRECT_URI", "http://localhost:5173/auth/callback/discord"),
+
+		// Resend email service configuration
+		ResendAPIKey: getEnv("RESEND_API_KEY", ""),
+
+		// Web app URL for verification links
+		WebAppURL: getEnv("WEB_APP_URL", "http://localhost:5173"),
+		// ,
 
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),
 		RedisPort:     getEnv("REDIS_PORT", "6379"),

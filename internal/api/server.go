@@ -14,10 +14,11 @@ import (
 
 // Server represents the API server
 type Server struct {
-	mux    *WrappedMux
-	port   string
-	server *http.Server
-	cfg    *config.Config
+	mux           *WrappedMux
+	port          string
+	server        *http.Server
+	cfg           *config.Config
+	mailerService *services.MailerService
 }
 
 // NewServer creates a new API server instance
@@ -32,6 +33,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	sessionService := services.NewSessionService(
 		repos.Identity,
 		repos.Account,
+		repos.EmailVerification,
 	)
 
 	discordOAuthService := services.NewDiscordOAuthService(
@@ -45,8 +47,20 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		sessionService,
 	)
 
+	// Initialize mailer service
+	mailerService := services.NewMailerService(
+		cfg.ResendAPIKey,
+		"noreply@noreply.chronosrmd.com",
+	)
+
+	// Initialize verification service
+	verificationService := services.NewVerificationService(
+		repos.EmailVerification,
+		mailerService,
+	)
+
 	// Initialize handlers
-	authHandler := NewAuthHandler(authService, sessionService)
+	authHandler := NewAuthHandler(authService, sessionService, verificationService, cfg.WebAppURL)
 	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
 	discordGuildHandler := NewDiscordGuildHandler(discordOAuthService)
 	userHandler := NewUserHandler(repos.Reminder, repos.ReminderError, repos.Account, sessionService)
@@ -63,22 +77,31 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	reminderHandler.SetAccountRepository(repos.Account)
 	reminderHandler.SetTimezoneRepository(repos.Timezone)
 
+	// Initialize timezone handler
+	timezoneHandler := NewTimezoneHandler(repos.Timezone)
+
+	// Initialize health handler
+	healthHandler := NewHealthHandler()
+
 	// Create wrapped mux with CORS middleware
 	wrappedMux := NewWrappedMux()
 	wrappedMux.Use(CORSMiddleware(cfg))
 
 	// Register all routes
+	registerHealthRoutes(wrappedMux, healthHandler)
 	registerSwaggerRoutes(wrappedMux)
 	registerAuthRoutes(wrappedMux, authHandler)
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
 	registerUserRoutes(wrappedMux, userHandler, sessionService)
 	registerReminderRoutes(wrappedMux, reminderHandler, sessionService)
+	registerTimezoneRoutes(wrappedMux, timezoneHandler)
 
 	return &Server{
-		mux:  wrappedMux,
-		port: cfg.APIPort,
-		cfg:  cfg,
+		mux:           wrappedMux,
+		port:          cfg.APIPort,
+		cfg:           cfg,
+		mailerService: mailerService,
 	}
 }
 
@@ -101,9 +124,15 @@ func registerSwaggerRoutes(mux *WrappedMux) {
 	mux.Handle("GET /swagger/", swaggerHandler)
 }
 
+// registerHealthRoutes registers health check routes
+func registerHealthRoutes(mux *WrappedMux, healthHandler *HealthHandler) {
+	mux.HandleFunc("GET /api/health", healthHandler.Health)
+}
+
 // registerAuthRoutes registers authentication routes
 func registerAuthRoutes(mux *WrappedMux, authHandler *AuthHandler) {
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
+	mux.HandleFunc("POST /api/auth/verify", authHandler.VerifyEmail)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
 }
@@ -153,6 +182,11 @@ func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, s
 	mux.Handle("POST /api/reminders/{id}/duplicate", authMiddleware(http.HandlerFunc(reminderHandler.DuplicateReminder)))
 }
 
+// registerTimezoneRoutes registers timezone routes (public, no auth required)
+func registerTimezoneRoutes(mux *WrappedMux, timezoneHandler *TimezoneHandler) {
+	mux.HandleFunc("GET /api/timezones", timezoneHandler.GetAvailableTimezones)
+}
+
 // Start starts the API server and listens for incoming requests
 func (s *Server) Start() error {
 	s.server = &http.Server{
@@ -184,4 +218,9 @@ func (s *Server) Stop() error {
 // GetPort returns the port the server is listening on
 func (s *Server) GetPort() string {
 	return s.port
+}
+
+// GetMailerService returns the mailer service instance
+func (s *Server) GetMailerService() *services.MailerService {
+	return s.mailerService
 }

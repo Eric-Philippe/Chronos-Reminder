@@ -83,3 +83,16 @@ type ReminderErrorRepository interface {
 	MarkAsFixed(id uuid.UUID) error
 	MarkMultipleAsFixed(ids []uuid.UUID) error
 }
+
+// EmailVerificationRepository interface defines operations for email verification data
+type EmailVerificationRepository interface {
+	Create(verification *models.EmailVerification) error
+	GetByID(id uuid.UUID) (*models.EmailVerification, error)
+	GetByEmailAndCode(email string, code string) (*models.EmailVerification, error)
+	GetByEmail(email string) (*models.EmailVerification, error)
+	GetByAccountID(accountID string) (*models.EmailVerification, error)
+	MarkAsVerified(id uuid.UUID) error
+	IsVerified(email string) (bool, error)
+	DeleteByEmail(email string) error
+	Delete(id uuid.UUID) error
+}

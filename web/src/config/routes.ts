@@ -128,6 +128,13 @@ export const ROUTES = {
     name: "Discord OAuth Callback",
     showInNav: false,
   } as Route,
+
+  VERIFY_EMAIL: {
+    path: "/verify",
+    requiresAuth: false,
+    name: "verifyEmail",
+    showInNav: false,
+  } as Route,
 } as const;
 
 // Menu groups configuration

@@ -13,15 +13,24 @@ import (
 
 // AuthHandler handles authentication-related requests
 type AuthHandler struct {
-	authService    *services.AuthService
-	sessionService *services.SessionService
+	authService         *services.AuthService
+	sessionService      *services.SessionService
+	verificationService *services.VerificationService
+	webAppURL           string
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(authService *services.AuthService, sessionService *services.SessionService) *AuthHandler {
+func NewAuthHandler(
+	authService *services.AuthService,
+	sessionService *services.SessionService,
+	verificationService *services.VerificationService,
+	webAppURL string,
+) *AuthHandler {
 	return &AuthHandler{
-		authService:    authService,
-		sessionService: sessionService,
+		authService:         authService,
+		sessionService:      sessionService,
+		verificationService: verificationService,
+		webAppURL:           webAppURL,
 	}
 }
 
@@ -39,6 +48,22 @@ type RegisterResponse struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Message  string `json:"message"`
+}
+
+// VerifyEmailRequest represents the email verification request payload
+type VerifyEmailRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+// VerifyEmailResponse represents the email verification response payload
+type VerifyEmailResponse struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	Token     string `json:"token"`
+	ExpiresAt string `json:"expires_at"`
+	Message   string `json:"message"`
 }
 
 // LoginRequest represents the login request payload
@@ -101,6 +126,25 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create verification record and send verification email
+	verificationCode, err := h.verificationService.CreateVerification(req.Email, account.ID.String())
+	if err != nil {
+		// Log error but don't fail registration
+		WriteError(w, http.StatusInternalServerError, "Failed to create verification code")
+		return
+	}
+
+	// Build verification link (frontend will handle the redirect)
+	verificationLink := h.webAppURL + "/verify?email=" + req.Email + "&code=" + verificationCode
+
+	// Send verification email
+	_, err = h.verificationService.SendVerificationEmail(req.Email, verificationCode, verificationLink)
+	if err != nil {
+		// Log error but don't fail registration
+		WriteError(w, http.StatusInternalServerError, "Failed to send verification email")
+		return
+	}
+
 	// Get the email identity for response
 	var email string
 	if len(account.Identities) > 0 {
@@ -116,7 +160,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		ID:       account.ID.String(),
 		Email:    email,
 		Username: username,
-		Message:  "User registered successfully",
+		Message:  "Account created successfully. Please check your email to verify your account.",
 	}
 
 	WriteJSON(w, http.StatusCreated, resp)
@@ -152,6 +196,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	sessionData, token, err := h.sessionService.LoginUser(r.Context(), serviceReq)
 	if err != nil {
 		// Check for specific error types
+		if strings.Contains(err.Error(), "email not verified") {
+			WriteError(w, http.StatusForbidden, "Email not verified. Please check your email to verify your account.")
+			return
+		}
 		if strings.Contains(err.Error(), "invalid email or password") {
 			WriteError(w, http.StatusUnauthorized, "Invalid email or password")
 			return
@@ -239,6 +287,74 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Logged out successfully",
 	})
+}
+
+// VerifyEmail handles email verification with verification code
+func (h *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req VerifyEmailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	// Validate input
+	if strings.TrimSpace(req.Email) == "" {
+		WriteError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	if strings.TrimSpace(req.Code) == "" {
+		WriteError(w, http.StatusBadRequest, "Verification code is required")
+		return
+	}
+
+	// Verify email
+	accountID, err := h.verificationService.VerifyEmail(req.Email, req.Code)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, "Invalid or expired verification code")
+		return
+	}
+
+	// Create session and login user
+	loginReq := &services.LoginWithIDRequest{
+		AccountID: accountID,
+	}
+
+	sessionData, token, err := h.sessionService.LoginUserWithID(r.Context(), loginReq)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to create session after verification")
+		return
+	}
+
+	// Set HTTP-only secure cookie for token
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   24 * 3600, // 24 hours
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	// Delete verification records
+	_ = h.verificationService.DeleteVerification(req.Email)
+
+	resp := VerifyEmailResponse{
+		ID:        sessionData.AccountID.String(),
+		Email:     sessionData.Email,
+		Username:  sessionData.Username,
+		Token:     token,
+		ExpiresAt: sessionData.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
+		Message:   "Email verified successfully",
+	}
+
+	WriteJSON(w, http.StatusOK, resp)
 }
 
 // validateLoginRequest validates the login request

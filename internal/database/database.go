@@ -81,6 +81,7 @@ func runMigrations() error {
 		&models.Reminder{},
 		&models.ReminderDestination{},
 		&models.ReminderError{},
+		&models.EmailVerification{},
 	)
 	
 	if err != nil {

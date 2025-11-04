@@ -422,5 +422,23 @@
     "accountDeleted": "Account deleted successfully",
     "accountDeletedDesc": "Your account has been deleted. You are being logged out.",
     "deleteAccountFailed": "Failed to delete account"
+  },
+  "verification": {
+    "success": "Email Verified",
+    "failed": "Verification Failed",
+    "verifying": "Verifying Email",
+    "verifyingDesc": "Please wait while we verify your email address...",
+    "enterCode": "Enter Verification Code",
+    "enterCodeDesc": "Check your email for the verification code and enter it below.",
+    "email": "Email Address",
+    "code": "Verification Code",
+    "verify": "Verify Email",
+    "tryAgain": "Try Again",
+    "backToLogin": "Back to Login",
+    "invalidCode": "Invalid or expired verification code",
+    "fillFields": "Please fill in all fields",
+    "successDesc": "Your email has been verified successfully!",
+    "redirecting": "You will be redirected shortly...",
+    "checkEmail": "Check your email for verification code"
   }
 }

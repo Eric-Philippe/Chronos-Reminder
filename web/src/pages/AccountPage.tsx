@@ -19,36 +19,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { accountService, type Account } from "@/services";
+import { TimezoneSelect } from "@/components/common/TimezoneSelect";
 import { PasswordStrengthIndicator } from "@/components/common/PasswordStrengthIndicator";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/config/routes";
-
-const TIMEZONES = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "Asia/Hong_Kong",
-  "Asia/Singapore",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Australia/Sydney",
-  "Australia/Melbourne",
-  "Pacific/Auckland",
-  "America/Toronto",
-  "America/Mexico_City",
-  "America/Argentina/Buenos_Aires",
-  "America/Sao_Paulo",
-  "Africa/Cairo",
-  "Africa/Johannesburg",
-];
 
 export function AccountPage() {
   const { t } = useTranslation();
@@ -584,19 +559,13 @@ export function AccountPage() {
                   <Label htmlFor="timezone-select" className="text-foreground">
                     {t("account.selectTimezone")}
                   </Label>
-                  <select
-                    id="timezone-select"
-                    value={selectedTimezone}
-                    onChange={(e) => handleTimezoneChange(e.target.value)}
-                    disabled={isChangingTimezone}
-                    className="mt-2 w-full px-3 py-2 bg-secondary/30 border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
-                  >
-                    {TIMEZONES.map((tz) => (
-                      <option key={tz} value={tz}>
-                        {tz}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-4">
+                    <TimezoneSelect
+                      value={selectedTimezone}
+                      onChange={(value) => handleTimezoneChange(value)}
+                      disabled={isChangingTimezone}
+                    />
+                  </div>
                 </div>
 
                 {isChangingTimezone && (

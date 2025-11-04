@@ -6,12 +6,14 @@ import { ModeToggle } from "@/components/common/mode-toggle";
 import { LoginSection } from "@/components/LoginSection";
 import { SignUpSection } from "@/components/SignUpSection";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
 
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login, register, isLoading, error } = useAuth();
+  const { success, error: showError } = useToast();
 
   const [isSignUp, setIsSignUp] = useState(() => {
     const mode = searchParams.get("mode");
@@ -70,7 +72,11 @@ export function LoginPage() {
     try {
       await register(signUpEmail, username, signUpPassword, timezone);
       setLocalError(null);
-      // Show success message and switch to login
+
+      // Show success toast with verification message
+      success(t("verification.checkEmail") as string);
+
+      // Reset form and switch to login
       setIsSignUp(false);
       setSignUpEmail("");
       setUsername("");
@@ -80,6 +86,7 @@ export function LoginPage() {
       const errorMsg =
         err instanceof Error ? err.message : "Registration failed";
       setLocalError(errorMsg);
+      showError(errorMsg);
       console.error("Registration failed:", err);
     }
   };

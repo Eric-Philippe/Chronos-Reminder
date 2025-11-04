@@ -1,157 +1,93 @@
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-
-// IANA timezone identifiers
-const TIMEZONES = [
-  "Africa/Cairo",
-  "Africa/Johannesburg",
-  "Africa/Lagos",
-  "Africa/Nairobi",
-  "America/Anchorage",
-  "America/Argentina/Buenos_Aires",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Mexico_City",
-  "America/New_York",
-  "America/Phoenix",
-  "America/Toronto",
-  "America/Vancouver",
-  "Asia/Bangkok",
-  "Asia/Dubai",
-  "Asia/Hong_Kong",
-  "Asia/Kolkata",
-  "Asia/Jakarta",
-  "Asia/Manila",
-  "Asia/Shanghai",
-  "Asia/Singapore",
-  "Asia/Seoul",
-  "Asia/Tokyo",
-  "Atlantic/Azores",
-  "Atlantic/Cape_Verde",
-  "Australia/Adelaide",
-  "Australia/Brisbane",
-  "Australia/Melbourne",
-  "Australia/Perth",
-  "Australia/Sydney",
-  "Europe/Amsterdam",
-  "Europe/Athens",
-  "Europe/Belgrade",
-  "Europe/Berlin",
-  "Europe/Brussels",
-  "Europe/Bucharest",
-  "Europe/Budapest",
-  "Europe/Dublin",
-  "Europe/Helsinki",
-  "Europe/Istanbul",
-  "Europe/Lisbon",
-  "Europe/London",
-  "Europe/Madrid",
-  "Europe/Moscow",
-  "Europe/Paris",
-  "Europe/Prague",
-  "Europe/Rome",
-  "Europe/Stockholm",
-  "Europe/Vienna",
-  "Europe/Warsaw",
-  "Europe/Zurich",
-  "Pacific/Auckland",
-  "Pacific/Fiji",
-  "Pacific/Honolulu",
-  "Pacific/Tongatapu",
-  "UTC",
-].sort();
+import { useEffect, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { timezoneService } from "@/services";
+import type { Timezone } from "@/services/types";
 
 interface TimezoneSelectProps {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  noResultsText?: string;
+  disabled?: boolean;
+}
+
+// Helper function to extract region from IANA location
+function getRegion(iana: string): string {
+  const parts = iana.split("/");
+  if (parts.length === 2) {
+    return parts[0];
+  }
+  return "Other";
 }
 
 export function TimezoneSelect({
   value,
   onChange,
-  placeholder = "Select timezone",
-  searchPlaceholder = "Search timezone...",
-  noResultsText = "No timezones found",
+  disabled = false,
 }: TimezoneSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [timezones, setTimezones] = useState<Timezone[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredTimezones = TIMEZONES.filter((tz) =>
-    tz.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch timezones from API
+  useEffect(() => {
+    const fetchTimezones = async () => {
+      try {
+        setIsLoading(true);
+        const data = await timezoneService.getAvailableTimezones();
+        setTimezones(data);
+      } catch (error) {
+        console.error("Failed to fetch timezones from API", error);
+        setTimezones([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTimezones();
+  }, []);
+
+  // Group timezones by region (first part of IANA location)
+  const groupedTimezones = timezones.reduce((groups, tz) => {
+    const region = getRegion(tz.iana_location);
+    if (!groups[region]) {
+      groups[region] = [];
+    }
+    groups[region].push(tz);
+    return groups;
+  }, {} as Record<string, Timezone[]>);
+
+  // Sort regions and timezones within each region
+  const sortedRegions = Object.keys(groupedTimezones).sort();
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground rounded-md px-3 py-2 text-sm flex justify-between items-center hover:bg-secondary/70 transition-colors"
-      >
-        <span>{value || placeholder}</span>
-        <svg
-          className={`w-4 h-4 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 14l-7 7m0 0l-7-7m7 7V3"
-          />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-md shadow-lg z-50">
-          {/* Search Box */}
-          <div className="p-2 border-b border-border">
-            <Input
-              type="text"
-              placeholder={searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground text-sm"
-              autoFocus
-            />
-          </div>
-
-          {/* Timezone List */}
-          <div className="max-h-64 overflow-y-auto">
-            {filteredTimezones.length > 0 ? (
-              filteredTimezones.map((tz) => (
-                <button
-                  key={tz}
-                  type="button"
-                  onClick={() => {
-                    onChange(tz);
-                    setIsOpen(false);
-                    setSearchQuery("");
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    value === tz
-                      ? "bg-accent text-accent-foreground"
-                      : "text-foreground hover:bg-secondary/50"
-                  }`}
-                >
-                  {tz}
-                </button>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
-                {noResultsText}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    <Select
+      value={value}
+      onValueChange={onChange}
+      disabled={isLoading || disabled}
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select a timezone" />
+      </SelectTrigger>
+      <SelectContent className="max-h-[300px]">
+        {sortedRegions.map((region) => (
+          <SelectGroup key={region}>
+            <SelectLabel>{region}</SelectLabel>
+            {groupedTimezones[region]
+              .sort((a, b) => a.iana_location.localeCompare(b.iana_location))
+              .map((tz) => (
+                <SelectItem key={tz.iana_location} value={tz.iana_location}>
+                  {tz.iana_location}
+                </SelectItem>
+              ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

@@ -162,7 +162,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           registerRequest
         );
 
-        // After registration, user needs to log in
+        // After registration, user needs to verify email
+        // The auth handler will show a toast with the verification message
         console.log("Registration successful:", response);
       } catch (err) {
         const errorMessage =

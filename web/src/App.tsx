@@ -4,6 +4,7 @@ import { ThemeProvider } from "./components/common/theme-provider";
 import { AuthProvider } from "./hooks/AuthContext";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { VerificationPage } from "./pages/VerificationPage";
 import { RemindersPage } from "./pages/RemindersPage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
@@ -36,6 +37,9 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Email Verification route: Public route for email verification */}
+      <Route path={ROUTES.VERIFY_EMAIL.path} element={<VerificationPage />} />
+
       {/* OAuth Callback route: Public route for Discord OAuth callback */}
       <Route
         path={ROUTES.AUTH_CALLBACK_DISCORD.path}

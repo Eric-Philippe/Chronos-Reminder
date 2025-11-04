@@ -28,18 +28,21 @@ const (
 
 // SessionService handles session and authentication operations
 type SessionService struct {
-	identityRepo repositories.IdentityRepository
-	accountRepo  repositories.AccountRepository
+	identityRepo      repositories.IdentityRepository
+	accountRepo       repositories.AccountRepository
+	verificationRepo  repositories.EmailVerificationRepository
 }
 
 // NewSessionService creates a new session service instance
 func NewSessionService(
 	identityRepo repositories.IdentityRepository,
 	accountRepo repositories.AccountRepository,
+	verificationRepo repositories.EmailVerificationRepository,
 ) *SessionService {
 	return &SessionService{
-		identityRepo: identityRepo,
-		accountRepo:  accountRepo,
+		identityRepo:     identityRepo,
+		accountRepo:      accountRepo,
+		verificationRepo: verificationRepo,
 	}
 }
 
@@ -48,6 +51,11 @@ type LoginRequest struct {
 	Email      string `json:"email"`
 	Password   string `json:"password"`
 	RememberMe bool   `json:"remember_me"`
+}
+
+// LoginWithIDRequest represents a login request using account ID
+type LoginWithIDRequest struct {
+	AccountID string `json:"account_id"`
 }
 
 // SessionToken represents a JWT token payload
@@ -103,6 +111,16 @@ func (s *SessionService) LoginUser(ctx context.Context, req *LoginRequest) (*Ses
 
 	if account == nil {
 		return nil, "", errors.New("account not found")
+	}
+
+	// Check if email has been verified
+	isVerified, err := s.verificationRepo.IsVerified(req.Email)
+	if err != nil {
+		return nil, "", fmt.Errorf("error checking email verification: %w", err)
+	}
+
+	if !isVerified {
+		return nil, "", errors.New("email not verified")
 	}
 
 	// Determine session duration based on remember_me flag
@@ -210,6 +228,86 @@ func (s *SessionService) RefreshToken(tokenString string) (string, error) {
 // LogoutUser invalidates a session
 func (s *SessionService) LogoutUser(accountID uuid.UUID) error {
 	return s.invalidateSession(accountID)
+}
+
+// LoginUserWithID authenticates a user using account ID (used for email verification)
+func (s *SessionService) LoginUserWithID(ctx context.Context, req *LoginWithIDRequest) (*SessionData, string, error) {
+	if req == nil {
+		return nil, "", errors.New("login request is nil")
+	}
+
+	if req.AccountID == "" {
+		return nil, "", errors.New("account ID is required")
+	}
+
+	// Parse account ID
+	accountID, err := uuid.Parse(req.AccountID)
+	if err != nil {
+		return nil, "", errors.New("invalid account ID")
+	}
+
+	// Get full account with timezone and identities
+	account, err := s.accountRepo.GetWithIdentities(accountID)
+	if err != nil {
+		return nil, "", fmt.Errorf("error fetching account: %w", err)
+	}
+
+	if account == nil {
+		return nil, "", errors.New("account not found")
+	}
+
+	// Get the app identity - find the first app provider identity
+	var identity *models.Identity
+	for _, id := range account.Identities {
+		if id.Provider == models.ProviderApp {
+			identity = &id
+			break
+		}
+	}
+
+	if identity == nil {
+		return nil, "", errors.New("identity not found")
+	}
+
+	// Check if email has been verified
+	isVerified, err := s.verificationRepo.IsVerified(identity.ExternalID)
+	if err != nil {
+		return nil, "", fmt.Errorf("error checking email verification: %w", err)
+	}
+
+	if !isVerified {
+		return nil, "", errors.New("email not verified")
+	}
+
+	// Create JWT token (24 hour session)
+	token, err := s.generateToken(account, identity, 24*time.Hour)
+	if err != nil {
+		return nil, "", fmt.Errorf("error generating token: %w", err)
+	}
+
+	// Get username
+	var username string
+	if identity.Username != nil {
+		username = *identity.Username
+	}
+
+	// Create session data
+	sessionData := &SessionData{
+		AccountID:  account.ID,
+		IdentityID: identity.ID,
+		Email:      identity.ExternalID,
+		Username:   username,
+		ExpiresAt:  time.Now().Add(24 * time.Hour),
+		RememberMe: false,
+	}
+
+	// Cache session in Redis
+	if err := s.cacheSession(sessionData); err != nil {
+		// Log but don't fail - session will still work with the token
+		fmt.Printf("[SESSION] Warning: Failed to cache session: %v\n", err)
+	}
+
+	return sessionData, token, nil
 }
 
 // generateToken creates a JWT token
