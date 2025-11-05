@@ -24,7 +24,6 @@
 - - [ ] Use Web Application
 - - [ ] Use API Key
 - - [ ] Self-hosting guide
-- - [ ] Contact support and Feedback
 - - [ ] What's New
 
 ### Layout

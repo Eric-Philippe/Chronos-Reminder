@@ -238,6 +238,12 @@ export function Header() {
                             <a
                               key={item.path}
                               href={item.path}
+                              target={item.external ? "_blank" : undefined}
+                              rel={
+                                item.external
+                                  ? "noopener noreferrer"
+                                  : undefined
+                              }
                               className="px-6 py-2.5 text-black/60 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors text-sm border-b border-black/5 dark:border-white/5 last:border-b-0"
                               onClick={() => {
                                 setMobileMenuOpen(false);
@@ -317,6 +323,8 @@ export function Header() {
                     <div key={item.path}>
                       <a
                         href={item.path}
+                        target={item.external ? "_blank" : undefined}
+                        rel={item.external ? "noopener noreferrer" : undefined}
                         className="px-4 py-2 text-black/70 dark:text-white/70 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-amber-400/5 dark:hover:bg-amber-400/10 transition-all duration-200 rounded whitespace-nowrap text-sm block"
                         onClick={() => setActiveMenuGroup(null)}
                       >

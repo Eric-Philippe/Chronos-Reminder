@@ -16,6 +16,7 @@ export interface Route {
   showInNav?: boolean;
   group?: string;
   submenu?: boolean;
+  external?: boolean;
 }
 
 export interface MenuGroup {
@@ -99,11 +100,12 @@ export const ROUTES = {
   } as Route,
 
   STATUS: {
-    path: "/status",
+    path: "https://status.chronosrmd.com/status/chronos",
     requiresAuth: false,
     name: "status",
     submenu: true,
     group: "help",
+    external: true,
   } as Route,
 
   // Account (Settings group)

@@ -112,9 +112,22 @@ services:
       retries: 3
       start_period: 20s
 
+  # Uptime Kuma
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: chronos-uptime-kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    restart: unless-stopped
+    networks:
+      - chronos-network
+
 volumes:
   postgres_data:
   redis_data:
+  uptime_kuma_data:
 
 networks:
   chronos-network:
