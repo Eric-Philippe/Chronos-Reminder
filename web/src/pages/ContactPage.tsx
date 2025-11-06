@@ -9,7 +9,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Header } from "../components/common/header";
-import { Footer } from "../components/common/footer";
+import { Footer } from "@/components/common/footer";
 import { toast } from "sonner";
 
 type MessageType = "general" | "feedback" | "bug" | "feature";

@@ -6,8 +6,8 @@ import {
   BenefitsSection,
   WorldClocksSection,
   CTASection,
-  FooterSection,
 } from "./sections";
+import { Footer } from "@/components/common/footer";
 
 export function HomePage() {
   return (
@@ -21,7 +21,7 @@ export function HomePage() {
         <BenefitsSection />
         <CTASection />
       </main>
-      <FooterSection />
+      <Footer />
     </div>
   );
 }

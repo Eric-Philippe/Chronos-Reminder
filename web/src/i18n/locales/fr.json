@@ -46,7 +46,8 @@
     "logout": "Déconnexion",
     "startNow": "Commencer Maintenant",
     "signIn": "Se Connecter",
-    "signUp": "S'Inscrire"
+    "signUp": "S'Inscrire",
+    "account": "Compte"
   },
   "welcome": {
     "title": "Bienvenue sur Chronos",

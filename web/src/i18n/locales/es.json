@@ -46,7 +46,8 @@
     "logout": "Cerrar Sesión",
     "startNow": "Comenzar Ahora",
     "signIn": "Iniciar Sesión",
-    "signUp": "Registrarse"
+    "signUp": "Registrarse",
+    "account": "Cuenta"
   },
   "welcome": {
     "title": "Bienvenido a Chronos",

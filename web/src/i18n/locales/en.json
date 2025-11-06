@@ -46,7 +46,8 @@
     "logout": "Logout",
     "startNow": "Start Now",
     "signIn": "Sign In",
-    "signUp": "Sign Up"
+    "signUp": "Sign Up",
+    "account": "Account"
   },
   "welcome": {
     "title": "Welcome to Chronos",

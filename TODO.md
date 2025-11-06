@@ -9,7 +9,6 @@
 
 ### Web Application
 
-- [ ] Complete the footer with proper links and information
 - [ ] Complete the Changelog page
 - [ ] Bot documentation page
 - [ ] Terms of Service and Privacy Policy pages

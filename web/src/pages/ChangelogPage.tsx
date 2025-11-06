@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronDown, Package, Zap, Wrench } from "lucide-react";
 import { useChangelogParser } from "../hooks/useChangelogParser";
 import { Header } from "../components/common/header";
-import { Footer } from "../components/common/footer";
+import { Footer } from "@/components/common/footer";
 
 export function ChangelogPage() {
   const { t } = useTranslation();
