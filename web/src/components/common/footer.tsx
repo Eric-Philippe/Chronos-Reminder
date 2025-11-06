@@ -19,9 +19,9 @@ export function Footer() {
   return (
     <footer className="border-t border-white/5 py-12 px-4 sm:px-6 lg:px-8 bg-background/50">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
           {/* Logo Section */}
-          <div>
+          <div className="md:col-span-1.5 mr-8">
             <div className="flex items-center gap-2 mb-4">
               <img
                 src="/logo_chronos.png"
@@ -43,7 +43,7 @@ export function Footer() {
               <h4 className="font-semibold text-foreground mb-4">
                 {t(`header.${group.label}`)}
               </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-1 text-sm text-muted-foreground">
                 {group.items.map((item) => (
                   <li key={item.path}>
                     <button
@@ -64,7 +64,7 @@ export function Footer() {
               <h4 className="font-semibold text-foreground mb-4">
                 {t("header.account") || "Account"}
               </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-1 text-sm text-muted-foreground">
                 <li>
                   <button
                     onClick={() => navigate(`${ROUTES.LOGIN.path}?mode=login`)}
