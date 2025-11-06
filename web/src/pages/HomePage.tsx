@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  Clock,
+  Clock as ClockIcon,
   Bell,
   Zap,
   Globe,
@@ -16,6 +16,7 @@ import { Header } from "@/components/common/header";
 import { Button } from "@/components/ui/button";
 import { Hourglass3D } from "@/components/Hourglass3D";
 import { IntegrationCard } from "@/components/IntegrationCard";
+import { WorldClocks } from "@/components/Clock";
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -174,7 +175,7 @@ export function HomePage() {
               {/* Feature 4: Timezone Support */}
               <div className="group p-6 rounded-xl bg-background/50 border border-white/5 hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover:shadow-accent/10">
                 <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center mb-4 group-hover:bg-accent/30 transition-colors">
-                  <Clock className="w-6 h-6 text-accent" />
+                  <ClockIcon className="w-6 h-6 text-accent" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   {t("vitrine.timezoneTitle")}
@@ -359,6 +360,12 @@ export function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* World Clocks Section */}
+        <WorldClocks
+          title={t("vitrine.worldClocksTitle")}
+          subtitle={t("vitrine.worldClocksSubtitle")}
+        />
 
         {/* CTA Section */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/50">

@@ -377,7 +377,9 @@
     "footerPricing": "Pricing",
     "footerResources": "Resources",
     "footerCommunity": "Community",
-    "footerTwitter": "Twitter"
+    "footerTwitter": "Twitter",
+    "worldClocksTitle": "World Clocks",
+    "worldClocksSubtitle": "Time around the globe - Stay connected across timezones with Chronos"
   },
   "account": {
     "title": "My Account",

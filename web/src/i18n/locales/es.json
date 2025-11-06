@@ -377,7 +377,9 @@
     "footerPricing": "Precios",
     "footerResources": "Recursos",
     "footerCommunity": "Comunidad",
-    "footerTwitter": "Twitter"
+    "footerTwitter": "Twitter",
+    "worldClocksTitle": "Relojes Mundiales",
+    "worldClocksSubtitle": "La hora en todo el mundo - Permanece conectado a través de zonas horarias con Chronos"
   },
   "account": {
     "title": "Mi Cuenta",
