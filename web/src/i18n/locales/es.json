@@ -612,5 +612,130 @@
   },
   "validation": {
     "passwordTooShort": "La contraseña debe tener al menos 8 caracteres"
+  },
+  "selfHost": {
+    "title": "Guía de Auto-alojamiento",
+    "subtitle": "Despliega y aloja tu propia instancia de Chronos Reminder con control total sobre tus datos e infraestructura.",
+    "nav": {
+      "title": "En Esta Página",
+      "overview": "Resumen",
+      "architecture": "Arquitectura",
+      "backend": "Despliegue Backend",
+      "frontend": "Despliegue Frontend",
+      "environment": "Variables de Entorno",
+      "database": "Configuración Base de Datos"
+    },
+    "overview": {
+      "title": "Resumen",
+      "description": "Chronos Reminder está diseñado para ser fácilmente auto-alojable usando contenedores Docker. Esta guía te guiará a través del despliegue de todos los componentes necesarios.",
+      "backend": "Backend Go",
+      "backendDesc": "Servidor API con integración de bot Discord",
+      "frontend": "Frontend React",
+      "frontendDesc": "Interfaz web moderna construida con Vite",
+      "database": "PostgreSQL + Redis",
+      "databaseDesc": "Persistencia de datos y capa de caché"
+    },
+    "architecture": {
+      "title": "Arquitectura",
+      "description": "Chronos consta de múltiples servicios trabajando juntos:",
+      "backendTitle": "Servicio Backend (Puerto 8080)",
+      "backendDesc": "Servidor API basado en Go que maneja recordatorios, autenticación y funcionalidad del bot Discord",
+      "postgresTitle": "Base de Datos PostgreSQL (Puerto 5432)",
+      "postgresDesc": "Almacenamiento principal para usuarios, recordatorios y configuraciones. Las migraciones se manejan automáticamente.",
+      "redisTitle": "Caché Redis (Puerto 6379)",
+      "redisDesc": "Gestión de sesiones, limitación de tasa y capa de caché",
+      "frontendTitle": "Frontend Web (Puerto 3000)",
+      "frontendDesc": "Interfaz de usuario React servida a través de Nginx"
+    },
+    "backend": {
+      "title": "Despliegue Backend",
+      "description": "El contenedor backend incluye el servidor API y el bot Discord en una sola imagen.",
+      "dockerImage": "Imagen Docker",
+      "dockerRun": "Ejecutar con Docker",
+      "migrationNote": "El backend maneja automáticamente las migraciones de base de datos al inicio. No se requieren pasos de migración manual."
+    },
+    "frontend": {
+      "title": "Despliegue Frontend",
+      "description": "La interfaz web puede desplegarse usando la imagen Docker pre-construida o reconstruirse desde el código fuente.",
+      "dockerImage": "Imagen Docker",
+      "dockerRun": "Ejecutar con Docker",
+      "envVars": "Variables de Entorno",
+      "vars": {
+        "apiUrl": "URL del endpoint de la API backend",
+        "discordClientId": "ID de cliente de la aplicación OAuth de Discord",
+        "discordRedirect": "URL de callback OAuth (debe coincidir con la configuración de Discord)"
+      }
+    },
+    "environment": {
+      "title": "Variables de Entorno",
+      "description": "Referencia completa para todas las opciones de configuración. Crea un archivo .env con estas variables.",
+      "allVars": "Todas las Variables de Entorno",
+      "exampleTitle": "Archivo .env de Ejemplo",
+      "categories": {
+        "core": "Configuración Principal",
+        "discord": "Configuración Discord",
+        "database": "Configuración Base de Datos",
+        "redis": "Configuración Redis",
+        "security": "Seguridad",
+        "rateLimit": "Limitación de Tasa",
+        "email": "Email (Opcional)"
+      },
+      "vars": {
+        "environment": "Modo de entorno (DEV o PROD)",
+        "apiPort": "Puerto para el servidor API",
+        "apiCors": "Orígenes CORS permitidos (* para todos, o URLs separadas por comas)",
+        "defaultTz": "ID de zona horaria predeterminada para nuevos usuarios (16 = Europa/París)",
+        "discordBotToken": "Token del bot Discord desde el Portal de Desarrolladores de Discord",
+        "discordClientId": "ID de cliente OAuth de Discord",
+        "discordClientSecret": "Secreto de cliente OAuth de Discord",
+        "discordRedirectUri": "URI de redirección OAuth de Discord",
+        "dbHost": "Dirección del host PostgreSQL",
+        "dbPort": "Puerto PostgreSQL",
+        "dbUser": "Nombre de usuario PostgreSQL",
+        "dbPassword": "Contraseña PostgreSQL",
+        "dbName": "Nombre de la base de datos PostgreSQL",
+        "redisHost": "Dirección del host Redis",
+        "redisPort": "Puerto Redis",
+        "redisPassword": "Contraseña Redis (dejar vacío si no hay autenticación)",
+        "redisDb": "Número de base de datos Redis",
+        "jwtSecret": "Clave secreta para la firma de tokens JWT (generar una cadena aleatoria segura)",
+        "rateLimitEnabled": "Activar o desactivar limitación de tasa",
+        "rateLimitRequests": "Número máximo de solicitudes permitidas por ventana",
+        "rateLimitWindow": "Ventana de tiempo en segundos",
+        "resendApiKey": "Clave API de Resend para notificaciones por email (opcional, para restablecer contraseña)"
+      }
+    },
+    "database": {
+      "title": "Configuración Base de Datos",
+      "description": "Chronos requiere PostgreSQL para almacenamiento de datos y Redis para caché. Ambos pueden desplegarse fácilmente con Docker.",
+      "postgresTitle": "Configuración PostgreSQL",
+      "postgresDesc": "Se recomienda PostgreSQL 16 para compatibilidad óptima.",
+      "redisTitle": "Configuración Redis",
+      "redisDesc": "Redis se utiliza para gestión de sesiones y limitación de tasa.",
+      "migrationTitle": "Migraciones Automáticas",
+      "migrationDesc": "El servicio backend ejecuta automáticamente las migraciones de base de datos al inicio. Simplemente asegúrate de que tu instancia PostgreSQL esté ejecutándose antes de iniciar el contenedor backend.",
+      "dockerComposeTitle": "Configuración Docker Compose Completa",
+      "dockerComposeDesc": "Para un despliegue completo, usa esta configuración docker-compose.yml:",
+      "quickStart": "Inicio Rápido",
+      "quickStartStep1": "Crea un archivo .env con todas las variables requeridas",
+      "quickStartStep2": "Guarda el archivo docker-compose.yml anterior",
+      "quickStartStep3": "Ejecuta: docker-compose up -d",
+      "quickStartStep4": "Accede a la interfaz web en http://localhost:3000"
+    },
+    "support": {
+      "title": "¿Necesitas Ayuda?",
+      "description": "Si encuentras algún problema o tienes preguntas sobre el auto-alojamiento, ¡estamos aquí para ayudar!",
+      "github": "Repositorio GitHub",
+      "discord": "Soporte Discord"
+    },
+    "table": {
+      "variable": "Variable",
+      "required": "Requerido",
+      "optional": "Opcional",
+      "recommended": "Recomendado",
+      "description": "Descripción",
+      "default": "Por Defecto",
+      "example": "Ejemplo"
+    }
   }
 }

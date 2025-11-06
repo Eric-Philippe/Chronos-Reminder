@@ -15,6 +15,7 @@ import { APIKeysPage } from "./pages/APIKeysPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { ChangelogPage } from "./pages/ChangelogPage";
 import { ContactPage } from "./pages/ContactPage";
+import { SelfHostPage } from "./pages/SelfHostPage";
 import { useAuth } from "./hooks/useAuth";
 import { ROUTES } from "./config/routes";
 import "./i18n/config";
@@ -57,6 +58,9 @@ function AppRoutes() {
 
       {/* Changelog route: Public route to view changelog */}
       <Route path={ROUTES.CHANGELOG.path} element={<ChangelogPage />} />
+
+      {/* Self-Host Guide route: Public route for self-hosting documentation */}
+      <Route path={ROUTES.SELFHOST.path} element={<SelfHostPage />} />
 
       {/* Contact route: Public route for contact form */}
       <Route path={ROUTES.CONTACT.path} element={<ContactPage />} />

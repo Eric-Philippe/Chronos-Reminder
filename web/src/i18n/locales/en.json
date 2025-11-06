@@ -612,5 +612,130 @@
   },
   "validation": {
     "passwordTooShort": "Password must be at least 8 characters long"
+  },
+  "selfHost": {
+    "title": "Self-Host Guide",
+    "subtitle": "Deploy and host your own instance of Chronos Reminder with complete control over your data and infrastructure.",
+    "nav": {
+      "title": "On This Page",
+      "overview": "Overview",
+      "architecture": "Architecture",
+      "backend": "Backend Deployment",
+      "frontend": "Frontend Deployment",
+      "environment": "Environment Variables",
+      "database": "Database Setup"
+    },
+    "overview": {
+      "title": "Overview",
+      "description": "Chronos Reminder is designed to be easily self-hostable using Docker containers. This guide will walk you through deploying all necessary components.",
+      "backend": "Go Backend",
+      "backendDesc": "API server with Discord bot integration",
+      "frontend": "React Frontend",
+      "frontendDesc": "Modern web interface built with Vite",
+      "database": "PostgreSQL + Redis",
+      "databaseDesc": "Data persistence and caching layer"
+    },
+    "architecture": {
+      "title": "Architecture",
+      "description": "Chronos consists of multiple services working together:",
+      "backendTitle": "Backend Service (Port 8080)",
+      "backendDesc": "Go-based API server handling reminders, authentication, and Discord bot functionality",
+      "postgresTitle": "PostgreSQL Database (Port 5432)",
+      "postgresDesc": "Primary data storage for users, reminders, and configurations. Migrations are handled automatically.",
+      "redisTitle": "Redis Cache (Port 6379)",
+      "redisDesc": "Session management, rate limiting, and caching layer",
+      "frontendTitle": "Web Frontend (Port 3000)",
+      "frontendDesc": "React-based user interface served through Nginx"
+    },
+    "backend": {
+      "title": "Backend Deployment",
+      "description": "The backend container includes the API server and Discord bot in a single image.",
+      "dockerImage": "Docker Image",
+      "dockerRun": "Run with Docker",
+      "migrationNote": "The backend automatically handles database migrations on startup. No manual migration steps required."
+    },
+    "frontend": {
+      "title": "Frontend Deployment",
+      "description": "The web interface can be deployed using the pre-built Docker image or rebuilt from source.",
+      "dockerImage": "Docker Image",
+      "dockerRun": "Run with Docker",
+      "envVars": "Environment Variables",
+      "vars": {
+        "apiUrl": "Backend API URL endpoint",
+        "discordClientId": "Discord OAuth application client ID",
+        "discordRedirect": "OAuth callback URL (must match Discord settings)"
+      }
+    },
+    "environment": {
+      "title": "Environment Variables",
+      "description": "Complete reference for all configuration options. Create a .env file with these variables.",
+      "allVars": "All Environment Variables",
+      "exampleTitle": "Example .env File",
+      "categories": {
+        "core": "Core Settings",
+        "discord": "Discord Configuration",
+        "database": "Database Configuration",
+        "redis": "Redis Configuration",
+        "security": "Security",
+        "rateLimit": "Rate Limiting",
+        "email": "Email (Optional)"
+      },
+      "vars": {
+        "environment": "Environment mode (DEV or PROD)",
+        "apiPort": "Port for the API server",
+        "apiCors": "CORS allowed origins (* for all, or comma-separated URLs)",
+        "defaultTz": "Default timezone ID for new users (16 = Europe/Paris)",
+        "discordBotToken": "Discord bot token from Discord Developer Portal",
+        "discordClientId": "Discord OAuth client ID",
+        "discordClientSecret": "Discord OAuth client secret",
+        "discordRedirectUri": "Discord OAuth redirect URI",
+        "dbHost": "PostgreSQL host address",
+        "dbPort": "PostgreSQL port",
+        "dbUser": "PostgreSQL username",
+        "dbPassword": "PostgreSQL password",
+        "dbName": "PostgreSQL database name",
+        "redisHost": "Redis host address",
+        "redisPort": "Redis port",
+        "redisPassword": "Redis password (leave empty if no auth)",
+        "redisDb": "Redis database number",
+        "jwtSecret": "Secret key for JWT token signing (generate a secure random string)",
+        "rateLimitEnabled": "Enable or disable rate limiting",
+        "rateLimitRequests": "Maximum requests allowed per window",
+        "rateLimitWindow": "Time window in seconds",
+        "resendApiKey": "Resend API key for email notifications (optional, for password reset)"
+      }
+    },
+    "database": {
+      "title": "Database Setup",
+      "description": "Chronos requires PostgreSQL for data storage and Redis for caching. Both can be easily deployed with Docker.",
+      "postgresTitle": "PostgreSQL Setup",
+      "postgresDesc": "PostgreSQL 16 is recommended for optimal compatibility.",
+      "redisTitle": "Redis Setup",
+      "redisDesc": "Redis is used for session management and rate limiting.",
+      "migrationTitle": "Automatic Migrations",
+      "migrationDesc": "The backend service automatically runs database migrations on startup. Simply ensure your PostgreSQL instance is running before starting the backend container.",
+      "dockerComposeTitle": "Complete Docker Compose Setup",
+      "dockerComposeDesc": "For a complete deployment, use this docker-compose.yml configuration:",
+      "quickStart": "Quick Start",
+      "quickStartStep1": "Create a .env file with all required variables",
+      "quickStartStep2": "Save the docker-compose.yml file above",
+      "quickStartStep3": "Run: docker-compose up -d",
+      "quickStartStep4": "Access the web interface at http://localhost:3000"
+    },
+    "support": {
+      "title": "Need Help?",
+      "description": "If you encounter any issues or have questions about self-hosting, we're here to help!",
+      "github": "GitHub Repository",
+      "discord": "Discord Support"
+    },
+    "table": {
+      "variable": "Variable",
+      "required": "Required",
+      "optional": "Optional",
+      "recommended": "Recommended",
+      "description": "Description",
+      "default": "Default",
+      "example": "Example"
+    }
   }
 }
