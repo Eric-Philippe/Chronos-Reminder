@@ -198,7 +198,7 @@ export function DiscordGuildSelectionModal({
 
   const handleInviteBot = () => {
     if (selectedGuildId) {
-      const inviteUrl = discordService.getBotInviteUrl(selectedGuildId);
+      const inviteUrl = discordService.getBotInviteUrl();
       window.open(inviteUrl, "_blank", "noopener,noreferrer");
     }
   };

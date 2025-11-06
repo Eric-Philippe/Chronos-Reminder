@@ -23,5 +23,6 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"status": "ok",
 		"service": "chronos-reminder-api",
+		"version": "1.0.0",
 	})
 }
