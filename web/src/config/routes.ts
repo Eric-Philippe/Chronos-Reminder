@@ -9,6 +9,8 @@
  * - submenu: whether this is a submenu item
  */
 
+import { discordService } from "@/services";
+
 export interface Route {
   path: string;
   requiresAuth: boolean;
@@ -91,18 +93,45 @@ export const ROUTES = {
     group: "help",
   } as Route,
 
-  HELP: {
-    path: "/help",
+  BOT_HELP: {
+    path: "/bothelp",
     requiresAuth: false,
-    name: "help",
+    name: "botHelp",
     submenu: true,
-    group: "help",
+    group: "documentation",
   } as Route,
 
   STATUS: {
     path: "https://status.chronosrmd.com/status/chronos",
     requiresAuth: false,
     name: "status",
+    submenu: true,
+    group: "help",
+    external: true,
+  } as Route,
+
+  GITHUB: {
+    path: "https://github.com/Eric-Philippe/Chronos-Reminder",
+    requiresAuth: false,
+    name: "github",
+    submenu: true,
+    group: "",
+    external: true,
+  } as Route,
+
+  INVITE_BOT: {
+    path: discordService.getBotInviteUrl(),
+    requiresAuth: false,
+    name: "inviteBot",
+    submenu: true,
+    group: "settings",
+    external: true,
+  } as Route,
+
+  SUPPORT_SERVER: {
+    path: "https://discord.gg/m3MsM922QD",
+    requiresAuth: false,
+    name: "supportServer",
     submenu: true,
     group: "help",
     external: true,
@@ -173,13 +202,19 @@ export const MENU_GROUPS: MenuGroup[] = [
     name: "resources",
     label: "resources",
     requiresAuth: false,
-    items: [ROUTES.CHANGELOG, ROUTES.SELFHOST],
+    items: [ROUTES.CHANGELOG, ROUTES.GITHUB, ROUTES.INVITE_BOT],
+  },
+  {
+    name: "documentation",
+    label: "documentation",
+    requiresAuth: false,
+    items: [ROUTES.SELFHOST, ROUTES.BOT_HELP],
   },
   {
     name: "help",
     label: "help",
     requiresAuth: false,
-    items: [ROUTES.CONTACT, ROUTES.HELP, ROUTES.STATUS],
+    items: [ROUTES.CONTACT, ROUTES.SUPPORT_SERVER, ROUTES.STATUS],
   },
   {
     name: "settings",

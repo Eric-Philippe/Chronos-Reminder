@@ -94,15 +94,15 @@ class DiscordService {
    * Generate Discord bot invite URL for a specific guild
    * Uses the VITE_DISCORD_CLIENT_ID environment variable
    */
-  getBotInviteUrl(guildId: string): string {
+  getBotInviteUrl(): string {
     const botClientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
     if (!botClientId) {
       throw new Error(
         "Discord Client ID is not configured. Set VITE_DISCORD_CLIENT_ID in your environment variables."
       );
     }
-    const permissions = "2147483648"; // Manage Channels + Send Messages + Mention Everyone
-    return `https://discord.com/api/oauth2/authorize?client_id=${botClientId}&permissions=${permissions}&scope=bot&guild_id=${guildId}`;
+    const permissions = "2416127056"; // Manage Channels + Send Messages + Mention Everyone
+    return `https://discord.com/api/oauth2/authorize?client_id=${botClientId}&permissions=${permissions}&scope=bot`;
   }
 }
 
