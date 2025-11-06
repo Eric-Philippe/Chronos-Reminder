@@ -1,6 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Clock } from "./Clock";
 import { DigitalClock } from "./DigitalClock";
+
+const ROMAN_NUMERALS = [
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "X",
+  "XI",
+  "XII",
+];
 
 interface WorldClockProps {
   title?: string;
@@ -21,6 +36,22 @@ export function WorldClocks({
 }: WorldClockProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Pre-generate positions so they stay stable across re-renders
+  const romanPositions = useMemo(() => {
+    const count = isMobile ? 18 : 40;
+    return Array.from({ length: count }).map(() => ({
+      numeral:
+        ROMAN_NUMERALS[Math.floor(Math.random() * ROMAN_NUMERALS.length)],
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      delay: Math.random() * 10,
+      duration: 10 + Math.random() * 10,
+      scale: 0.7 + Math.random() * 0.9,
+      opacity: 0.08 + Math.random() * 0.18,
+      spin: Math.random() < 0.35,
+    }));
+  }, [isMobile]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -59,6 +90,46 @@ export function WorldClocks({
         <div className="absolute top-1/2 -left-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl"></div>
       </div>
+
+      {/* Animated Roman numeral pattern */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {romanPositions.map((item, idx) => (
+          <span
+            key={idx}
+            style={{
+              position: "absolute",
+              top: `${item.top}%`,
+              left: `${item.left}%`,
+              animationDelay: `${item.delay}s`,
+              animationDuration: `${item.duration}s`,
+              transform: `translate(-50%, -50%) scale(${item.scale})`,
+              opacity: item.opacity,
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+            }}
+            className={`select-none text-accent text-xs sm:text-sm md:text-base [text-shadow:0_0_6px_rgba(255,255,255,0.15)] animate-float-slow ${
+              item.spin ? "animate-spin-slow" : ""
+            }`}
+          >
+            {item.numeral}
+          </span>
+        ))}
+      </div>
+
+      {/* Local styles for animations */}
+      <style>{`
+        @keyframes floatSlow {
+          0% { transform: translate(-50%, -50%) translateY(0) scale(1); }
+          50% { transform: translate(-50%, -50%) translateY(-12px) scale(1); }
+          100% { transform: translate(-50%, -50%) translateY(0) scale(1); }
+        }
+        @keyframes spinSlow {
+          0% { rotate: 0deg; }
+          100% { rotate: 360deg; }
+        }
+        .animate-float-slow { animation-name: floatSlow; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+        .animate-spin-slow { animation-name: spinSlow; animation-timing-function: linear; animation-iteration-count: infinite; }
+      `}</style>
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Separator */}
