@@ -46,6 +46,29 @@ func RegisterCommand(command *Command) {
 	commandRegistry[command.Data.Name] = command
 }
 
+// GetRegisteredCommands returns all registered commands
+func GetRegisteredCommands() []*Command {
+	return commands
+}
+
+// GetCommandsInfoForHelp returns command information formatted for help display
+func GetCommandsInfoForHelp() []map[string]interface{} {
+	var result []map[string]interface{}
+	for _, cmd := range commands {
+		result = append(result, map[string]interface{}{
+			"name":             cmd.Description.Name,
+			"emoji":            cmd.Description.Emoji,
+			"categoryName":     cmd.Description.CategoryName,
+			"shortDescription": cmd.Description.ShortDescription,
+			"fullDescription":  cmd.Description.FullDescription,
+			"usage":            cmd.Description.Usage,
+			"example":          cmd.Description.Example,
+			"options":          cmd.Data.Options,
+		})
+	}
+	return result
+}
+
 // RegisterCommands registers all commands with Discord and builds the command registry
 func RegisterCommands(session *discordgo.Session) (int, error) {
 	var applicationCommands []*discordgo.ApplicationCommand

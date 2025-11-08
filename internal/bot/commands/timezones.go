@@ -11,7 +11,7 @@ func init() {
 		Description: Description{
 			Name:             "timezone",
 			Emoji:            "🌏",
-			CategoryName:     "General",
+			CategoryName:     "User",
 			ShortDescription: "Manage timezones",
 			FullDescription:  "List available timezones or change your current timezone",
 			Usage:            "/timezone <list|change>",
