@@ -94,11 +94,12 @@ export const ROUTES = {
   } as Route,
 
   BOT_HELP: {
-    path: "/bothelp",
+    path: "https://docs.chronosrmd.com",
     requiresAuth: false,
-    name: "botHelp",
+    name: "documentation",
     submenu: true,
     group: "documentation",
+    external: true,
   } as Route,
 
   STATUS: {
