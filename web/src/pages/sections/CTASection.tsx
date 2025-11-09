@@ -26,7 +26,13 @@ export function CTASection() {
             variant="outline"
             className="px-8 py-6 rounded-lg font-semibold text-lg"
           >
-            {t("vitrine.viewDocs")}
+            <a
+              href="https://docs.chronosreminder.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t("vitrine.viewDocs")}
+            </a>
           </Button>
         </div>
       </div>

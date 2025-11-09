@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 9/11/2025
+
+Final release of Chronos Reminder with the following features:
+
+### Major additions
+
+- Complete home page with 3D models, descriptions and app details.
+- Header UI improvements
+- Footer UI improvements
+- Reminders dashboard with pagination, search and filters
+- Changelog page
+- Contact page with form submission
+- Account settings page
+- API Key management
+- Rate limiting for API calls
+- Status page with uptime kuma integration
+- Documentation site with guides and API references with GitBook
+- Reset password flow
+- Email verification flow
+- Official Discord server for support and community
+- Reminders getting paused then later resumed don't try to resend missed reminders, instead just continue from the next occurrence.
+- Complete containerization and deployment scripts for production use.
+- New Bot commands:
+  - `/hourglass` launch a quick timer
+  - `/support` get the link to the official support server
+  - `/help` complete help command listing all available commands and their usage.
+  - `/timezone display` show the user's current timezone
+
+### Minor additions
+
+- Improved responsiveness for mobile devices.
+- Performance optimizations on main engine
+- User can now delete their account from settings.
+- Minor translation fixes and improvements.
+
+### Fixes
+
+- Reminders editing now properly updates the reminder without putting back the old values.
+- Fixed various UI bugs and layout issues.
+- Fixed timezone handling issues in the reminders creation flow.
+
 ## [Alpha 0.2.0] - 20-10-2025
 
 ### Major additions

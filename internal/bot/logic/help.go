@@ -277,7 +277,7 @@ func sendCommandDetailedHelp(session *discordgo.Session, interaction *discordgo.
 	})
 
 	embed.Footer = &discordgo.MessageEmbedFooter{
-		Text:    "Chronos Bot Reminder • Learn more on our web platform",
+		Text:    "Chronos Bot Reminder 1.0.0 • Learn more on our web platform",
 		IconURL: session.State.User.AvatarURL(""),
 	}
 

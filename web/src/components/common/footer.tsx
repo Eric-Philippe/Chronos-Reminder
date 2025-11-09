@@ -33,6 +33,8 @@ export function Footer() {
             <p className="text-sm text-muted-foreground">
               {t("vitrine.footerDesc")}
             </p>
+            <br />
+            <p className="text-sm text-muted-foreground">v1.0.0</p>
           </div>
 
           {/* Dynamic Menu Groups - Filter by requiresAuth */}
