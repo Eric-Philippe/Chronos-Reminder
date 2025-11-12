@@ -431,6 +431,13 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 		return "", fmt.Errorf("error loading account: %w", err)
 	}
 
+	// Update the account variable to reflect any changes
+	// We want to set the emailVerified to true since they have verified via Discord OAuth
+	account.EmailVerified = true
+	if err := s.accountRepo.Update(account); err != nil {
+		return "", fmt.Errorf("error updating account: %w", err)
+	}
+
 	// Create session token for the account
 	token, err := s.sessionService.generateTokenForAccount(account, appIdentity, 30*24*time.Hour)
 	if err != nil {
