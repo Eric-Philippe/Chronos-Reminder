@@ -269,7 +269,7 @@ func (s *Server) Start() error {
 	log.Printf("[API] - 🚀 Starting API server on port %s\n", s.port)
 	log.Printf("[API] - 📡 Server running at http://localhost:%s\n", s.port)
 	log.Printf("[API] - 📚 Swagger documentation available at http://localhost:%s/swagger/\n", s.port)
-
+	log.Printf("[API] - 🌐 WebClient available at %s", s.cfg.WebAppURL)
 	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("[API] - ❌ Failed to start server: %w", err)
 	}

@@ -9,8 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Ensure RegisterUserRequest is imported from services package
-
 // AuthHandler handles authentication-related requests
 type AuthHandler struct {
 	authService         *services.AuthService

@@ -79,13 +79,13 @@ func Load() *Config {
 		// Discord OAuth configuration
 		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", ""),
 		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", ""),
-		DiscordRedirectURI:  getEnv("DISCORD_REDIRECT_URI", "http://localhost:5173/auth/callback/discord"),
+		DiscordRedirectURI:  getEnv("DISCORD_REDIRECT_URI", "https://chronosrmd.com/auth/callback/discord"),
 
 		// Resend email service configuration
 		ResendAPIKey: getEnv("RESEND_API_KEY", ""),
 
 		// Web app URL for verification links
-		WebAppURL: getEnv("WEB_APP_URL", "http://localhost:5173"),
+		WebAppURL: getEnv("WEB_APP_URL", "https://chronosrmd.com"),
 
 		// Rate limiting configuration
 		RateLimitRequestsPerWindow: parseInt(getEnv("RATE_LIMIT_REQUESTS_PER_WINDOW", "100")),
