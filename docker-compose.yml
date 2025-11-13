@@ -30,99 +30,99 @@ services:
       - chronos-network
 
   # Go API Backend
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: chronos-backend
-    environment:
-      - PORT=8080
-      - API_PORT=8080
-      - ENVIRONMENT=${ENVIRONMENT:-DEV}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - REDIS_DB=${REDIS_DB:-0}
-      - JWT_SECRET=${JWT_SECRET}
-      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
-      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
-      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
-      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI:-http://localhost:3000/auth/callback/discord}
-      - API_CORS=${API_CORS:-http://localhost:3000}
-      - DEFAULT_TZ=${DEFAULT_TZ:-16}
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - chronos-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:8080/health",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+  # backend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: chronos-backend
+  #   environment:
+  #     - PORT=8080
+  #     - API_PORT=8080
+  #     - ENVIRONMENT=${ENVIRONMENT:-DEV}
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_USER=${DB_USER}
+  #     - DB_PASSWORD=${DB_PASSWORD}
+  #     - DB_NAME=${DB_NAME}
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+  #     - REDIS_DB=${REDIS_DB:-0}
+  #     - JWT_SECRET=${JWT_SECRET}
+  #     - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+  #     - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+  #     - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+  #     - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI:-http://localhost:3000/auth/callback/discord}
+  #     - API_CORS=${API_CORS:-http://localhost:3000}
+  #     - DEFAULT_TZ=${DEFAULT_TZ:-16}
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_started
+  #     redis:
+  #       condition: service_started
+  #   restart: unless-stopped
+  #   networks:
+  #     - chronos-network
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD",
+  #         "wget",
+  #         "--quiet",
+  #         "--tries=1",
+  #         "--spider",
+  #         "http://localhost:8080/health",
+  #       ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
 
   # React Web Frontend
-  web:
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-      args:
-        - NODE_ENV=production
-        - VITE_API_URL=http://localhost:8080
-    container_name: chronos-web
-    ports:
-      - "3000:3000"
-    depends_on:
-      backend:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - chronos-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3000/",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+  # web:
+  #   build:
+  #     context: ./web
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - NODE_ENV=production
+  #       - VITE_API_URL=http://localhost:8080
+  #   container_name: chronos-web
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     backend:
+  #       condition: service_started
+  #   restart: unless-stopped
+  #   networks:
+  #     - chronos-network
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD",
+  #         "wget",
+  #         "--quiet",
+  #         "--tries=1",
+  #         "--spider",
+  #         "http://localhost:3000/",
+  #       ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 20s
 
   # Uptime Kuma
-  uptime-kuma:
-    image: louislam/uptime-kuma:latest
-    container_name: chronos-uptime-kuma
-    ports:
-      - "3001:3001"
-    volumes:
-      - uptime_kuma_data:/app/data
-    restart: unless-stopped
-    networks:
-      - chronos-network
+  # uptime-kuma:
+  #   image: louislam/uptime-kuma:latest
+  #   container_name: chronos-uptime-kuma
+  #   ports:
+  #     - "3001:3001"
+  #   volumes:
+  #     - uptime_kuma_data:/app/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - chronos-network
 
 volumes:
   postgres_data:

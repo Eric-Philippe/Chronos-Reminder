@@ -23,12 +23,14 @@ func ChangeAccountTimezone(account *models.Account, timezoneID uint) error {
 		return fmt.Errorf("unknown timezone: %d", timezoneID)
 	}
 
-	account.TimezoneID = &timezoneID
-
-	// Save the changes to the database
-	if err := database.GetDB().Save(account).Error; err != nil {
+	// Use the dedicated UpdateTimezone method to update only the timezone_id field
+	if err := repo.Account.UpdateTimezone(account.ID, timezoneID); err != nil {
 		return err
 	}
+
+	// Update the in-memory account object
+	account.TimezoneID = &timezoneID
+	account.Timezone = timezone
 
 	// Invalidate cache after account changes
 	if err := InvalidateAccountCache(account); err != nil {
