@@ -10,6 +10,7 @@ import (
 func TestRecalculateNextOccurrence(t *testing.T) {
 	// Test current time: November 1, 2025 at 23:55 Europe/Paris
 	parisLoc, _ := time.LoadLocation("Europe/Paris")
+	LosAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	now := time.Date(2025, time.November, 1, 23, 55, 0, 0, parisLoc)
 
 	tests := []struct {
@@ -106,6 +107,26 @@ func TestRecalculateNextOccurrence(t *testing.T) {
 			recurrenceState: services.RecurrenceHourly,
 			expectedAfter:   time.Date(2025, time.November, 3, 10, 0, 0, 0, parisLoc),
 			checkTimeOfDay:  false,
+		},
+		{
+			name:            "Workdays - future date should jump to next monday (in timezone) if triggered on weekend",
+			from:            time.Date(2025, time.November, 14, 10, 0, 0, 0, parisLoc), // Nov 14, 2025 is Friday
+			timezone:        "Europe/Paris",
+			recurrenceState: services.RecurrenceWorkdays,
+			expectedAfter:   time.Date(2025, time.November, 17, 10, 0, 0, 0, parisLoc), // Next Should be Monday Nov 17, 2025
+			expectedHour:    10,
+			expectedMinute:  0,
+			checkTimeOfDay:  true,
+		},
+		{
+			name:			"Workdays - from weekend should jump to next monday",
+			from:			time.Date(2025, time.November, 14, 20, 51, 0, 0, LosAngelesLoc), // Nov 14, 2025 is Friday
+			recurrenceState:	services.RecurrenceWorkdays,
+			expectedAfter:		time.Date(2025, time.November, 17, 20, 51, 0, 0, LosAngelesLoc), // Next Should be Monday Nov 17, 2025
+			expectedHour:		20,
+			expectedMinute:		51,
+			checkTimeOfDay:		true,
+			timezone:		"America/Los_Angeles",
 		},
 	}
 

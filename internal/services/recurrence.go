@@ -6,15 +6,16 @@ import (
 )
 
 // Recurrence type constants
+// Int representation:
 const (
-	RecurrenceOnce     = 0
-	RecurrenceYearly   = 1
-	RecurrenceMonthly  = 2
-	RecurrenceWeekly   = 3
-	RecurrenceDaily    = 4
-	RecurrenceHourly   = 5
-	RecurrenceWorkdays = 6
-	RecurrenceWeekend  = 7
+	RecurrenceOnce     = 0 // 0/128
+	RecurrenceYearly   = 1 // 1/129
+	RecurrenceMonthly  = 2 // 2/130
+	RecurrenceWeekly   = 3 // 3/131
+	RecurrenceDaily    = 4 // 4/132
+	RecurrenceHourly   = 5 // 5/133
+	RecurrenceWorkdays = 6 // 6/134
+	RecurrenceWeekend  = 7 // 7/135
 )
 
 // Pause bit flag (8th bit)
@@ -156,21 +157,9 @@ type WorkdaysRecurrence struct{}
 
 // NextOccurrence returns the next occurrence timestamp for workdays recurrence
 func (r WorkdaysRecurrence) NextOccurrence(from int64, interval int) int64 {
-	// 1 day = 86400 seconds, 5 workdays = 432000 seconds
-	daysToAdd := interval
-	weeksToAdd := daysToAdd / 5
-	extraDays := daysToAdd % 5
-
-	// Calculate total seconds to add
-	totalSeconds := int64(weeksToAdd*7*86400 + extraDays*86400)
-
-	// Adjust for weekends
-	dayOfWeek := (from / 86400) % 7 // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-	if dayOfWeek+int64(extraDays) >= 6 { // If it goes into the weekend
-		totalSeconds += 2 * 86400 // Skip Saturday and Sunday
-	}
-
-	return from + totalSeconds
+	// This is a placeholder - workdays/weekend need timezone context
+	// The actual logic is handled in addInterval with timezone awareness
+	return from + int64(interval*86400)
 }
 
 // WeekendRecurrence struct
@@ -178,25 +167,13 @@ type WeekendRecurrence struct{}
 
 // NextOccurrence returns the next occurrence timestamp for weekend recurrence
 func (r WeekendRecurrence) NextOccurrence(from int64, interval int) int64 {
-	// 1 day = 86400 seconds, 2 weekend days = 172800 seconds
-	daysToAdd := interval
-	weeksToAdd := daysToAdd / 2
-	extraDays := daysToAdd % 2
-
-	// Calculate total seconds to add
-	totalSeconds := int64(weeksToAdd*7*86400 + extraDays*86400)
-
-	// Adjust for weekdays
-	dayOfWeek := (from / 86400) % 7 // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-	if dayOfWeek+int64(extraDays) < 6 { // If it goes into the weekday
-		totalSeconds += (6 - dayOfWeek) * 86400 // Skip to Saturday
-	}
-
-	return from + totalSeconds
+	// This is a placeholder - workdays/weekend need timezone context
+	// The actual logic is handled in addInterval with timezone awareness
+	return from + int64(interval*86400)
 }
 
 // findNextFutureOccurrence calculates the next occurrence that is in the future
-func findNextFutureOccurrence(from time.Time, recurrence Recurrence, loc *time.Location, maxIterations int) time.Time {
+func findNextFutureOccurrence(from time.Time, recurrence Recurrence, loc *time.Location) time.Time {
 	now := time.Now().In(loc)
 
 	// Determine if we should preserve time-of-day (not for hourly recurrence)
@@ -288,9 +265,32 @@ func addInterval(t time.Time, recurrence Recurrence, intervals int, loc *time.Lo
 		nextTime = t.AddDate(0, intervals, 0)
 	case YearlyRecurrence:
 		nextTime = t.AddDate(intervals, 0, 0)
-	case WorkdaysRecurrence, WeekendRecurrence:
-		// For these, fall back to adding days
-		nextTime = t.AddDate(0, 0, intervals)
+	case WorkdaysRecurrence:
+		// Add days while skipping weekends
+		daysAdded := 0
+		currentTime := t
+		for daysAdded < intervals {
+			currentTime = currentTime.AddDate(0, 0, 1)
+			// Check if the day is a weekday (Monday-Friday)
+			// time.Weekday: Sunday=0, Monday=1, ..., Friday=5, Saturday=6
+			if currentTime.Weekday() > 0 && currentTime.Weekday() < 6 {
+				daysAdded++
+			}
+		}
+		nextTime = currentTime
+	case WeekendRecurrence:
+		// Add days while skipping weekdays
+		daysAdded := 0
+		currentTime := t
+		for daysAdded < intervals {
+			currentTime = currentTime.AddDate(0, 0, 1)
+			// Check if the day is a weekend day (Saturday or Sunday)
+			// time.Weekday: Sunday=0, Saturday=6
+			if currentTime.Weekday() == 0 || currentTime.Weekday() == 6 {
+				daysAdded++
+			}
+		}
+		nextTime = currentTime
 	default:
 		// Fallback
 		nextTime = t.AddDate(0, 0, intervals)
@@ -339,6 +339,6 @@ func GetNextOccurrence(from time.Time, recurrenceState int, ianaLocation string)
 
 	// Find the next future occurrence by iterating through past ones if needed
 	// maxIterations prevents infinite loops for edge cases (set to 1000 as safety limit)
-	nextTimeLocal := findNextFutureOccurrence(fromLocal, recurrence, loc, 1000)
+	nextTimeLocal := findNextFutureOccurrence(fromLocal, recurrence, loc)
 	return nextTimeLocal, nil
 }
