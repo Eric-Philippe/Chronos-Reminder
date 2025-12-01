@@ -215,9 +215,7 @@ func (s *Scheduler) scheduleNext() {
 		return
 	}
 
-	if config.IsDebugMode() {
-		log.Printf("[ENGINE] - Next reminder at %v (in %v)", nextTime, duration)
-	}
+	log.Printf("[ENGINE] - Next reminder at %v (in %v)", nextTime, duration)
 	
 	s.currentTimer = time.NewTimer(duration)
 }
