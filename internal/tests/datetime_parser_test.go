@@ -40,6 +40,13 @@ func TestParseDateTime(t *testing.T) {
 			timezone: "Europe/Paris",
 			expected: time.Date(time.Now().Year(), 11, 3, 15, 0, 0, 0, parisLoc),
 		},
+		{
+			// 5 January next year in Paris timezone
+			input_date: "05/01/2026",
+			input_time: "09:30",
+			timezone: "Europe/Paris",
+			expected: time.Date(2026, 1, 5, 9, 30, 0, 0, parisLoc),
+		},
 	}
 
 	for _, test := range tests {

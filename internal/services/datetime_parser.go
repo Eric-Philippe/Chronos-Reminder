@@ -321,7 +321,7 @@ func parseDateOnly(dateStr string, now time.Time, ianaLocation string) (time.Tim
 			}
 			
 			// Handle cases where month is missing (day only)
-			if parsedTime.Month() == 1 && parsedTime.Day() != 1 && !strings.Contains(dateStr, "jan") {
+			if format == "2" && parsedTime.Month() == 1 && parsedTime.Day() != 1 && !strings.Contains(dateStr, "jan") {
 				parsedTime = time.Date(now.Year(), now.Month(), parsedTime.Day(), 0, 0, 0, 0, loc)
 			}
 			

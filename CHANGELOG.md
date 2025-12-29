@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 29/12/2025
+
+### Fixes
+
+- Fixed the datetime parser to correctly parse dates for january when specific conditions are met.
+
+## [1.0.1] - 16/11/2025
+
+### Fixes
+
+- Fixed an issue where users could not change their timezone after it was initially set.
+
 ## [1.0.0] - 9/11/2025
 
 Final release of Chronos Reminder with the following features:
