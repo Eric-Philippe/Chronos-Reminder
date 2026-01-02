@@ -12,6 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// fallbackPollInterval is the maximum time the scheduler will wait before
+// checking for reminders, even if no timer is set. This prevents the scheduler
+// from getting stuck after system sleep, container restart, or when the timer
+// channel is orphaned.
+const fallbackPollInterval = 5 * time.Minute
+
 // QueueEvent represents different types of events that can trigger a reschedule
 type QueueEvent struct {
 	Type       string    // "created", "updated", "deleted"
@@ -184,6 +190,9 @@ func (s *Scheduler) scheduleNext() {
 	nextReminders, err := s.reminderRepo.GetNextReminders()
 	if err != nil {
 		log.Printf("[ENGINE] - Error fetching next reminders: %v", err)
+		// Set fallback timer to retry later
+		log.Printf("[ENGINE] - Setting fallback poll timer (%v) due to error", fallbackPollInterval)
+		s.currentTimer = time.NewTimer(fallbackPollInterval)
 		return
 	}
 
@@ -191,6 +200,9 @@ func (s *Scheduler) scheduleNext() {
 		if config.IsDebugMode() {
 			log.Println("[ENGINE] - No upcoming reminders, waiting for updates...")
 		}
+		// Set fallback timer to periodically check for new reminders
+		// This handles cases where reminders are added externally or notifications are missed
+		s.currentTimer = time.NewTimer(fallbackPollInterval)
 		return
 	}
 
@@ -215,9 +227,15 @@ func (s *Scheduler) scheduleNext() {
 		return
 	}
 
-	log.Printf("[ENGINE] - Next reminder at %v (in %v)", nextTime, duration)
-	
-	s.currentTimer = time.NewTimer(duration)
+	// Cap the duration to fallbackPollInterval to handle system sleep/restart scenarios
+	// where a long timer might get orphaned
+	if duration > fallbackPollInterval {
+		log.Printf("[ENGINE] - Next reminder at %v (in %v), using fallback poll interval (%v)", nextTime, duration, fallbackPollInterval)
+		s.currentTimer = time.NewTimer(fallbackPollInterval)
+	} else {
+		log.Printf("[ENGINE] - Next reminder at %v (in %v)", nextTime, duration)
+		s.currentTimer = time.NewTimer(duration)
+	}
 }
 
 // checkAndProcessReminders fetches and processes all due reminders
