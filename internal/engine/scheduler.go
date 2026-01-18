@@ -212,18 +212,11 @@ func (s *Scheduler) scheduleNext() {
 	duration := nextTime.Sub(now)
 
 	if duration <= 0 {
-		// Reminder is already due, process immediately
-		log.Printf("[ENGINE] - Reminder is already due, processing immediately")
-		go func() {
-			time.Sleep(100 * time.Millisecond) // Small delay to avoid tight loop
-			select {
-			case <-s.stopChan:
-				return
-			default:
-				s.checkAndProcessReminders()
-				s.scheduleNext()
-			}
-		}()
+		// Reminder is already due, set a very short timer to process it
+		// We use a timer instead of a goroutine to ensure currentTimer is always set
+		// and the main loop handles all processing consistently
+		log.Printf("[ENGINE] - Reminder is already due, processing shortly")
+		s.currentTimer = time.NewTimer(100 * time.Millisecond)
 		return
 	}
 
