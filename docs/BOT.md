@@ -598,5 +598,5 @@ All reminder commands support these recurrence types:
 
 ---
 
-_Last Updated: 2025_
+_Last Updated: 2026_
 _Chronos Reminder Bot - Making time management easy_

@@ -87,10 +87,16 @@ export function Footer() {
             </div>
           )}
         </div>
-        <div className="border-t border-white/5 pt-8">
-          <p className="text-center text-sm text-muted-foreground">
+        <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
             {t("footer.copyright")}
           </p>
+          <button
+            onClick={() => handleNavigation("/terms")}
+            className="text-sm text-muted-foreground hover:text-accent transition-colors"
+          >
+            {t("footer.terms")}
+          </button>
         </div>
       </div>
     </footer>

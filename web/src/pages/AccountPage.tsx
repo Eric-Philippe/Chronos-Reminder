@@ -277,7 +277,7 @@ export function AccountPage() {
 
   // Handle delete account
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE") {
+    if (deleteConfirmText !== t("account.deleteConfirmWord")) {
       setDeleteError(t("account.deleteConfirmationMismatch"));
       return;
     }
@@ -965,7 +965,7 @@ export function AccountPage() {
                         </p>
                         <Input
                           type="text"
-                          placeholder="DELETE"
+                          placeholder={t("account.deleteConfirmWord")}
                           value={deleteConfirmText}
                           onChange={(e) => setDeleteConfirmText(e.target.value)}
                           disabled={isDeletingAccount}
@@ -977,7 +977,7 @@ export function AccountPage() {
                         <Button
                           onClick={handleDeleteAccount}
                           disabled={
-                            isDeletingAccount || deleteConfirmText !== "DELETE"
+                            isDeletingAccount || deleteConfirmText !== t("account.deleteConfirmWord")
                           }
                           className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold gap-2"
                         >

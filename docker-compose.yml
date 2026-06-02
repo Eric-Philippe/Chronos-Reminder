@@ -127,7 +127,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  uptime_kuma_data:
+#  uptime_kuma_data:
 
 networks:
   chronos-network:

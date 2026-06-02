@@ -93,6 +93,13 @@ export const ROUTES = {
     group: "help",
   } as Route,
 
+  TERMS: {
+    path: "/terms",
+    requiresAuth: false,
+    name: "terms",
+    showInNav: false,
+  } as Route,
+
   BOT_HELP: {
     path: "https://docs.chronosrmd.com",
     requiresAuth: false,

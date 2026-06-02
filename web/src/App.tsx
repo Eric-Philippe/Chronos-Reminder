@@ -16,6 +16,7 @@ import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { ChangelogPage } from "./pages/ChangelogPage";
 import { ContactPage } from "./pages/ContactPage";
 import { SelfHostPage } from "./pages/SelfHostPage";
+import { TermsPage } from "./pages/TermsPage";
 import { useAuth } from "./hooks/useAuth";
 import { ROUTES } from "./config/routes";
 import "./i18n/config";
@@ -64,6 +65,9 @@ function AppRoutes() {
 
       {/* Contact route: Public route for contact form */}
       <Route path={ROUTES.CONTACT.path} element={<ContactPage />} />
+
+      {/* Terms & Privacy route: Public route for terms and privacy policy */}
+      <Route path={ROUTES.TERMS.path} element={<TermsPage />} />
 
       {/* Vitrine route: Public route at root for all users */}
       <Route path={ROUTES.HOME.path} element={<HomePage />} />

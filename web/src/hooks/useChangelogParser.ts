@@ -23,6 +23,18 @@ export const useChangelogParser = () => {
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 02/06/2026
+
+### Minor additions
+
+- New Terms & Privacy Policy page at \`/terms\` with full EN/FR/ES translations.
+- New Bot command \`/terms\` displaying a summary of the privacy policy with a link to the full page.
+- Footer now includes a "Terms & Privacy" link on all pages.
+
+### Fixes
+
+- Fixed account deletion confirmation being broken for French and Spanish users (typed word was hardcoded to "DELETE" regardless of language).
+
 ## [1.0.2] - 29/12/2025
 
 ### Fixes
