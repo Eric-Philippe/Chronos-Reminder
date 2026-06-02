@@ -34,12 +34,12 @@ export function Footer() {
               {t("vitrine.footerDesc")}
             </p>
             <br />
-            <p className="text-sm text-muted-foreground">v1.0.0</p>
+            <p className="text-sm text-muted-foreground">v1.0.3</p>
           </div>
 
           {/* Dynamic Menu Groups - Filter by requiresAuth */}
           {MENU_GROUPS.filter(
-            (group) => !group.requiresAuth || isAuthenticated
+            (group) => !group.requiresAuth || isAuthenticated,
           ).map((group) => (
             <div key={group.name}>
               <h4 className="font-semibold text-foreground mb-4">

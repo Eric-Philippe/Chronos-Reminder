@@ -26,7 +26,7 @@ func ReadDoc() string {
   "swagger": "2.0",
   "info": {
     "description": "Chronos Reminder API Documentation",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "title": "Chronos Reminder API",
     "contact": {
       "name": "API Support"

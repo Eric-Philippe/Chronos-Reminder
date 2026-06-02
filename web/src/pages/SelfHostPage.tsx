@@ -387,7 +387,7 @@ export function SelfHostPage() {
                     </h4>
                     <CodeBlock
                       id="backend-image"
-                      code="ghcr.io/eric-philippe/chronos-reminder:1.0.0"
+                      code="ghcr.io/eric-philippe/chronos-reminder:1.0.3"
                     />
                   </div>
 
@@ -401,7 +401,7 @@ export function SelfHostPage() {
   --name chronos-backend \\
   -p 8080:8080 \\
   --env-file .env \\
-  ghcr.io/eric-philippe/chronos-reminder:1.0.0`}
+  ghcr.io/eric-philippe/chronos-reminder:1.0.3`}
                     />
                   </div>
 
@@ -432,7 +432,7 @@ export function SelfHostPage() {
                     </h4>
                     <CodeBlock
                       id="frontend-image"
-                      code="ghcr.io/eric-philippe/chronos-reminder/web:1.0.0"
+                      code="ghcr.io/eric-philippe/chronos-reminder/web:1.0.3"
                     />
                   </div>
 
@@ -448,7 +448,7 @@ export function SelfHostPage() {
   -e VITE_API_URL=http://your-backend-url:8080 \\
   -e VITE_DISCORD_CLIENT_ID=your_discord_client_id \\
   -e VITE_DISCORD_REDIRECT_URI=http://your-domain.com/auth/callback/discord \\
-  ghcr.io/eric-philippe/chronos-reminder/web:1.0.0`}
+  ghcr.io/eric-philippe/chronos-reminder/web:1.0.3`}
                     />
                   </div>
 
@@ -675,7 +675,7 @@ export function SelfHostPage() {
                               </TableCell>
                               <TableCell>
                                 {t(
-                                  "selfHost.environment.vars.discordClientSecret"
+                                  "selfHost.environment.vars.discordClientSecret",
                                 )}
                               </TableCell>
                               <TableCell className="font-mono text-xs">
@@ -693,7 +693,7 @@ export function SelfHostPage() {
                               </TableCell>
                               <TableCell>
                                 {t(
-                                  "selfHost.environment.vars.discordRedirectUri"
+                                  "selfHost.environment.vars.discordRedirectUri",
                                 )}
                               </TableCell>
                               <TableCell className="font-mono text-xs">
@@ -911,7 +911,7 @@ export function SelfHostPage() {
                               </TableCell>
                               <TableCell>
                                 {t(
-                                  "selfHost.environment.vars.rateLimitEnabled"
+                                  "selfHost.environment.vars.rateLimitEnabled",
                                 )}
                               </TableCell>
                               <TableCell className="font-mono text-xs">
@@ -929,7 +929,7 @@ export function SelfHostPage() {
                               </TableCell>
                               <TableCell>
                                 {t(
-                                  "selfHost.environment.vars.rateLimitRequests"
+                                  "selfHost.environment.vars.rateLimitRequests",
                                 )}
                               </TableCell>
                               <TableCell className="font-mono text-xs">
@@ -1134,7 +1134,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/eric-philippe/chronos-reminder:1.0.0
+    image: ghcr.io/eric-philippe/chronos-reminder:1.0.3
     container_name: chronos-backend
     env_file: .env
     ports:
@@ -1145,7 +1145,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ghcr.io/eric-philippe/chronos-reminder/web:1.0.0
+    image: ghcr.io/eric-philippe/chronos-reminder/web:1.0.3
     container_name: chronos-web
     environment:
       - VITE_API_URL=http://localhost:8080
