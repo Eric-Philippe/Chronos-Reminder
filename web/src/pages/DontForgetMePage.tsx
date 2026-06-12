@@ -428,7 +428,7 @@ export function DontForgetMePage() {
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                                 onClick={() => handleStartEdit(item)}
                                 aria-label={t("dfm.editItem")}
                               >
@@ -437,7 +437,7 @@ export function DontForgetMePage() {
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600"
+                                className="h-8 w-8 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600"
                                 onClick={() => handleDeleteItem(item)}
                                 aria-label={t("dfm.deleteItem")}
                               >
