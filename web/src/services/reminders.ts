@@ -17,7 +17,7 @@ class RemindersService {
    * Ensures all date fields are strings and keeps recurrence_type as uppercase string
    */
   private normalizeReminder(
-    reminder: Record<string, unknown> & Partial<Reminder>
+    reminder: Record<string, unknown> & Partial<Reminder>,
   ): Reminder {
     return {
       id: String(reminder.id || ""),
@@ -43,17 +43,16 @@ class RemindersService {
    * Fetch all reminders for the authenticated user
    */
   async getReminders(): Promise<Reminder[]> {
-    const response = await httpClient.get<ApiResponse<RemindersResponse>>(
-      "/api/reminders"
-    );
+    const response =
+      await httpClient.get<ApiResponse<RemindersResponse>>("/api/reminders");
     const data = (response.data || response) as RemindersResponse;
     const reminders = data.reminders || [];
 
     // Normalize all reminders to ensure proper data types
     return reminders.map((reminder) =>
       this.normalizeReminder(
-        reminder as Record<string, unknown> & Partial<Reminder>
-      )
+        reminder as Record<string, unknown> & Partial<Reminder>,
+      ),
     );
   }
 
@@ -63,11 +62,11 @@ class RemindersService {
   async getReminder(reminderId: string): Promise<Reminder | null> {
     try {
       const response = await httpClient.get<ApiResponse<Reminder>>(
-        `/api/reminders/${reminderId}`
+        `/api/reminders/${reminderId}`,
       );
       const reminder = (response.data || response) as Reminder;
       return this.normalizeReminder(
-        reminder as Record<string, unknown> & Partial<Reminder>
+        reminder as Record<string, unknown> & Partial<Reminder>,
       );
     } catch (error) {
       console.error("Failed to fetch reminder:", error);
@@ -113,18 +112,18 @@ class RemindersService {
     message: string;
     recurrence: string; // Uppercase string (e.g., "DAILY")
     destinations: Array<{
-      type: "discord_dm" | "discord_channel" | "webhook";
+      type: "discord_dm" | "discord_channel" | "webhook" | "email";
       metadata: Record<string, unknown>;
     }>;
   }): Promise<Reminder | null> {
     try {
       const response = await httpClient.post<ApiResponse<Reminder>>(
         "/api/reminders",
-        data
+        data,
       );
       const reminder = (response.data || response) as Reminder;
       return this.normalizeReminder(
-        reminder as Record<string, unknown> & Partial<Reminder>
+        reminder as Record<string, unknown> & Partial<Reminder>,
       );
     } catch (error) {
       console.error("Failed to create reminder:", error);
@@ -143,19 +142,19 @@ class RemindersService {
       time?: string;
       recurrence?: string; // Uppercase string (e.g., "DAILY")
       destinations?: Array<{
-        type: "discord_dm" | "discord_channel" | "webhook";
+        type: "discord_dm" | "discord_channel" | "webhook" | "email";
         metadata: Record<string, unknown>;
       }>;
-    }
+    },
   ): Promise<Reminder | null> {
     try {
       const response = await httpClient.put<ApiResponse<Reminder>>(
         `/api/reminders/${reminderId}`,
-        data
+        data,
       );
       const reminder = (response.data || response) as Reminder;
       return this.normalizeReminder(
-        reminder as Record<string, unknown> & Partial<Reminder>
+        reminder as Record<string, unknown> & Partial<Reminder>,
       );
     } catch (error) {
       console.error("Failed to update reminder:", error);
@@ -196,11 +195,11 @@ class RemindersService {
     try {
       const response = await httpClient.post<ApiResponse<Reminder>>(
         `/api/reminders/${reminderId}/duplicate`,
-        {}
+        {},
       );
       const reminder = (response.data || response) as Reminder;
       return this.normalizeReminder(
-        reminder as Record<string, unknown> & Partial<Reminder>
+        reminder as Record<string, unknown> & Partial<Reminder>,
       );
     } catch (error) {
       console.error("Failed to duplicate reminder:", error);
