@@ -157,9 +157,15 @@ type WorkdaysRecurrence struct{}
 
 // NextOccurrence returns the next occurrence timestamp for workdays recurrence
 func (r WorkdaysRecurrence) NextOccurrence(from int64, interval int) int64 {
-	// This is a placeholder - workdays/weekend need timezone context
-	// The actual logic is handled in addInterval with timezone awareness
-	return from + int64(interval*86400)
+	daysAdded := 0
+	current := time.Unix(from, 0).UTC()
+	for daysAdded < interval {
+		current = current.AddDate(0, 0, 1)
+		if current.Weekday() != time.Saturday && current.Weekday() != time.Sunday {
+			daysAdded++
+		}
+	}
+	return current.Unix()
 }
 
 // WeekendRecurrence struct
@@ -167,9 +173,15 @@ type WeekendRecurrence struct{}
 
 // NextOccurrence returns the next occurrence timestamp for weekend recurrence
 func (r WeekendRecurrence) NextOccurrence(from int64, interval int) int64 {
-	// This is a placeholder - workdays/weekend need timezone context
-	// The actual logic is handled in addInterval with timezone awareness
-	return from + int64(interval*86400)
+	daysAdded := 0
+	current := time.Unix(from, 0).UTC()
+	for daysAdded < interval {
+		current = current.AddDate(0, 0, 1)
+		if current.Weekday() == time.Saturday || current.Weekday() == time.Sunday {
+			daysAdded++
+		}
+	}
+	return current.Unix()
 }
 
 // findNextFutureOccurrence calculates the next occurrence that is in the future
