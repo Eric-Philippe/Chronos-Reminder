@@ -23,6 +23,28 @@ export const useChangelogParser = () => {
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 12/06/2026
+
+### Major additions
+
+- **Don't Forget Me (DFM)** feature: A private note-taking tool with recurring reminders
+  - Create and manage a personal note with multiple todo items
+  - Check/uncheck items as you complete them
+  - Set up recurring reminders for your note (daily, weekly, monthly, yearly, workdays, weekends)
+  - Choose reminder destinations (Discord DM and/or Email)
+  - Send your note on-demand to all configured destinations
+  - Web dashboard for managing your note and reminders
+  - Discord bot commands for quick access: \`/dfm create\`, \`/dfm list\`, \`/dfm delete\`, \`/dfm set-reminder\`, \`/dfm send\`
+
+### Minor additions
+
+- **Email delivery for reminders**: Users can now receive reminders via email in addition to Discord and Webhooks.
+  - Configure email delivery on a per-reminder basis
+  - Requires linking a Chronos web account with an email address
+  - Works seamlessly alongside Discord DM and Channel destinations
+- API cooldown mechanism for DFM send operations to prevent abuse
+- Complete Swagger documentation for all DFM endpoints
+
 ## [1.0.3] - 02/06/2026
 
 ### Minor additions
@@ -173,12 +195,12 @@ First release of the Discord bot with the following features:
 
       const versionContent = changelogText.substring(
         currentVersion.index,
-        nextVersionIndex
+        nextVersionIndex,
       );
 
       const categories = [];
       const categoryMatches = Array.from(
-        versionContent.matchAll(/### (.+?)\n([\s\S]*?)(?=###|$)/g)
+        versionContent.matchAll(/### (.+?)\n([\s\S]*?)(?=###|$)/g),
       );
 
       for (const categoryMatch of categoryMatches) {
@@ -187,7 +209,7 @@ First release of the Discord bot with the following features:
 
         const entries: ChangelogEntry[] = [];
         const sectionMatches = Array.from(
-          categoryBody.matchAll(/#### (.+?)\n([\s\S]*?)(?=####|$)/g)
+          categoryBody.matchAll(/#### (.+?)\n([\s\S]*?)(?=####|$)/g),
         );
 
         for (const sectionMatch of sectionMatches) {
@@ -217,7 +239,7 @@ First release of the Discord bot with the following features:
             .split("\n")
             .filter((line) => line.trim().startsWith("-"));
           const items = lines.map((line) =>
-            line.replace(/^\s*-\s*/, "").trim()
+            line.replace(/^\s*-\s*/, "").trim(),
           );
 
           if (items.length > 0) {

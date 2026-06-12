@@ -83,6 +83,8 @@ func runMigrations() error {
 		&models.ReminderError{},
 		&models.EmailVerification{},
 		&models.PasswordReset{},
+		&models.DFMNote{},
+		&models.DFMItem{},
 	)
 	
 	if err != nil {
@@ -134,7 +136,14 @@ func createEnumTypes() error {
 	`).Error; err != nil {
 		return fmt.Errorf("failed to create destination_type enum: %w", err)
 	}
-	
+
+	// Add 'email' to destination_type enum if not already present
+	if err := DB.Exec(`ALTER TYPE destination_type ADD VALUE IF NOT EXISTS 'email';`).Error; err != nil {
+		log.Printf("[DATABASE] - ⚠️  Could not add 'email' to destination_type enum: %v", err)
+	} else {
+		log.Println("[DATABASE] - ✅ 'email' value ensured in destination_type enum")
+	}
+
 	return nil
 }
 

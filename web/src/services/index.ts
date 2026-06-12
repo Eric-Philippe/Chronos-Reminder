@@ -11,6 +11,7 @@ export { discordService } from "./discord";
 export { identityService } from "./identity";
 export { timezoneService } from "./timezone";
 export { apiKeyService } from "./api-keys";
+export { dfmService } from "./dfm";
 
 // Export all types
 export type {
@@ -35,6 +36,8 @@ export type {
   GetGuildChannelsResponse,
   GetGuildRolesResponse,
   Timezone,
+  DFMNote,
+  DFMItem,
   APIKey,
   CreateAPIKeyResponse,
   ListAPIKeysResponse,

@@ -6,6 +6,7 @@ import {
   MessageCircle,
   Megaphone,
   Link2,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +30,7 @@ export interface ReminderFormData {
   message: string;
   recurrence: string; // Uppercase string (e.g., "DAILY", "WEEKLY")
   destinations: Array<{
-    type: "discord_dm" | "discord_channel" | "webhook";
+    type: "discord_dm" | "discord_channel" | "webhook" | "email";
     metadata: Record<string, unknown>;
   }>;
 }
@@ -306,6 +307,15 @@ export function CreateReminderPage() {
                                         ({dest.metadata.platform as string})
                                       </span>
                                     )}
+                                </>
+                              )}
+                              {dest.type === "email" && (
+                                <>
+                                  <Mail className="w-4 h-4 flex-shrink-0" />
+                                  {t("reminderCreation.destinations.email")}
+                                  <span className="text-xs text-muted-foreground ml-1">
+                                    ({dest.metadata.email as string})
+                                  </span>
                                 </>
                               )}
                             </div>

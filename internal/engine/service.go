@@ -5,9 +5,11 @@ import (
 	"log"
 	"sync"
 
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
 	"github.com/ericp/chronos-bot-reminder/internal/dispatchers"
+	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
 
 // SchedulerService manages the complete scheduling system
@@ -16,6 +18,7 @@ type SchedulerService struct {
 	GarbageCollector   *GarbageCollector
 	DispatcherRegistry *DispatcherRegistry
 	ReminderRepo       repositories.ReminderRepository
+	DFMScheduler       *DFMScheduler
 }
 
 var (
@@ -73,6 +76,11 @@ func StartSchedulerService() {
 
 	// Start the garbage collector
 	schedulerService.GarbageCollector.Start(schedulerCtx)
+
+	// Start the Don't Forget Me scheduler
+	if schedulerService.DFMScheduler != nil {
+		schedulerService.DFMScheduler.Start(schedulerCtx)
+	}
 }
 
 // StopSchedulerService gracefully stops the scheduler service
@@ -86,6 +94,9 @@ func StopSchedulerService() {
 		}
 		if schedulerService.GarbageCollector.IsRunning() {
 			schedulerService.GarbageCollector.Stop()
+		}
+		if schedulerService.DFMScheduler != nil && schedulerService.DFMScheduler.IsRunning() {
+			schedulerService.DFMScheduler.Stop()
 		}
 	}
 
@@ -165,27 +176,41 @@ func IsSchedulerNotificationEnabled() bool {
 func NewSchedulerService(reminderRepo repositories.ReminderRepository, reminderErrorRepo repositories.ReminderErrorRepository) *SchedulerService {
 	// Create dispatcher registry
 	dispatcherRegistry := NewDispatcherRegistry(reminderErrorRepo)
-	
+
 	// Register all dispatchers
 	dispatcherRegistry.RegisterDispatcher(dispatchers.NewDiscordDMDispatcher())
 	dispatcherRegistry.RegisterDispatcher(dispatchers.NewWebhookDispatcher())
 	dispatcherRegistry.RegisterDispatcher(dispatchers.NewDiscordChannelDispatcher())
+
+	cfg := config.Load()
+	mailer := services.NewMailerService(cfg.ResendAPIKey, "noreply@noreply.chronosrmd.com")
+	dispatcherRegistry.RegisterDispatcher(dispatchers.NewEmailDispatcher(mailer))
 
 	// Create garbage collector
 	garbageCollector := NewGarbageCollector(reminderRepo)
 
 	// Create scheduler
 	scheduler := NewScheduler(reminderRepo, reminderErrorRepo, dispatcherRegistry, garbageCollector)
-	
+
 	// Set the scheduler in the repository if it supports it
 	if schedulerAwareRepo, ok := reminderRepo.(interface{ SetScheduler(repositories.SchedulerNotifier) }); ok {
 		schedulerAwareRepo.SetScheduler(scheduler)
 	}
-	
+
+	// Create the Don't Forget Me scheduler
+	var dfmScheduler *DFMScheduler
+	if repos := database.GetRepositories(); repos != nil {
+		dfmDispatcher := dispatchers.NewDFMDispatcher(mailer, cfg.WebAppURL)
+		dfmScheduler = NewDFMScheduler(repos.DFMNote, repos.Identity, dfmDispatcher)
+		// Expose the immediate send for callers that cannot import the engine (bot commands)
+		services.DFMSendNow = dfmScheduler.SendNoteNow
+	}
+
 	return &SchedulerService{
 		Scheduler:          scheduler,
 		GarbageCollector:   garbageCollector,
 		DispatcherRegistry: dispatcherRegistry,
 		ReminderRepo:       reminderRepo,
+		DFMScheduler:       dfmScheduler,
 	}
 }

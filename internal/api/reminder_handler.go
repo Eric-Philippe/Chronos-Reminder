@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -176,6 +177,8 @@ func (h *ReminderHandler) UpdateReminder(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
+		effectiveRecurrence := int(reminder.Recurrence)
+
 		// Create new destinations
 		newDestinations := make([]models.ReminderDestination, len(updateData.Destinations))
 		for i, dest := range updateData.Destinations {
@@ -183,6 +186,17 @@ func (h *ReminderHandler) UpdateReminder(w http.ResponseWriter, r *http.Request)
 			if !destType.IsValid() {
 				WriteError(w, http.StatusBadRequest, "Invalid destination type")
 				return
+			}
+
+			if destType == models.DestinationEmail {
+				if _, hasEmail := dest.Metadata["email"]; !hasEmail {
+					WriteError(w, http.StatusBadRequest, fmt.Sprintf("Email destination requires email in metadata"))
+					return
+				}
+				if services.GetRecurrenceType(effectiveRecurrence) == services.RecurrenceHourly {
+					WriteError(w, http.StatusBadRequest, "Email destination cannot be used with hourly recurrence")
+					return
+				}
 			}
 
 			newDestinations[i] = models.ReminderDestination{

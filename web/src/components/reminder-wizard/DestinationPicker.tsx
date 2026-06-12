@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Trash2, Plus, MessageCircle, Megaphone, Link2 } from "lucide-react";
+import { Trash2, Plus, MessageCircle, Megaphone, Link2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,8 @@ import { DiscordGuildSelectionModal } from "./DiscordGuildSelectionModal";
 export type ReminderDestinationType =
   | "discord_dm"
   | "discord_channel"
-  | "webhook";
+  | "webhook"
+  | "email";
 
 export type WebhookPlatform = "generic" | "discord" | "slack";
 
@@ -21,6 +22,7 @@ export interface ReminderDestination {
 interface DestinationPickerProps {
   destinations: ReminderDestination[];
   onDestinationsChange: (destinations: ReminderDestination[]) => void;
+  recurrence?: string;
   showTitle?: boolean;
   showAddOptions?: boolean;
   compact?: boolean;
@@ -29,6 +31,7 @@ interface DestinationPickerProps {
 export function DestinationPicker({
   destinations,
   onDestinationsChange,
+  recurrence,
   showTitle = true,
   showAddOptions = true,
   compact = false,
@@ -40,6 +43,8 @@ export function DestinationPicker({
   const [webhookUsername, setWebhookUsername] = useState("");
   const [isGuildModalOpen, setIsGuildModalOpen] = useState(false);
   const [hasDiscordIdentity, setHasDiscordIdentity] = useState(false);
+  const [hasEmail, setHasEmail] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Load user identities on component mount
   useEffect(() => {
@@ -47,9 +52,13 @@ export function DestinationPicker({
       try {
         const capabilities = await identityService.getIdentityCapabilities();
         setHasDiscordIdentity(capabilities.hasDiscordIdentity);
+        setHasEmail(capabilities.hasEmail);
+        setUserEmail(capabilities.userEmail);
       } catch (error) {
         console.error("Failed to load identity capabilities:", error);
         setHasDiscordIdentity(false);
+        setHasEmail(false);
+        setUserEmail(null);
       }
     };
 
@@ -62,11 +71,23 @@ export function DestinationPicker({
     (d) => d.type === "discord_channel"
   ).length;
   const webhookCount = destinations.filter((d) => d.type === "webhook").length;
+  const emailCount = destinations.filter((d) => d.type === "email").length;
 
   // Destination limits
   const MAX_DM = 1;
   const MAX_CHANNELS = 5;
   const MAX_WEBHOOKS = 5;
+  const MAX_EMAILS = 1;
+
+  const isHourlyRecurrence = recurrence === "HOURLY";
+
+  const handleAddEmail = () => {
+    if (!hasEmail || emailCount >= MAX_EMAILS || isHourlyRecurrence) return;
+    onDestinationsChange([
+      ...destinations,
+      { type: "email" as const, metadata: { email: userEmail } },
+    ]);
+  };
 
   const handleAddDiscordDM = () => {
     if (dmCount >= MAX_DM) return;
@@ -239,6 +260,36 @@ export function DestinationPicker({
                             </p>
                           )}
                         </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleRemoveDestination(idx)}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+
+              {dest.type === "email" && (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Mail className="w-4 h-4 text-accent flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`font-semibold text-foreground truncate ${
+                          compact ? "text-xs" : "text-sm"
+                        }`}
+                      >
+                        {t("reminderCreation.destinations.email")}
+                      </p>
+                      {!compact && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
+                          {dest.metadata.email as string}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -561,6 +612,65 @@ export function DestinationPicker({
                   {t("reminderCreation.destinations.addWebhook")}
                 </Button>
               </div>
+            </div>
+          </Card>
+
+          {/* Email Option */}
+          <Card
+            className={`border-border bg-secondary/20 transition-colors ${
+              hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
+                ? "hover:border-accent/50 cursor-pointer"
+                : "opacity-60 cursor-not-allowed"
+            }`}
+            onClick={
+              hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
+                ? handleAddEmail
+                : undefined
+            }
+          >
+            <div className="p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-4 h-4 text-accent" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {t("reminderCreation.destinations.email")}
+                  </p>
+                  {!compact && (
+                    <p className="text-xs text-muted-foreground">
+                      {!hasEmail
+                        ? t("reminderCreation.destinations.noEmailConfigured")
+                        : isHourlyRecurrence
+                        ? t("reminderCreation.destinations.emailHourlyDisabled")
+                        : emailCount >= MAX_EMAILS
+                        ? t("reminderCreation.destinations.limitReached")
+                        : userEmail ?? ""}
+                    </p>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                  {emailCount}/{MAX_EMAILS}
+                </span>
+              </div>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddEmail();
+                }}
+                variant="outline"
+                size="sm"
+                disabled={
+                  !hasEmail || emailCount >= MAX_EMAILS || isHourlyRecurrence
+                }
+                className={`border-accent/50 flex-shrink-0 ${
+                  hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
+                    ? "text-accent hover:bg-accent/10"
+                    : "text-muted-foreground opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
           </Card>
         </div>

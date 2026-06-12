@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/resend/resend-go/v2"
+	"github.com/resend/resend-go/v3"
 )
 
 // MailerService handles email sending operations using Resend

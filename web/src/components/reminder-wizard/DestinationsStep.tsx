@@ -36,6 +36,7 @@ export function DestinationsStep({
       <DestinationPicker
         destinations={formData.destinations}
         onDestinationsChange={handleDestinationsChange}
+        recurrence={formData.recurrence}
         showTitle={false}
         showAddOptions={true}
       />

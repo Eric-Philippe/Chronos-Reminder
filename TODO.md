@@ -1,10 +1,8 @@
 # TODOs
 
-## Chronos v1.1 Roadmap
+## Chronos v1.2.0 Roadmap
 
 ### Web Application
-
-- [ ] Terms of Service and Privacy Policy pages
 
 ### Discord Bot
 
@@ -23,7 +21,7 @@
 
 ### Global
 
-- [ ] Put Email, Discord Invite Link, Version in the config file instead of hardcoding them
-- [ ] Add email support
 - [ ] Add API Key badge to user profiles
 - [ ] Badge shop
+- [ ] Put Email, Discord Invite Link, Version in the config file instead of hardcoding them
+- [ ] Streamline versioning

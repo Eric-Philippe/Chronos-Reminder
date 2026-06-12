@@ -12,8 +12,8 @@ type swaggerInfo struct {
 
 // SwaggerInfo variable
 var SwaggerInfo = swaggerInfo{
-	Version:     "1.0",
-	Host:        "localhost:8080",
+	Version:     "1.1.0",
+	Host:        "api.chronosrmd.com",
 	BasePath:    "/api",
 	Schemes:     []string{"http", "https"},
 	Title:       "Chronos Reminder API",
@@ -26,13 +26,13 @@ func ReadDoc() string {
   "swagger": "2.0",
   "info": {
     "description": "Chronos Reminder API Documentation",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "title": "Chronos Reminder API",
     "contact": {
       "name": "API Support"
     }
   },
-  "host": "localhost:8080",
+  "host": "api.chronosrmd.com",
   "basePath": "/api",
   "schemes": ["http", "https"],
   "paths": {
@@ -862,6 +862,368 @@ func ReadDoc() string {
           }
         }
       }
+    },
+    "/dfm": {
+      "get": {
+        "tags": ["DFM"],
+        "summary": "Get DFM note",
+        "description": "Get the current user's Don't Forget Me note with all items",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved DFM note",
+            "schema": {
+              "$ref": "#/definitions/DFMNoteResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/dfm/items": {
+      "post": {
+        "tags": ["DFM"],
+        "summary": "Add DFM item",
+        "description": "Add a new item to the user's Don't Forget Me note",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Item content",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["content"],
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "example": "Buy groceries"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Item created successfully",
+            "schema": {
+              "$ref": "#/definitions/DFMItem"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/dfm/items/{id}": {
+      "put": {
+        "tags": ["DFM"],
+        "summary": "Update DFM item",
+        "description": "Update an item's content or checked state",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Item ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Update data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "checked": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DFMItem"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Item not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["DFM"],
+        "summary": "Delete DFM item",
+        "description": "Remove an item from the user's Don't Forget Me note",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Item ID",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item deleted successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Item deleted successfully"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Item not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/dfm/reminder": {
+      "put": {
+        "tags": ["DFM"],
+        "summary": "Set DFM reminder",
+        "description": "Configure a recurring reminder for the Don't Forget Me note",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Reminder settings",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["time", "recurrence", "destinations"],
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2026-06-20"
+                },
+                "time": {
+                  "type": "string",
+                  "example": "09:00"
+                },
+                "recurrence": {
+                  "type": "string",
+                  "example": "DAILY"
+                },
+                "destinations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["discord_dm", "email"]
+                  },
+                  "example": ["discord_dm"]
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder set successfully",
+            "schema": {
+              "$ref": "#/definitions/DFMNoteResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["DFM"],
+        "summary": "Remove DFM reminder",
+        "description": "Remove the recurring reminder from the Don't Forget Me note",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder removed successfully",
+            "schema": {
+              "$ref": "#/definitions/DFMNoteResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/dfm/send": {
+      "post": {
+        "tags": ["DFM"],
+        "summary": "Send DFM note now",
+        "description": "Send the Don't Forget Me note immediately to all configured destinations",
+        "produces": ["application/json"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note sent successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Note sent successfully"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -1581,6 +1943,84 @@ func ReadDoc() string {
         "count": {
           "type": "integer",
           "example": 2
+        }
+      }
+    },
+    "DFMNoteResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "remind_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "next_fire_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recurrence_type": {
+          "type": "string",
+          "example": "DAILY"
+        },
+        "has_reminder": {
+          "type": "boolean",
+          "example": false
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": ["discord_dm"]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DFMItem"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "DFMItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "note_id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        },
+        "content": {
+          "type": "string",
+          "example": "Buy groceries"
+        },
+        "checked": {
+          "type": "boolean",
+          "example": false
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     }

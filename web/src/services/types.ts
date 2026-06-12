@@ -111,7 +111,7 @@ export interface Reminder {
 export interface ReminderDestination {
   id: string;
   reminder_id: string;
-  type: "discord_dm" | "discord_channel" | "webhook";
+  type: "discord_dm" | "discord_channel" | "webhook" | "email";
   metadata: Record<string, unknown>;
 }
 
@@ -210,6 +210,31 @@ export interface GetGuildChannelsResponse {
 export interface GetGuildRolesResponse {
   roles: DiscordRole[];
   error?: string;
+}
+
+/**
+ * Don't Forget Me Types
+ */
+export interface DFMItem {
+  id: string;
+  note_id: string;
+  content: string;
+  checked: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DFMNote {
+  id: string;
+  remind_at_utc?: string | null;
+  next_fire_utc?: string | null;
+  recurrence_type: string; // Uppercase string (e.g., "DAILY")
+  has_reminder: boolean;
+  destinations: Array<"discord_dm" | "email">;
+  items: DFMItem[];
+  created_at: string;
+  updated_at: string;
 }
 
 /**

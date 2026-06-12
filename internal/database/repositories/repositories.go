@@ -12,6 +12,8 @@ type Repositories struct {
 	ReminderError       ReminderErrorRepository
 	EmailVerification   EmailVerificationRepository
 	PasswordReset       PasswordResetRepository
+	DFMNote             DFMNoteRepository
+	DFMItem             DFMItemRepository
 }
 
 // NewRepositories creates new repository instances
@@ -25,5 +27,7 @@ func NewRepositories(db *gorm.DB) *Repositories {
 		ReminderError:       NewReminderErrorRepository(db),
 		EmailVerification:   NewEmailVerificationRepository(db),
 		PasswordReset:       NewPasswordResetRepository(db),
+		DFMNote:             NewDFMNoteRepository(db),
+		DFMItem:             NewDFMItemRepository(db),
 	}
 }

@@ -1,0 +1,446 @@
+definitions:
+  api.ContactRequest:
+    properties:
+      email:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      subject:
+        type: string
+      type:
+        type: string
+    type: object
+  api.DFMAddItemRequest:
+    properties:
+      content:
+        example: Buy groceries
+        type: string
+    type: object
+  api.DFMNoteResponse:
+    properties:
+      created_at:
+        type: string
+      destinations:
+        items:
+          type: string
+        type: array
+      has_reminder:
+        type: boolean
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/models.DFMItem'
+        type: array
+      next_fire_utc:
+        type: string
+      recurrence_type:
+        type: string
+      remind_at_utc:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  api.DFMSetReminderRequest:
+    properties:
+      date:
+        example: "2026-06-20"
+        type: string
+      destinations:
+        example:
+        - discord_dm
+        - email
+        items:
+          type: string
+        type: array
+      recurrence:
+        example: DAILY
+        type: string
+      time:
+        example: "09:00"
+        type: string
+    type: object
+  api.DFMUpdateItemRequest:
+    properties:
+      checked:
+        type: boolean
+      content:
+        type: string
+    type: object
+  models.Account:
+    properties:
+      created_at:
+        type: string
+      email_verified:
+        type: boolean
+      id:
+        type: string
+      identities:
+        items:
+          $ref: '#/definitions/models.Identity'
+        type: array
+      reminders:
+        items:
+          $ref: '#/definitions/models.Reminder'
+        type: array
+      timezone:
+        allOf:
+        - $ref: '#/definitions/models.Timezone'
+        description: Relationships
+      timezone_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.DFMItem:
+    properties:
+      checked:
+        type: boolean
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      note:
+        allOf:
+        - $ref: '#/definitions/models.DFMNote'
+        description: Relationships
+      note_id:
+        type: string
+      position:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.DFMNote:
+    properties:
+      account:
+        allOf:
+        - $ref: '#/definitions/models.Account'
+        description: Relationships
+      account_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/models.DFMItem'
+        type: array
+      last_sent_at:
+        type: string
+      next_fire_utc:
+        type: string
+      recurrence:
+        type: integer
+      remind_at_utc:
+        type: string
+      send_discord_dm:
+        description: Private delivery channels; both can be enabled at the same time
+        type: boolean
+      send_email:
+        type: boolean
+      updated_at:
+        type: string
+    type: object
+  models.DestinationType:
+    enum:
+    - discord_dm
+    - discord_channel
+    - webhook
+    - email
+    type: string
+    x-enum-varnames:
+    - DestinationDiscordDM
+    - DestinationDiscordChannel
+    - DestinationWebhook
+    - DestinationEmail
+  models.Identity:
+    properties:
+      account:
+        allOf:
+        - $ref: '#/definitions/models.Account'
+        description: Relationships
+      account_id:
+        type: string
+      avatar:
+        description: optional, snapshot of Discord avatar
+        type: string
+      created_at:
+        type: string
+      external_id:
+        description: e.g., discord_id or app email
+        type: string
+      id:
+        type: string
+      provider:
+        allOf:
+        - $ref: '#/definitions/models.ProviderType'
+        description: enum type from database
+      scopes:
+        description: comma-separated scopes for API keys (e.g., "reminders.read")
+        type: string
+      username:
+        description: snapshot for display purposes
+        type: string
+    type: object
+  models.JSONB:
+    additionalProperties: true
+    type: object
+  models.ProviderType:
+    enum:
+    - discord
+    - app
+    - api_key
+    type: string
+    x-enum-varnames:
+    - ProviderDiscord
+    - ProviderApp
+    - ProviderAPIKey
+  models.Reminder:
+    properties:
+      account:
+        allOf:
+        - $ref: '#/definitions/models.Account'
+        description: Relationships
+      account_id:
+        type: string
+      created_at:
+        type: string
+      destinations:
+        items:
+          $ref: '#/definitions/models.ReminderDestination'
+        type: array
+      id:
+        type: string
+      message:
+        type: string
+      next_fire_utc:
+        type: string
+      recurrence:
+        type: integer
+      remind_at_utc:
+        type: string
+      snoozed_at_utc:
+        type: string
+    type: object
+  models.ReminderDestination:
+    properties:
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/models.JSONB'
+      reminder:
+        allOf:
+        - $ref: '#/definitions/models.Reminder'
+        description: Relationships
+      reminder_id:
+        type: string
+      type:
+        $ref: '#/definitions/models.DestinationType'
+    type: object
+  models.Timezone:
+    properties:
+      accounts:
+        description: Relationships
+        items:
+          $ref: '#/definitions/models.Account'
+        type: array
+      gmt_offset:
+        type: number
+      iana_location:
+        description: IANA timezone identifier
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/contact:
+    post:
+      consumes:
+      - application/json
+      description: Submit a contact form with name, email, type, subject, and message
+      parameters:
+      - description: Contact request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.ContactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message sent successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Submit a contact form
+      tags:
+      - Contact
+  /api/dfm:
+    get:
+      description: Get the current user's Don't Forget Me note with all items
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.DFMNoteResponse'
+      summary: Get DFM note
+      tags:
+      - DFM
+  /api/dfm/items:
+    post:
+      consumes:
+      - application/json
+      description: Add a new item to the user's Don't Forget Me note
+      parameters:
+      - description: Item content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.DFMAddItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.DFMItem'
+      summary: Add DFM item
+      tags:
+      - DFM
+  /api/dfm/items/{id}:
+    delete:
+      description: Remove an item from the user's Don't Forget Me note
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete DFM item
+      tags:
+      - DFM
+    put:
+      consumes:
+      - application/json
+      description: Update an item's content or checked state
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.DFMUpdateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DFMItem'
+      summary: Update DFM item
+      tags:
+      - DFM
+  /api/dfm/reminder:
+    delete:
+      description: Remove the recurring reminder from the Don't Forget Me note
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.DFMNoteResponse'
+      summary: Remove DFM reminder
+      tags:
+      - DFM
+    put:
+      consumes:
+      - application/json
+      description: Configure a recurring reminder for the Don't Forget Me note
+      parameters:
+      - description: Reminder settings
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.DFMSetReminderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.DFMNoteResponse'
+      summary: Set DFM reminder
+      tags:
+      - DFM
+  /api/dfm/send:
+    post:
+      description: Send the Don't Forget Me note immediately to all configured destinations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send DFM note now
+      tags:
+      - DFM
+  /api/health:
+    get:
+      description: Returns the health status of the API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Server is healthy
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check
+      tags:
+      - Health
+swagger: "2.0"

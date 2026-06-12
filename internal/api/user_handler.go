@@ -267,7 +267,7 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 			if _, hasURL := dest.Metadata["url"]; !hasURL {
 				continue
 			}
-			
+
 			// Validate optional platform field
 			if platformVal, exists := dest.Metadata["platform"]; exists {
 				if platformStr, ok := platformVal.(string); ok {
@@ -277,6 +277,32 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 						continue
 					}
 				}
+			}
+		}
+
+		// Handle email destination
+		if destType == models.DestinationEmail {
+			if _, hasEmail := dest.Metadata["email"]; !hasEmail {
+				// Auto-fill from app identity
+				accountWithIdentities, err := h.accountRepo.GetWithIdentities(accountID)
+				if err == nil && accountWithIdentities != nil {
+					for _, identity := range accountWithIdentities.Identities {
+						if identity.Provider == models.ProviderApp {
+							dest.Metadata["email"] = identity.ExternalID
+							break
+						}
+					}
+				}
+				if _, still := dest.Metadata["email"]; !still {
+					continue
+				}
+			}
+
+			// Guard: disallow email for hourly (or shorter) recurrence to avoid flooding Resend free tier
+			recurrenceType := services.GetRecurrenceType(int(recurrenceValue))
+			if recurrenceType == services.RecurrenceHourly {
+				WriteError(w, http.StatusBadRequest, "Email destination cannot be used with hourly recurrence")
+				return
 			}
 		}
 

@@ -96,6 +96,14 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	reminderHandler.SetAccountRepository(repos.Account)
 	reminderHandler.SetTimezoneRepository(repos.Timezone)
 
+	// Initialize Don't Forget Me handler
+	dfmHandler := NewDFMHandler(
+		repos.DFMNote,
+		repos.DFMItem,
+		repos.Account,
+		repos.Identity,
+	)
+
 	// Initialize timezone handler
 	timezoneHandler := NewTimezoneHandler(repos.Timezone)
 
@@ -132,6 +140,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
 	registerUserRoutes(wrappedMux, userHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerReminderRoutes(wrappedMux, reminderHandler, sessionService, apiKeyService, rateLimitMiddleware)
+	registerDFMRoutes(wrappedMux, dfmHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerTimezoneRoutes(wrappedMux, timezoneHandler)
 	registerAPIKeyRoutes(wrappedMux, apiKeyHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerContactRoutes(wrappedMux, contactHandler)
@@ -232,6 +241,27 @@ func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, s
 	mux.Handle("POST /api/reminders/{id}/pause", chainMiddleware(http.HandlerFunc(reminderHandler.PauseReminder)))
 	mux.Handle("POST /api/reminders/{id}/resume", chainMiddleware(http.HandlerFunc(reminderHandler.ResumeReminder)))
 	mux.Handle("POST /api/reminders/{id}/duplicate", chainMiddleware(http.HandlerFunc(reminderHandler.DuplicateReminder)))
+}
+
+// registerDFMRoutes registers "Don't Forget Me" routes with auth and rate limit middleware
+func registerDFMRoutes(mux *WrappedMux, dfmHandler *DFMHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
+	authMiddleware := AuthMiddleware(sessionService, apiKeyService)
+
+	// Chain middlewares: rate limit -> auth
+	chainMiddleware := func(handler http.Handler) http.Handler {
+		return rateLimitMiddleware(authMiddleware(handler))
+	}
+
+	// Note and items
+	mux.Handle("GET /api/dfm", chainMiddleware(http.HandlerFunc(dfmHandler.GetNote)))
+	mux.Handle("POST /api/dfm/items", chainMiddleware(http.HandlerFunc(dfmHandler.AddItem)))
+	mux.Handle("PUT /api/dfm/items/{id}", chainMiddleware(http.HandlerFunc(dfmHandler.UpdateItem)))
+	mux.Handle("DELETE /api/dfm/items/{id}", chainMiddleware(http.HandlerFunc(dfmHandler.DeleteItem)))
+
+	// Reminder configuration
+	mux.Handle("PUT /api/dfm/reminder", chainMiddleware(http.HandlerFunc(dfmHandler.SetReminder)))
+	mux.Handle("DELETE /api/dfm/reminder", chainMiddleware(http.HandlerFunc(dfmHandler.RemoveReminder)))
+	mux.Handle("POST /api/dfm/send", chainMiddleware(http.HandlerFunc(dfmHandler.SendNow)))
 }
 
 // registerTimezoneRoutes registers timezone routes (public, no auth required)

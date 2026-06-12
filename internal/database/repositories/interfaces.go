@@ -85,6 +85,27 @@ type ReminderErrorRepository interface {
 	MarkMultipleAsFixed(ids []uuid.UUID) error
 }
 
+// DFMNoteRepository interface defines operations for "Don't Forget Me" notes
+type DFMNoteRepository interface {
+	GetOrCreateByAccountID(accountID uuid.UUID) (*models.DFMNote, error)
+	GetByAccountID(accountID uuid.UUID) (*models.DFMNote, error)
+	GetByID(id uuid.UUID) (*models.DFMNote, error)
+	GetWithItems(accountID uuid.UUID) (*models.DFMNote, error)
+	Update(note *models.DFMNote) error
+	Delete(id uuid.UUID) error
+	GetDueNotes(now time.Time) ([]models.DFMNote, error)
+}
+
+// DFMItemRepository interface defines operations for "Don't Forget Me" note items
+type DFMItemRepository interface {
+	Create(item *models.DFMItem) error
+	GetByID(id uuid.UUID) (*models.DFMItem, error)
+	GetByNoteID(noteID uuid.UUID) ([]models.DFMItem, error)
+	Update(item *models.DFMItem) error
+	Delete(id uuid.UUID) error
+	DeleteByNoteID(noteID uuid.UUID) error
+}
+
 // EmailVerificationRepository interface defines operations for email verification data
 type EmailVerificationRepository interface {
 	Create(verification *models.EmailVerification) error

@@ -67,6 +67,14 @@ export const ROUTES = {
     showInNav: false,
   } as Route,
 
+  DONT_FORGET_ME: {
+    path: "/dont-forget-me",
+    requiresAuth: true,
+    name: "dontForgetMe",
+    submenu: true,
+    group: "reminders",
+  } as Route,
+
   // Resources group
   CHANGELOG: {
     path: "/changelog",
@@ -204,7 +212,7 @@ export const MENU_GROUPS: MenuGroup[] = [
     name: "reminders",
     label: "myReminders",
     requiresAuth: true,
-    items: [ROUTES.REMINDERS, ROUTES.REMINDERS_CREATE],
+    items: [ROUTES.REMINDERS, ROUTES.REMINDERS_CREATE, ROUTES.DONT_FORGET_ME],
   },
   {
     name: "resources",

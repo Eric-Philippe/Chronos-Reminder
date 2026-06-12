@@ -10,6 +10,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { RemindersPage } from "./pages/RemindersPage";
 import { CreateReminderPage } from "./pages/CreateReminderPage";
 import { ReminderDetailsPage } from "./pages/ReminderDetailsPage";
+import { DontForgetMePage } from "./pages/DontForgetMePage";
 import { AccountPage } from "./pages/AccountPage";
 import { APIKeysPage } from "./pages/APIKeysPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
@@ -102,6 +103,18 @@ function AppRoutes() {
         element={
           isAuthenticated ? (
             <ReminderDetailsPage />
+          ) : (
+            <Navigate to={ROUTES.HOME.path} replace />
+          )
+        }
+      />
+
+      {/* Protected route: Don't Forget Me page requires authentication */}
+      <Route
+        path={ROUTES.DONT_FORGET_ME.path}
+        element={
+          isAuthenticated ? (
+            <DontForgetMePage />
           ) : (
             <Navigate to={ROUTES.HOME.path} replace />
           )

@@ -8,6 +8,8 @@ import type { Account, AccountIdentity } from "./types";
 export interface IdentityCapabilities {
   hasDiscordIdentity: boolean;
   hasAppIdentity: boolean;
+  hasEmail: boolean;
+  userEmail: string | null;
   account: Account | null;
 }
 
@@ -28,6 +30,8 @@ class IdentityService {
         return {
           hasDiscordIdentity: false,
           hasAppIdentity: false,
+          hasEmail: false,
+          userEmail: null,
           account: null,
         };
       }
@@ -37,13 +41,18 @@ class IdentityService {
       const hasDiscordIdentity = identities.some(
         (identity: AccountIdentity) => identity.provider === "discord"
       );
-      const hasAppIdentity = identities.some(
+      const appIdentity = identities.find(
         (identity: AccountIdentity) => identity.provider === "app"
       );
+      const hasAppIdentity = !!appIdentity;
+      const hasEmail = hasAppIdentity && !!appIdentity?.external_id;
+      const userEmail = appIdentity?.external_id ?? null;
 
       return {
         hasDiscordIdentity,
         hasAppIdentity,
+        hasEmail,
+        userEmail,
         account,
       };
     } catch (error) {
@@ -51,6 +60,8 @@ class IdentityService {
       return {
         hasDiscordIdentity: false,
         hasAppIdentity: false,
+        hasEmail: false,
+        userEmail: null,
         account: null,
       };
     }
