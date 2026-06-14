@@ -24,6 +24,7 @@ urls:
 
 email:
   noreply: "noreply@noreply.chronosrmd.com"
+  developer: "ericphlpp@proton.me"
 
 docker:
   api_image: "ghcr.io/eric-philippe/chronos-reminder"

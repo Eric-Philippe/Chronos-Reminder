@@ -17,7 +17,7 @@ func NewHealthHandler() *HealthHandler {
 // Root handles GET / and identifies the service.
 func (h *HealthHandler) Root(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"service": "Chronos Reminder API",
+		"service": "Chronos Reminder API - Timely yours",
 		"version": config.Version,
 		"docs":    config.URLDocs,
 		"status":  config.URLStatus,

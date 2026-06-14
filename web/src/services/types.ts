@@ -111,7 +111,7 @@ export interface Reminder {
 export interface ReminderDestination {
   id: string;
   reminder_id: string;
-  type: "discord_dm" | "discord_channel" | "webhook" | "email";
+  type: "discord_dm" | "discord_channel" | "webhook" | "email" | "android_push";
   metadata: Record<string, unknown>;
 }
 
