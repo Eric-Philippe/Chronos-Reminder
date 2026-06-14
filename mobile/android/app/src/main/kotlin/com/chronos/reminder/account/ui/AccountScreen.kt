@@ -505,7 +505,10 @@ fun AccountScreen(
 private fun currentLocaleTag(context: Context): String {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val localeManager = context.getSystemService(LocaleManager::class.java)
-        localeManager?.applicationLocales?.get(0)?.language ?: ""
+        val appLocale = localeManager?.applicationLocales?.get(0)?.language
+        // Fall back to the actual displayed locale when no app-specific override is set
+        if (!appLocale.isNullOrEmpty()) appLocale
+        else context.resources.configuration.locales.get(0)?.language ?: ""
     } else {
         val prefs = context.getSharedPreferences("chronos_prefs", Context.MODE_PRIVATE)
         prefs.getString("locale_tag", null) ?: java.util.Locale.getDefault().language

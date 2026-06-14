@@ -13,7 +13,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Chronos.Splash"
         android:usesCleartextTraffic="true"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:localeConfig="@xml/locale_config">
 
         <activity
             android:name=".MainActivity"
