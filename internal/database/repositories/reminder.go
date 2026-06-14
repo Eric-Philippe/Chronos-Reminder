@@ -253,22 +253,18 @@ func (r *reminderRepository) Reschedule(id uuid.UUID, newTime time.Time, notify 
 }
 
 func (r *reminderRepository) Snooze(id uuid.UUID, snoozeUntil time.Time) error {
-	// First, get the current reminder to check remind_at_utc
 	var reminder models.Reminder
 	if err := r.db.First(&reminder, "id = ?", id).Error; err != nil {
 		return err
 	}
 
-	// Calculate next_fire_utc as the minimum between remind_at_utc and snoozed_at_utc
-	nextFireUTC := snoozeUntil
-	if reminder.RemindAtUTC.Before(snoozeUntil) {
-		nextFireUTC = reminder.RemindAtUTC
-	}
-
-	// Update snoozed_at_utc and next_fire_utc
+	// next_fire_utc must be the snooze wake-up time, not the original remind_at_utc.
+	// Using min(remind_at, snooze) would set next_fire to a past time when the
+	// reminder has already fired, causing it to either be skipped or re-dispatch
+	// immediately without the snooze delay.
 	updates := map[string]interface{}{
-		"snoozed_at_utc":  snoozeUntil,
-		"next_fire_utc": nextFireUTC,
+		"snoozed_at_utc": snoozeUntil,
+		"next_fire_utc":  snoozeUntil,
 	}
 
 	err := r.db.Model(&models.Reminder{}).Where("id = ?", id).Updates(updates).Error

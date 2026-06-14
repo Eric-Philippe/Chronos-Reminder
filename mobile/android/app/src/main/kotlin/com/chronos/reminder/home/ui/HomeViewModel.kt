@@ -56,6 +56,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             accountRepository.refreshAccount()
+            remindersRepository.refreshReminders()
+            dfmRepository.refresh()
             _state.update { it.copy(loading = false) }
         }
     }

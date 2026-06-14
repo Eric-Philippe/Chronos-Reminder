@@ -68,7 +68,7 @@ export function ContactPage() {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -314,12 +314,12 @@ export function ContactPage() {
                   {t("contact.otherWays")}
                 </h3>
                 <a
-                  href="mailto:contact@chronos-reminder.com"
+                  href="mailto:ericphlpp@proton.me"
                   className="block p-3 rounded-lg bg-background/50 hover:bg-background/70 border border-border/30 text-foreground text-sm transition-colors"
                 >
                   <div className="font-medium">{t("contact.directEmail")}</div>
                   <div className="text-foreground/70 text-xs mt-1">
-                    contact@chronos-reminder.com
+                    ericphlpp@proton.me
                   </div>
                 </a>
 

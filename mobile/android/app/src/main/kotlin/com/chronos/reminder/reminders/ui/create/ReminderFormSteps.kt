@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -197,11 +199,15 @@ fun WhatStep(
         Spacer(Modifier.height(24.dp))
         ChronosTextField(
             value = form.message,
-            onValueChange = onMessageChange,
+            onValueChange = { value ->
+                val capitalized = if (value.isNotEmpty()) value[0].uppercaseChar() + value.drop(1) else value
+                onMessageChange(capitalized)
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = stringResource(R.string.message_placeholder),
             singleLine = false,
             minLines = 4,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         )
         Spacer(Modifier.height(8.dp))
         Text(

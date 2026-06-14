@@ -37,7 +37,9 @@ export function ReminderDetailsStep({
   };
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onFormChange({ ...formData, message: e.target.value });
+    const value = e.target.value;
+    const capitalized = value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+    onFormChange({ ...formData, message: capitalized });
   };
 
   const handleRecurrenceChange = (recurrence: string) => {

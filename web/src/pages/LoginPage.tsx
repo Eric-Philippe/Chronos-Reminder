@@ -7,6 +7,7 @@ import { LoginSection } from "@/components/LoginSection";
 import { SignUpSection } from "@/components/SignUpSection";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
+import { ROUTES } from "@/config/routes";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -50,8 +51,7 @@ export function LoginPage() {
 
     try {
       await login(email, password, rememberMe);
-      // Navigate to welcome page on successful login
-      navigate("/welcome", { replace: true });
+      navigate(ROUTES.REMINDERS.path, { replace: true });
     } catch (err) {
       // Error is already set in the hook's error state
       // The error will be displayed from the hook's error state via the error banner
