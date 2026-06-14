@@ -72,6 +72,16 @@ type RequestPasswordResetRequest struct {
 	Email string `json:"email"`
 }
 
+// ResendVerificationRequest represents the request to resend a verification email
+type ResendVerificationRequest struct {
+	Email string `json:"email"`
+}
+
+// ResendVerificationResponse represents the response to a resend request
+type ResendVerificationResponse struct {
+	Message string `json:"message"`
+}
+
 // RequestPasswordResetResponse represents the response to password reset request
 type RequestPasswordResetResponse struct {
 	Message string `json:"message"`
@@ -457,6 +467,38 @@ func isValidEmail(email string) bool {
 		return false
 	}
 	return true
+}
+
+// ResendVerification re-sends the account verification email.
+// @Route: POST /api/auth/verify/resend
+func (h *AuthHandler) ResendVerification(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req ResendVerificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.Email == "" || !isValidEmail(req.Email) {
+		WriteError(w, http.StatusBadRequest, "Invalid email format")
+		return
+	}
+
+	// Best-effort: never reveal whether the email maps to an account or is
+	// already verified — always return the same generic message.
+	if _, err := h.verificationService.ResendVerification(req.Email); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to send verification email")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, ResendVerificationResponse{
+		Message: "If an unverified account with this email exists, a verification email has been sent.",
+	})
 }
 
 // RequestPasswordReset handles password reset requests (forgot password)

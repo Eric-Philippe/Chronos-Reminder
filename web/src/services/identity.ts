@@ -10,6 +10,7 @@ export interface IdentityCapabilities {
   hasAppIdentity: boolean;
   hasEmail: boolean;
   userEmail: string | null;
+  hasAndroidPush: boolean;
   account: Account | null;
 }
 
@@ -32,11 +33,11 @@ class IdentityService {
           hasAppIdentity: false,
           hasEmail: false,
           userEmail: null,
+          hasAndroidPush: false,
           account: null,
         };
       }
 
-      // Check what identities the user has configured
       const identities = account.identities || [];
       const hasDiscordIdentity = identities.some(
         (identity: AccountIdentity) => identity.provider === "discord"
@@ -47,12 +48,16 @@ class IdentityService {
       const hasAppIdentity = !!appIdentity;
       const hasEmail = hasAppIdentity && !!appIdentity?.external_id;
       const userEmail = appIdentity?.external_id ?? null;
+      const hasAndroidPush = identities.some(
+        (identity: AccountIdentity) => identity.provider === "mobile"
+      );
 
       return {
         hasDiscordIdentity,
         hasAppIdentity,
         hasEmail,
         userEmail,
+        hasAndroidPush,
         account,
       };
     } catch (error) {
@@ -62,6 +67,7 @@ class IdentityService {
         hasAppIdentity: false,
         hasEmail: false,
         userEmail: null,
+        hasAndroidPush: false,
         account: null,
       };
     }

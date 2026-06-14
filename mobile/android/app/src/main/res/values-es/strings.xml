@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="back">Atrás</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="create">Crear</string>
+    <string name="next">Siguiente</string>
+    <string name="retry">Reintentar</string>
+    <string name="more_options">Más opciones</string>
+    <string name="error_generic">Algo salió mal</string>
+    <string name="error_network">Sin conexión a internet</string>
+    <string name="loading">Cargando</string>
+
+    <!-- Auth -->
+    <string name="login_title">CHRONOS</string>
+    <string name="login_subtitle">Nunca olvides nada de nuevo</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="sign_in">Iniciar sesión</string>
+    <string name="or_divider">o</string>
+    <string name="continue_with_discord">Continuar con Discord</string>
+    <string name="forgot_password_link">¿Olvidaste tu contraseña?</string>
+    <string name="no_account_sign_up">¿No tienes cuenta? Regístrate</string>
+    <string name="register_title">Crear cuenta</string>
+    <string name="username">Nombre de usuario</string>
+    <string name="confirm_password">Confirmar contraseña</string>
+    <string name="timezone">Zona horaria</string>
+    <string name="create_account">Crear cuenta</string>
+    <string name="have_account_sign_in">¿Ya tienes cuenta? Iniciar sesión</string>
+    <string name="register_success">Revisa tu correo para verificar tu cuenta</string>
+    <string name="error_passwords_mismatch">Las contraseñas no coinciden</string>
+    <string name="error_invalid_email">Dirección de correo inválida</string>
+    <string name="error_username_required">El nombre de usuario es requerido</string>
+    <string name="error_password_required">La contraseña es requerida</string>
+    <string name="reset_password_title">Restablecer contraseña</string>
+    <string name="reset_password_subtitle">Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</string>
+    <string name="send_reset_link">Enviar enlace</string>
+    <string name="reset_link_sent">Revisa tu correo para el enlace de restablecimiento</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_reminders">Recordatorios</string>
+    <string name="nav_dfm">Don\'t Forget Me</string>
+    <string name="nav_account">Cuenta</string>
+
+    <!-- Language -->
+    <string name="section_language">Idioma</string>
+    <string name="lang_en">Inglés</string>
+    <string name="lang_fr">Francés</string>
+    <string name="lang_es">Español</string>
+
+    <!-- Home / Dashboard -->
+    <string name="home_welcome_title">CHRONOS</string>
+    <string name="home_greeting">¡Hola, %1$s!</string>
+    <string name="home_section_overview">Resumen</string>
+    <string name="home_section_quick_access">Acceso rápido</string>
+    <string name="home_total_reminders">Total</string>
+    <string name="home_active_reminders">Activos</string>
+    <string name="home_dfm_items">Elementos DFM</string>
+    <string name="home_btn_create_reminder">Nuevo recordatorio</string>
+    <string name="home_btn_open_dfm">Don\'t Forget Me</string>
+    <string name="home_btn_account">Mi cuenta</string>
+
+    <!-- Reminders list -->
+    <string name="reminders_title">Recordatorios</string>
+    <string name="filter_all">Todos</string>
+    <string name="filter_active">Activos</string>
+    <string name="filter_paused">En pausa</string>
+    <string name="create_reminder">Crear recordatorio</string>
+    <string name="empty_reminders_title">Sin recordatorios</string>
+    <string name="empty_reminders_subtitle">Crea tu primer recordatorio y nunca olvides nada.</string>
+    <string name="empty_reminders_cta">Crear uno</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_duplicate">Duplicar</string>
+    <string name="action_pause">Pausar</string>
+    <string name="action_resume">Reanudar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="paused_badge">EN PAUSA</string>
+    <string name="delete_reminder_title">¿Eliminar recordatorio?</string>
+    <string name="delete_reminder_text">Este recordatorio se eliminará permanentemente. Esta acción no se puede deshacer.</string>
+    <string name="next_fire_in_hours">en %1$dh</string>
+    <string name="next_fire_in_minutes">en %1$dm</string>
+
+    <!-- Create reminder -->
+    <string name="create_reminder_title">Nuevo recordatorio</string>
+    <string name="step_when_title">¿Cuándo recordártelo?</string>
+    <string name="step_what_title">¿Cuál es el mensaje?</string>
+    <string name="step_where_title">¿Dónde enviarlo?</string>
+    <string name="pick_date">Fecha</string>
+    <string name="pick_time">Hora</string>
+    <string name="recurrence">Recurrencia</string>
+    <string name="error_date_in_past">Elige una fecha y hora futura</string>
+    <string name="message_placeholder">Comprar víveres…</string>
+    <string name="char_count">%1$d / %2$d</string>
+    <string name="error_message_required">El mensaje no puede estar vacío</string>
+    <string name="dest_discord_dm">Mensaje privado de Discord</string>
+    <string name="dest_email">Correo electrónico</string>
+    <string name="dest_push">Notificación push</string>
+    <string name="dest_discord_channel">Canal de Discord</string>
+    <string name="dest_webhook">Webhook</string>
+    <string name="dest_add">Agregar</string>
+    <string name="dest_remove">Quitar destino</string>
+    <string name="error_destination_required">Agrega al menos un destino</string>
+    <string name="webhook_url">URL del Webhook</string>
+    <string name="webhook_platform">Plataforma</string>
+    <string name="select_guild">Seleccionar servidor</string>
+    <string name="select_channel">Seleccionar canal</string>
+    <string name="email_address">Dirección de correo</string>
+    <string name="reminder_created">Recordatorio creado</string>
+
+    <!-- Reminder detail -->
+    <string name="next_fire_label">Próximo envío: %1$s</string>
+    <string name="created_label">Creado: %1$s</string>
+    <string name="edit_reminder">Editar recordatorio</string>
+    <string name="reminder_updated">Recordatorio actualizado</string>
+    <string name="destinations_label">Destinos</string>
+
+    <!-- DFM -->
+    <string name="dfm_title">Don\'t Forget Me</string>
+    <string name="dfm_add_item_hint">Agregar un elemento…</string>
+    <string name="dfm_add_item">Agregar</string>
+    <string name="dfm_delete_item">Eliminar elemento</string>
+    <string name="dfm_delete_confirm_title">¿Eliminar elemento?</string>
+    <string name="dfm_delete_confirm_text">Este elemento se eliminará permanentemente de tu lista.</string>
+    <string name="notification_snooze_10m">10 min</string>
+    <string name="notification_snooze_1h">1 hora</string>
+    <string name="notification_snooze_1d">Mañana</string>
+    <string name="notification_snoozed_title">Pospuesto</string>
+    <string name="notification_snoozed_10m">Te recordaremos de nuevo en 10 minutos</string>
+    <string name="notification_snoozed_1h">Te recordaremos de nuevo en 1 hora</string>
+    <string name="notification_snoozed_1d">Te recordaremos mañana</string>
+    <string name="dfm_send_now">Enviar ahora</string>
+    <string name="dfm_note_sent">Nota enviada</string>
+    <string name="dfm_set_reminder">Configurar envío automático</string>
+    <string name="dfm_description">Escribe las cosas que no quieres olvidar y recibe toda la nota con un recordatorio recurrente.</string>
+    <string name="dfm_set_reminder_confirm">Guardar programación</string>
+    <string name="dfm_edit_reminder">Editar</string>
+    <string name="dfm_remove_reminder">Quitar</string>
+    <string name="dfm_reminder_banner">Revisado %1$s · próximo %2$s</string>
+    <string name="dfm_empty_title">Nada aquí todavía</string>
+    <string name="dfm_empty_subtitle">Agrega las cosas que no quieres olvidar.</string>
+    <string name="dfm_destinations">Enviar a</string>
+
+    <!-- Account -->
+    <string name="account_title">Cuenta</string>
+    <string name="section_profile">Perfil</string>
+    <string name="section_timezone">Zona horaria</string>
+    <string name="section_username">Cambiar nombre de usuario</string>
+    <string name="section_email">Cambiar correo</string>
+    <string name="section_password">Cambiar contraseña</string>
+    <string name="section_identities">Identidades conectadas</string>
+    <string name="section_api_keys">Claves API</string>
+    <string name="section_about">Acerca de</string>
+    <string name="about_title">Acerca de Chronos</string>
+    <string name="about_tagline">Tu asistente de recordatorios inteligente</string>
+    <string name="about_version">Versión</string>
+    <string name="about_build">Build</string>
+    <string name="about_platform">Plataforma</string>
+    <string name="about_platform_value">Android</string>
+    <string name="about_api_version">Versión API</string>
+    <string name="about_license">Licencia</string>
+    <string name="about_license_value">MIT</string>
+    <string name="about_copyright">© 2024 Chronos — Todos los derechos reservados</string>
+    <string name="section_links">Enlaces y recursos</string>
+    <string name="section_legal">Legal</string>
+    <string name="section_danger">Zona de peligro</string>
+    <string name="current_timezone">Zona horaria actual: %1$s</string>
+    <string name="search_timezones">Buscar zonas horarias…</string>
+    <string name="old_password">Contraseña actual</string>
+    <string name="new_password">Nueva contraseña</string>
+    <string name="confirm_new_password">Confirmar nueva contraseña</string>
+    <string name="password_changed">Contraseña cambiada</string>
+    <string name="username_updated">Nombre de usuario actualizado</string>
+    <string name="email_updated">Correo actualizado — revisa tu bandeja de entrada</string>
+    <string name="timezone_updated">Zona horaria actualizada</string>
+    <string name="provider_app">Aplicación</string>
+    <string name="provider_discord">Discord</string>
+    <string name="provider_mobile">Aplicación móvil</string>
+    <string name="linked_badge">Vinculado</string>
+    <string name="manage_api_keys">Administrar claves API</string>
+    <string name="sign_out">Cerrar sesión</string>
+    <string name="delete_account">Eliminar cuenta</string>
+    <string name="delete_account_title">¿Eliminar cuenta?</string>
+    <string name="delete_account_text">Todos tus recordatorios y datos se eliminarán permanentemente. Escribe ELIMINAR para confirmar.</string>
+    <string name="delete_confirm_word">ELIMINAR</string>
+
+    <!-- Links -->
+    <string name="link_web_app">Abrir aplicación web</string>
+    <string name="link_support">Soporte</string>
+    <string name="link_discord">Servidor de Discord</string>
+    <string name="link_github">GitHub</string>
+    <string name="link_documentation">Documentación</string>
+    <string name="link_status">Estado del servicio</string>
+    <string name="links_screen_title">Enlaces</string>
+    <string name="terms_of_use">Términos de uso</string>
+    <string name="privacy_policy">Política de privacidad</string>
+
+    <!-- Terms & Privacy -->
+    <string name="terms_title">Términos &amp; Política de privacidad</string>
+    <string name="terms_subtitle">Sin jerga legal, solo respuestas honestas sobre tus datos.</string>
+    <string name="terms_updated">Última actualización: junio de 2026</string>
+    <string name="terms_s1_title">Un proyecto personal, compartido abiertamente</string>
+    <string name="terms_s1_body">Chronos comenzó como un bot que construí para mí mismo. Me alegré lo suficiente como para compartirlo — y esa es toda la historia. No hay empresa detrás, ni inversores, ni plan de negocios. Es un proyecto personal mantenido por una sola persona en su tiempo libre.</string>
+    <string name="terms_s2_title">Qué datos se recopilan</string>
+    <string name="terms_s2_body">Al crear una cuenta, se almacena lo siguiente: tu dirección de correo (solo para verificación y restablecimiento de contraseña), tu nombre de usuario, tu contraseña (hasheada con bcrypt), tu zona horaria, tu identidad de Discord si te conectas via OAuth, y el contenido de tus recordatorios.</string>
+    <string name="terms_s3_title">Tu contraseña está segura — incluso para mí</string>
+    <string name="terms_s3_body">Las contraseñas se hashean con bcrypt antes de almacenarse. No existe forma técnica de recuperar tu contraseña. Si la olvidas, solo el restablecimiento puede ayudar.</string>
+    <string name="terms_s4_title">Cómo se usan tus datos</string>
+    <string name="terms_s4_body">Tus datos nunca se comparten con terceros, nunca se venden y nunca se usan para publicidad. El correo y el contenido de los recordatorios pueden ser visibles para el desarrollador solo con fines de depuración.</string>
+    <string name="terms_s5_title">Sin monetización — nunca con tus datos</string>
+    <string name="terms_s5_body">No hay intención de monetizar Chronos. Los datos de los usuarios nunca formarán parte de ninguna ecuación, bajo ningún escenario.</string>
+    <string name="terms_s6_title">Disponibilidad del servicio</string>
+    <string name="terms_s6_body">Chronos funciona en un servidor personal en Francia. No se puede ofrecer ninguna garantía de disponibilidad. Puedes verificar el estado actual en chronosrmd.com/status.</string>
+    <string name="terms_s7_title">Tus derechos &amp; eliminación de cuenta</string>
+    <string name="terms_s7_body">Puedes eliminar tu cuenta en cualquier momento desde la página de Cuenta. La eliminación borra permanentemente todos los datos asociados: perfil, recordatorios y destinos. No hay archivo ni período de gracia.</string>
+    <string name="terms_s8_title">Auto-alojamiento</string>
+    <string name="terms_s8_body">Chronos es de código abierto bajo licencia MIT. Si prefieres controlar tus propios datos, puedes auto-alojar el stack completo. En ese caso, esta política no aplica — tú eres el operador.</string>
+    <string name="terms_s9_title">¿Preguntas?</string>
+    <string name="terms_s9_body">Para cualquier pregunta o solicitud de datos, contáctanos a través del formulario de contacto en chronosrmd.com/contact o en el servidor de Discord.</string>
+
+    <!-- Resend verification -->
+    <string name="resend_verification">Reenviar correo de verificación</string>
+    <string name="resend_verification_sending">Enviando…</string>
+    <string name="resend_verification_sent">Correo de verificación enviado — revisa tu bandeja de entrada</string>
+
+    <!-- API keys -->
+    <string name="api_keys_title">Claves API</string>
+    <string name="api_key_name">Nombre</string>
+    <string name="revoke">Revocar</string>
+    <string name="revoke_key_title">¿Revocar clave API?</string>
+    <string name="revoke_key_text">Las aplicaciones que usen esta clave dejarán de funcionar inmediatamente.</string>
+    <string name="create_api_key">Crear clave API</string>
+    <string name="api_key_created_title">Clave API creada</string>
+    <string name="api_key_created_warning">Cópiala ahora — no podrá mostrarse de nuevo.</string>
+    <string name="copy_to_clipboard">Copiar al portapapeles</string>
+    <string name="copied">Copiado</string>
+    <string name="empty_api_keys_title">Sin claves API</string>
+    <string name="empty_api_keys_subtitle">Crea una clave para usar la API de Chronos.</string>
+</resources>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Chronos hourglass logo — orange (#C47A3A) on transparent.
+  Designed to work as launcher foreground (dark bg set by ic_launcher_background).
+  ViewBox: 24×24.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Top cap / frame bar -->
+    <path
+        android:fillColor="#C47A3A"
+        android:pathData="M5,2 H19 V3.5 H5 Z" />
+
+    <!-- Top sand (filled upper bowl) -->
+    <path
+        android:fillColor="#C47A3A"
+        android:pathData="M5.5,3.5 L18.5,3.5 L14,9.5 L10,9.5 Z" />
+
+    <!-- Upper funnel outline (sides of the upper half, darker shade for depth) -->
+    <path
+        android:fillColor="#A0622E"
+        android:pathData="M5.5,3.5 L10,9.5 L10.5,9.5 L6,3.5 Z" />
+    <path
+        android:fillColor="#A0622E"
+        android:pathData="M18.5,3.5 L14,9.5 L13.5,9.5 L18,3.5 Z" />
+
+    <!-- Neck / waist (thin hourglass middle) -->
+    <path
+        android:fillColor="#C47A3A"
+        android:pathData="M10,9.5 H14 V10.5 H10 Z" />
+
+    <!-- Sand thread falling through neck -->
+    <path
+        android:fillColor="#E8973F"
+        android:pathData="M11.6,10.5 H12.4 V14.2 H11.6 Z" />
+
+    <!-- Lower funnel (partially filled with sand at bottom) -->
+    <path
+        android:fillColor="#7A4E2A"
+        android:pathData="M10,10.5 L5.5,20.5 L18.5,20.5 L14,10.5 Z" />
+
+    <!-- Sand pile collecting at the bottom of lower bowl -->
+    <path
+        android:fillColor="#C47A3A"
+        android:pathData="M7.5,17.5 L16.5,17.5 L18.5,20.5 L5.5,20.5 Z" />
+
+    <!-- Lower funnel side outlines for depth -->
+    <path
+        android:fillColor="#A0622E"
+        android:pathData="M10,10.5 L5.5,20.5 L6,20.5 L10.5,10.5 Z" />
+    <path
+        android:fillColor="#A0622E"
+        android:pathData="M14,10.5 L18.5,20.5 L18,20.5 L13.5,10.5 Z" />
+
+    <!-- Bottom cap / frame bar -->
+    <path
+        android:fillColor="#C47A3A"
+        android:pathData="M5,20.5 H19 V22 H5 Z" />
+
+    <!-- Small sand dots around the neck for visual detail -->
+    <path
+        android:fillColor="#E8973F"
+        android:pathData="M9,11.2 A0.5,0.5 0 1 0 9.001,11.2 Z" />
+    <path
+        android:fillColor="#E8973F"
+        android:pathData="M15,11.2 A0.5,0.5 0 1 0 15.001,11.2 Z" />
+</vector>

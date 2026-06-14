@@ -241,7 +241,10 @@
       "emailDesc": "Send to your registered email address",
       "noEmailConfigured": "Register with email/password to use this",
       "emailHourlyDisabled": "Email not available for hourly reminders",
-      "limitReached": "Limit reached"
+      "limitReached": "Limit reached",
+      "androidPush": "Android Push Notification",
+      "androidPushDesc": "Send to your Android device via the Chronos app",
+      "androidPushNoApp": "Install the Chronos Android app to use this"
     },
     "review": {
       "title": "Review Your Reminder",
@@ -370,8 +373,10 @@
     "apiKeyDesc": "Authenticate and manage all integrations via secure API keys",
     "apiKeyFeature1": "Public API for integrating yourself the reminders",
     "apiKeyFeature2": "2 requests per second",
-    "supportsEmail": "Email",
-    "emailComingSoonDesc": "Email support is coming soon. Stay tuned!",
+    "emailSupportTitle": "Email Support",
+    "emailSupportDesc": "Receive reminders directly to your email inbox",
+    "emailSupportFeature1": "Email notifications for reminders",
+    "emailSupportFeature2": "Supports all reminder types",
     "benefitsTitle": "Why Choose Chronos?",
     "benefitsSubtitle": "Join hundreds of users who trust Chronos for their important reminders",
     "benefit1Title": "Easy to Use",

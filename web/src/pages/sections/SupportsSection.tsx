@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Webhook, Key, Mail, Sparkles } from "lucide-react";
+import { Webhook, Key, Mail } from "lucide-react";
 import { IntegrationCard } from "@/components/IntegrationCard";
 
 export function SupportsSection() {
@@ -72,27 +72,15 @@ export function SupportsSection() {
             isApiKeyCard={true}
           />
 
-          <div className="relative h-full group">
-            <div className="relative p-6 rounded-xl bg-background/50 border border-white/5 hover:border-accent/30 h-full flex flex-col items-center justify-center gap-4 cursor-not-allowed opacity-75 hover:opacity-90 transition-all duration-300">
-              <div className="absolute top-3 right-3">
-                <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-accent/20 border border-accent/50">
-                  <Sparkles className="w-3 h-3 text-accent" />
-                  <span className="text-xs font-semibold text-accent">
-                    Coming Soon
-                  </span>
-                </div>
-              </div>
-              <div className="w-16 h-16 rounded-lg bg-accent/20 flex items-center justify-center">
-                <Mail className="w-10 h-10 text-accent" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground text-center">
-                {t("vitrine.supportsEmail")}
-              </h3>
-              <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                {t("vitrine.emailComingSoonDesc")}
-              </p>
-            </div>
-          </div>
+          <IntegrationCard
+            name={t("vitrine.emailSupportTitle")}
+            icon={<Mail className="w-10 h-10 text-accent" />}
+            description={t("vitrine.emailSupportDesc")}
+            features={[
+              t("vitrine.emailSupportFeature1"),
+              t("vitrine.emailSupportFeature2"),
+            ]}
+          />
         </div>
       </div>
     </section>

@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Trash2,
   Key,
+  Smartphone,
 } from "lucide-react";
 import { accountService, type Account } from "@/services";
 import { TimezoneSelect } from "@/components/common/TimezoneSelect";
@@ -145,7 +146,7 @@ export function AccountPage() {
 
       await accountService.updateAppIdentityPassword(
         currentPassword,
-        newPassword
+        newPassword,
       );
 
       setPasswordSuccess(true);
@@ -311,8 +312,11 @@ export function AccountPage() {
 
   // Get app identity
   const appIdentity = account?.identities?.find((id) => id.provider === "app");
+  const mobileIdentity = account?.identities?.find(
+    (id) => id.provider === "mobile",
+  );
   const discordIdentity = account?.identities?.find(
-    (id) => id.provider === "discord"
+    (id) => id.provider === "discord",
   );
 
   return (
@@ -370,7 +374,7 @@ export function AccountPage() {
                       className="mt-2 flex items-center gap-2 p-3 bg-secondary/30 rounded-md border border-border group hover:bg-secondary/50 transition-colors cursor-pointer"
                       onClick={() => {
                         setNewUsername(
-                          appIdentity?.username || account.username
+                          appIdentity?.username || account.username,
                         );
                         setEditingUsername(true);
                         setUsernameError(null);
@@ -652,13 +656,13 @@ export function AccountPage() {
 
                           if (!clientId || !redirectUri) {
                             console.error(
-                              "Discord OAuth configuration is missing. Please check your environment variables."
+                              "Discord OAuth configuration is missing. Please check your environment variables.",
                             );
                             return;
                           }
 
                           const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-                            redirectUri
+                            redirectUri,
                           )}&response_type=code&scope=identify%20email%20guilds%20guilds.members.read`;
                           window.location.href = discordAuthUrl;
                         }}
@@ -707,6 +711,34 @@ export function AccountPage() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Mobile Identity — only shown once the user has signed in from the mobile app */}
+                {mobileIdentity && (
+                  <div className="p-4 bg-secondary/20 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
+                        <Smartphone className="w-5 h-5 flex-shrink-0 text-emerald-500" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {t("account.mobileIdentity", "Mobile App")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {mobileIdentity.username ||
+                            t(
+                              "account.mobileIdentityDesc",
+                              "Signed in from the Chronos mobile app",
+                            )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end flex-shrink-0">
+                      <span className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 whitespace-nowrap">
+                        {t("account.connected", "Connected")}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -977,7 +1009,8 @@ export function AccountPage() {
                         <Button
                           onClick={handleDeleteAccount}
                           disabled={
-                            isDeletingAccount || deleteConfirmText !== t("account.deleteConfirmWord")
+                            isDeletingAccount ||
+                            deleteConfirmText !== t("account.deleteConfirmWord")
                           }
                           className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold gap-2"
                         >

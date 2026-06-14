@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/database/repositories"
 )
@@ -75,7 +76,7 @@ func (p *PasswordResetService) RequestPasswordReset(email string) error {
 	}
 
 	// Build reset link (frontend will handle the redirect)
-	resetLink := fmt.Sprintf("https://chronosrmd.com/reset-password?token=%s&email=%s", token, email)
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s&email=%s", config.URLWebApp, token, email)
 
 	// Send reset email
 	_, err = p.SendPasswordResetEmail(email, resetLink)

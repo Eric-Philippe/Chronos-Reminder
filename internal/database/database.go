@@ -85,6 +85,7 @@ func runMigrations() error {
 		&models.PasswordReset{},
 		&models.DFMNote{},
 		&models.DFMItem{},
+		&models.FcmToken{},
 	)
 	
 	if err != nil {
@@ -104,6 +105,13 @@ func runMigrations() error {
 
 // createEnumTypes creates custom PostgreSQL enum types
 func createEnumTypes() error {
+	// Add 'mobile' to provider_type enum (best-effort; ignored if it already exists)
+	if err := DB.Exec(`ALTER TYPE provider_type ADD VALUE IF NOT EXISTS 'mobile';`).Error; err != nil {
+		log.Printf("[DATABASE] - ⚠️  Could not add 'mobile' to provider_type enum: %v", err)
+	} else {
+		log.Println("[DATABASE] - ✅ 'mobile' value ensured in provider_type enum")
+	}
+
 	// Try to add api_key to existing provider_type enum first
 	if err := DB.Exec(`ALTER TYPE provider_type ADD VALUE IF NOT EXISTS 'api_key';`).Error; err == nil {
 		// Successfully added or already exists
@@ -116,7 +124,7 @@ func createEnumTypes() error {
 		if err := DB.Exec(`
 			DO $$ BEGIN
 				DROP TYPE IF EXISTS provider_type CASCADE;
-				CREATE TYPE provider_type AS ENUM ('discord', 'app', 'api_key');
+				CREATE TYPE provider_type AS ENUM ('discord', 'app', 'api_key', 'mobile');
 			EXCEPTION WHEN OTHERS THEN
 				NULL;
 			END $$;
@@ -142,6 +150,13 @@ func createEnumTypes() error {
 		log.Printf("[DATABASE] - ⚠️  Could not add 'email' to destination_type enum: %v", err)
 	} else {
 		log.Println("[DATABASE] - ✅ 'email' value ensured in destination_type enum")
+	}
+
+	// Add 'android_push' to destination_type enum if not already present
+	if err := DB.Exec(`ALTER TYPE destination_type ADD VALUE IF NOT EXISTS 'android_push';`).Error; err != nil {
+		log.Printf("[DATABASE] - ⚠️  Could not add 'android_push' to destination_type enum: %v", err)
+	} else {
+		log.Println("[DATABASE] - ✅ 'android_push' value ensured in destination_type enum")
 	}
 
 	return nil

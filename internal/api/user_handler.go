@@ -306,6 +306,14 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// Handle android_push destination - always inject account_id from auth context
+		if destType == models.DestinationAndroidPush {
+			if dest.Metadata == nil {
+				dest.Metadata = models.JSONB{}
+			}
+			dest.Metadata["account_id"] = accountID.String()
+		}
+
 		// Create the destination
 		reminderDest := &models.ReminderDestination{
 			ReminderID: reminder.ID,
@@ -730,12 +738,15 @@ func (h *UserHandler) UpdateAppIdentityUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Find the app identity
+	// Find app and mobile identities
 	var appIdentity *models.Identity
+	var mobileIdentity *models.Identity
 	for i := range account.Identities {
-		if account.Identities[i].Provider == models.ProviderApp {
+		switch account.Identities[i].Provider {
+		case models.ProviderApp:
 			appIdentity = &account.Identities[i]
-			break
+		case models.ProviderMobile:
+			mobileIdentity = &account.Identities[i]
 		}
 	}
 
@@ -744,11 +755,20 @@ func (h *UserHandler) UpdateAppIdentityUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Update the username
+	// Update app identity username
 	appIdentity.Username = &req.Username
 	if err := h.identityRepo.Update(appIdentity); err != nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to update username")
 		return
+	}
+
+	// Mirror the username to the mobile identity if it exists
+	if mobileIdentity != nil {
+		mobileIdentity.Username = &req.Username
+		if err := h.identityRepo.Update(mobileIdentity); err != nil {
+			// Non-fatal: log but don't fail the request
+			fmt.Printf("[UPDATE_USERNAME] Failed to mirror username to mobile identity: %v\n", err)
+		}
 	}
 
 	WriteJSON(w, http.StatusOK, map[string]string{
@@ -910,6 +930,67 @@ func (h *UserHandler) DeleteReminder(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Reminder deleted successfully",
 	})
+}
+
+// EnsureMobileIdentity creates a "mobile" identity for the calling account the
+// first time it connects from the mobile app. Idempotent: a single mobile
+// identity per account (keyed by account id), so repeated logins are no-ops.
+// @Route: POST /api/account/identity/mobile
+func (h *UserHandler) EnsureMobileIdentity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Optional friendly device label from the client.
+	var req struct {
+		DeviceName string `json:"device_name"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	defer r.Body.Close()
+
+	// One mobile identity per account; external_id is the account id so the
+	// (provider, external_id) unique index makes this idempotent.
+	externalID := accountID.String()
+	existing, err := h.identityRepo.GetByProviderAndExternalID(models.ProviderMobile, externalID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to check mobile identity")
+		return
+	}
+
+	if existing != nil {
+		// Refresh the device label if a new one was provided.
+		if req.DeviceName != "" && (existing.Username == nil || *existing.Username != req.DeviceName) {
+			existing.Username = &req.DeviceName
+			_ = h.identityRepo.Update(existing)
+		}
+		WriteJSON(w, http.StatusOK, existing)
+		return
+	}
+
+	username := req.DeviceName
+	if username == "" {
+		username = "Mobile App"
+	}
+
+	identity := &models.Identity{
+		AccountID:  accountID,
+		Provider:   models.ProviderMobile,
+		ExternalID: externalID,
+		Username:   &username,
+	}
+	if err := h.identityRepo.Create(identity); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to create mobile identity")
+		return
+	}
+
+	WriteJSON(w, http.StatusCreated, identity)
 }
 
 // extractAccountIDFromToken extracts the account ID from the JWT token in the request or context

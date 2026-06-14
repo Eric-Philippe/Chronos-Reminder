@@ -1,0 +1,63 @@
+name: Sync Constants
+
+# Runs whenever the source-of-truth for constants changes.
+# Regenerates all derived files (Go, TypeScript, Kotlin, build.gradle.kts,
+# Docker CI tags) and commits them back so the other build workflows pick
+# them up naturally.
+#
+# To let the commit trigger the Go/Web container builds you must create a
+# Personal Access Token (PAT) with "contents: write" scope and add it as
+# repository secret CONSTANTS_SYNC_PAT.  Without it the workflow still
+# commits and pushes, but GitHub Actions bot pushes do not re-trigger other
+# workflows (GitHub restriction).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - constants.yaml
+      - scripts/sync-constants.py
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Use a PAT when available so the resulting push triggers downstream
+          # workflows (Go container, web container, Android build).
+          token: ${{ secrets.CONSTANTS_SYNC_PAT != '' && secrets.CONSTANTS_SYNC_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Run sync script
+        run: python3 scripts/sync-constants.py
+
+      - name: Commit & push generated files
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            internal/config/constants.go \
+            web/src/config/constants.ts \
+            "mobile/android/app/src/main/kotlin/com/chronos/reminder/core/AppConstants.kt" \
+            mobile/android/app/build.gradle.kts \
+            .github/workflows/build-container.yml \
+            .github/workflows/build-web-container.yml
+
+          # Nothing changed → generated files were already in sync
+          git diff --staged --quiet && echo "All generated files are already up to date." && exit 0
+
+          VERSION=$(python3 - <<'EOF'
+import re, sys
+text = open("constants.yaml").read()
+m = re.search(r'^version:\s*"?([^"\n]+)"?', text, re.M)
+print(m.group(1) if m else "unknown")
+EOF
+          )
+
+          git commit -m "chore: sync generated constants to v${VERSION}"
+          git push

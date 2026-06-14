@@ -111,6 +111,18 @@ class AuthService {
   }
 
   /**
+   * Resend the account verification email. Safe to call with any email; the
+   * backend responds generically whether or not the address maps to an account.
+   */
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const response = await httpClient.post<ApiResponse<{ message: string }>>(
+      "/api/auth/verify/resend",
+      { email }
+    );
+    return (response.data || response) as { message: string };
+  }
+
+  /**
    * Request a password reset email
    */
   async requestPasswordReset(

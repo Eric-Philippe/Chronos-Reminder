@@ -35,6 +35,21 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		repos.Account,
 	)
 
+	// Initialize mailer service
+	mailerService := services.NewMailerService(
+		cfg.ResendAPIKey,
+		config.EmailNoreply,
+	)
+
+	// Initialize verification service (used by auth + Discord OAuth signup)
+	verificationService := services.NewVerificationService(
+		repos.EmailVerification,
+		repos.Account,
+		repos.Identity,
+		mailerService,
+		cfg.WebAppURL,
+	)
+
 	discordOAuthService := services.NewDiscordOAuthService(
 		cfg.DiscordClientID,
 		cfg.DiscordClientSecret,
@@ -44,25 +59,13 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 		repos.Account,
 		repos.Timezone,
 		sessionService,
-	)
-
-	// Initialize mailer service
-	mailerService := services.NewMailerService(
-		cfg.ResendAPIKey,
-		"noreply@noreply.chronosrmd.com",
+		verificationService,
 	)
 
 	// Initialize rate limiter service
 	rateLimiterService := services.NewRateLimiterService(
 		cfg.RateLimitRequestsPerWindow,
 		cfg.RateLimitWindowSeconds,
-	)
-
-	// Initialize verification service
-	verificationService := services.NewVerificationService(
-		repos.EmailVerification,
-		repos.Account,
-		mailerService,
 	)
 
 	// Initialize password reset service
@@ -110,6 +113,9 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	// Initialize API key handler
 	apiKeyHandler := NewAPIKeyHandler(apiKeyService)
 
+	// Initialize FCM token handler
+	fcmHandler := NewFcmHandler(repos.FcmToken)
+
 	// Initialize health handler
 	healthHandler := NewHealthHandler()
 
@@ -143,6 +149,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerDFMRoutes(wrappedMux, dfmHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerTimezoneRoutes(wrappedMux, timezoneHandler)
 	registerAPIKeyRoutes(wrappedMux, apiKeyHandler, sessionService, apiKeyService, rateLimitMiddleware)
+	registerFcmRoutes(wrappedMux, fcmHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerContactRoutes(wrappedMux, contactHandler)
 
 	return &Server{
@@ -174,6 +181,7 @@ func registerSwaggerRoutes(mux *WrappedMux) {
 
 // registerHealthRoutes registers health check routes
 func registerHealthRoutes(mux *WrappedMux, healthHandler *HealthHandler) {
+	mux.HandleFunc("GET /", healthHandler.Root)
 	mux.HandleFunc("GET /api/health", healthHandler.Health)
 }
 
@@ -181,6 +189,7 @@ func registerHealthRoutes(mux *WrappedMux, healthHandler *HealthHandler) {
 func registerAuthRoutes(mux *WrappedMux, authHandler *AuthHandler) {
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/verify", authHandler.VerifyEmail)
+	mux.HandleFunc("POST /api/auth/verify/resend", authHandler.ResendVerification)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
 	mux.HandleFunc("POST /api/auth/password-reset/request", authHandler.RequestPasswordReset)
@@ -221,6 +230,7 @@ func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionServic
 	mux.Handle("PUT /api/account/identity/app/username", chainMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityUsername)))
 	mux.Handle("PUT /api/account/identity/app/email", chainMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityEmail)))
 	mux.Handle("DELETE /api/account", chainMiddleware(http.HandlerFunc(userHandler.DeleteAccount)))
+	mux.Handle("POST /api/account/identity/mobile", chainMiddleware(http.HandlerFunc(userHandler.EnsureMobileIdentity)))
 }
 
 // registerReminderRoutes registers reminder-specific routes with auth and rate limit middleware
@@ -241,6 +251,7 @@ func registerReminderRoutes(mux *WrappedMux, reminderHandler *ReminderHandler, s
 	mux.Handle("POST /api/reminders/{id}/pause", chainMiddleware(http.HandlerFunc(reminderHandler.PauseReminder)))
 	mux.Handle("POST /api/reminders/{id}/resume", chainMiddleware(http.HandlerFunc(reminderHandler.ResumeReminder)))
 	mux.Handle("POST /api/reminders/{id}/duplicate", chainMiddleware(http.HandlerFunc(reminderHandler.DuplicateReminder)))
+	mux.Handle("POST /api/reminders/{id}/snooze", chainMiddleware(http.HandlerFunc(reminderHandler.SnoozeReminder)))
 }
 
 // registerDFMRoutes registers "Don't Forget Me" routes with auth and rate limit middleware
@@ -282,6 +293,20 @@ func registerAPIKeyRoutes(mux *WrappedMux, apiKeyHandler *APIKeyHandler, session
 	mux.Handle("POST /api/api-keys", chainMiddleware(http.HandlerFunc(apiKeyHandler.CreateAPIKey)))
 	mux.Handle("GET /api/api-keys", chainMiddleware(http.HandlerFunc(apiKeyHandler.GetAPIKeys)))
 	mux.Handle("DELETE /api/api-keys/{id}", chainMiddleware(http.HandlerFunc(apiKeyHandler.RevokeAPIKey)))
+}
+
+// registerFcmRoutes registers FCM token routes with auth and rate limit middleware
+func registerFcmRoutes(mux *WrappedMux, fcmHandler *FcmHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
+	authMiddleware := AuthMiddleware(sessionService, apiKeyService)
+
+	// Chain middlewares: rate limit -> auth
+	chainMiddleware := func(handler http.Handler) http.Handler {
+		return rateLimitMiddleware(authMiddleware(handler))
+	}
+
+	mux.Handle("GET /api/fcm/status", chainMiddleware(http.HandlerFunc(fcmHandler.HasTokens)))
+	mux.Handle("POST /api/fcm/token", chainMiddleware(http.HandlerFunc(fcmHandler.RegisterToken)))
+	mux.Handle("DELETE /api/fcm/token", chainMiddleware(http.HandlerFunc(fcmHandler.UnregisterToken)))
 }
 
 // registerContactRoutes registers contact form routes (public, no auth required)

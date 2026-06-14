@@ -14,6 +14,7 @@ type Repositories struct {
 	PasswordReset       PasswordResetRepository
 	DFMNote             DFMNoteRepository
 	DFMItem             DFMItemRepository
+	FcmToken            FcmTokenRepository
 }
 
 // NewRepositories creates new repository instances
@@ -29,5 +30,6 @@ func NewRepositories(db *gorm.DB) *Repositories {
 		PasswordReset:       NewPasswordResetRepository(db),
 		DFMNote:             NewDFMNoteRepository(db),
 		DFMItem:             NewDFMItemRepository(db),
+		FcmToken:            NewFcmTokenRepository(db),
 	}
 }

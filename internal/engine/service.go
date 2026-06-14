@@ -183,8 +183,14 @@ func NewSchedulerService(reminderRepo repositories.ReminderRepository, reminderE
 	dispatcherRegistry.RegisterDispatcher(dispatchers.NewDiscordChannelDispatcher())
 
 	cfg := config.Load()
-	mailer := services.NewMailerService(cfg.ResendAPIKey, "noreply@noreply.chronosrmd.com")
+	mailer := services.NewMailerService(cfg.ResendAPIKey, config.EmailNoreply)
 	dispatcherRegistry.RegisterDispatcher(dispatchers.NewEmailDispatcher(mailer))
+
+	// Android push delivery via Firebase Cloud Messaging
+	if repos := database.GetRepositories(); repos != nil {
+		fcmService := services.NewFcmService(cfg.GoogleAppCredentials)
+		dispatcherRegistry.RegisterDispatcher(dispatchers.NewAndroidPushDispatcher(fcmService, repos.FcmToken))
+	}
 
 	// Create garbage collector
 	garbageCollector := NewGarbageCollector(reminderRepo)

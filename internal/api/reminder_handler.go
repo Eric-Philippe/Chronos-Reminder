@@ -199,6 +199,13 @@ func (h *ReminderHandler) UpdateReminder(w http.ResponseWriter, r *http.Request)
 				}
 			}
 
+			if destType == models.DestinationAndroidPush {
+				if dest.Metadata == nil {
+					dest.Metadata = map[string]interface{}{}
+				}
+				dest.Metadata["account_id"] = accountID.String()
+			}
+
 			newDestinations[i] = models.ReminderDestination{
 				ID:         uuid.New(),
 				ReminderID: id,
@@ -392,4 +399,45 @@ func (h *ReminderHandler) DuplicateReminder(w http.ResponseWriter, r *http.Reque
 	}
 
 	WriteJSON(w, http.StatusCreated, ToReminderResponse(newReminder))
+}
+
+type snoozeRequest struct {
+	Minutes int `json:"minutes"`
+}
+
+// SnoozeReminder sets a snooze on a reminder so it re-fires after the given duration.
+// @Route: POST /api/reminders/{id}/snooze
+func (h *ReminderHandler) SnoozeReminder(w http.ResponseWriter, r *http.Request) {
+	accountID := r.Context().Value(AccountIDKey).(uuid.UUID)
+	reminderID := r.PathValue("id")
+
+	id, err := uuid.Parse(reminderID)
+	if err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid reminder ID")
+		return
+	}
+
+	var req snoozeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Minutes <= 0 {
+		WriteError(w, http.StatusBadRequest, "minutes must be a positive integer")
+		return
+	}
+
+	reminder, err := h.reminderRepo.GetByID(id)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to fetch reminder")
+		return
+	}
+	if reminder == nil || reminder.AccountID != accountID {
+		WriteError(w, http.StatusNotFound, "Reminder not found")
+		return
+	}
+
+	snoozeUntil := time.Now().UTC().Add(time.Duration(req.Minutes) * time.Minute)
+	if err := h.reminderRepo.Snooze(id, snoozeUntil); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to snooze reminder")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{"message": fmt.Sprintf("Snoozed for %d minutes", req.Minutes)})
 }

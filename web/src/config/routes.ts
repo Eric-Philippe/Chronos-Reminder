@@ -10,6 +10,7 @@
  */
 
 import { discordService } from "@/services";
+import { URLS } from "./constants";
 
 export interface Route {
   path: string;
@@ -109,7 +110,7 @@ export const ROUTES = {
   } as Route,
 
   BOT_HELP: {
-    path: "https://docs.chronosrmd.com",
+    path: URLS.docs,
     requiresAuth: false,
     name: "documentation",
     submenu: true,
@@ -118,7 +119,7 @@ export const ROUTES = {
   } as Route,
 
   STATUS: {
-    path: "https://status.chronosrmd.com/status/chronos",
+    path: URLS.status,
     requiresAuth: false,
     name: "status",
     submenu: true,
@@ -127,7 +128,7 @@ export const ROUTES = {
   } as Route,
 
   GITHUB: {
-    path: "https://github.com/Eric-Philippe/Chronos-Reminder",
+    path: URLS.github,
     requiresAuth: false,
     name: "github",
     submenu: true,
@@ -145,7 +146,7 @@ export const ROUTES = {
   } as Route,
 
   SUPPORT_SERVER: {
-    path: "https://discord.gg/m3MsM922QD",
+    path: URLS.discordInvite,
     requiresAuth: false,
     name: "supportServer",
     submenu: true,

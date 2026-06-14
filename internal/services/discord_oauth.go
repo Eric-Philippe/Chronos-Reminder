@@ -25,6 +25,9 @@ type DiscordOAuthService struct {
 	accountRepo    repositories.AccountRepository
 	timezoneRepo   repositories.TimezoneRepository
 	sessionService *SessionService
+	// verificationService is optional; when set, new Discord accounts whose
+	// email is not already verified by Discord receive a verification email.
+	verificationService *VerificationService
 }
 
 // DiscordUserInfo represents Discord user information from OAuth
@@ -34,6 +37,8 @@ type DiscordUserInfo struct {
 	Email         string `json:"email"`
 	Avatar        string `json:"avatar"`
 	Discriminator string `json:"discriminator"`
+	// Verified reports whether Discord has verified the user's email address.
+	Verified bool `json:"verified"`
 }
 
 // DiscordGuild represents a Discord guild (server)
@@ -87,16 +92,18 @@ func NewDiscordOAuthService(
 	accountRepo repositories.AccountRepository,
 	timezoneRepo repositories.TimezoneRepository,
 	sessionService *SessionService,
+	verificationService *VerificationService,
 ) *DiscordOAuthService {
 	return &DiscordOAuthService{
-		clientID:       clientID,
-		clientSecret:   clientSecret,
-		redirectURI:    redirectURI,
-		botToken:       botToken,
-		identityRepo:   identityRepo,
-		accountRepo:    accountRepo,
-		timezoneRepo:   timezoneRepo,
-		sessionService: sessionService,
+		clientID:            clientID,
+		clientSecret:        clientSecret,
+		redirectURI:         redirectURI,
+		botToken:            botToken,
+		identityRepo:        identityRepo,
+		accountRepo:         accountRepo,
+		timezoneRepo:        timezoneRepo,
+		sessionService:      sessionService,
+		verificationService: verificationService,
 	}
 }
 
@@ -297,10 +304,16 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 		return nil, "", errors.New("UTC timezone not found")
 	}
 
-	// Create new account
+	// Create new account. Discord already verifies user emails, so when Discord
+	// reports the email as verified we trust it and mark the account verified
+	// immediately — this avoids leaving the user stuck behind an "email not
+	// verified" wall they have no way to clear (they signed up via Discord and
+	// never received a Chronos verification email).
+	emailVerified := userInfo.Email != "" && userInfo.Verified
 	account := &models.Account{
-		ID:         uuid.New(),
-		TimezoneID: &timezone.ID,
+		ID:            uuid.New(),
+		TimezoneID:    &timezone.ID,
+		EmailVerified: emailVerified,
 	}
 
 	if err := s.accountRepo.Create(account); err != nil {
@@ -330,6 +343,15 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 	// Load full account
 	account.Identities = []models.Identity{*newDiscordIdentity}
 	account.Timezone = timezone
+
+	// If we could not auto-verify the email (Discord reported it unverified, or
+	// no email scope was granted), send a Chronos verification email so the user
+	// has a way to verify and unblock email/password login. Best-effort only.
+	if !emailVerified && userInfo.Email != "" && s.verificationService != nil {
+		if err := s.verificationService.SendAccountVerification(userInfo.Email, account.ID.String()); err != nil {
+			fmt.Printf("[DISCORD_OAUTH] - ⚠️ Failed to send verification email for new Discord account: %v\n", err)
+		}
+	}
 
 	// New account created with Discord identity only - prompt for setup
 	return account, "SETUP_REQUIRED", nil

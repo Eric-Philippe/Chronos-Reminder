@@ -21,6 +21,7 @@ const (
 	ProviderDiscord ProviderType = "discord"
 	ProviderApp     ProviderType = "app"
 	ProviderAPIKey  ProviderType = "api_key"
+	ProviderMobile  ProviderType = "mobile"
 )
 
 // Value implements the driver.Valuer interface for database storage
@@ -45,7 +46,7 @@ func (p *ProviderType) Scan(value interface{}) error {
 	}
 	
 	// Validate the scanned value
-	if *p != ProviderDiscord && *p != ProviderApp && *p != ProviderAPIKey {
+	if *p != ProviderDiscord && *p != ProviderApp && *p != ProviderAPIKey && *p != ProviderMobile {
 		return fmt.Errorf("invalid provider type: %s", *p)
 	}
 	
@@ -59,7 +60,7 @@ func (p ProviderType) String() string {
 
 // IsValid checks if the provider type is valid
 func (p ProviderType) IsValid() bool {
-	return p == ProviderDiscord || p == ProviderApp || p == ProviderAPIKey
+	return p == ProviderDiscord || p == ProviderApp || p == ProviderAPIKey || p == ProviderMobile
 }
 
 // Identity represents the identities table

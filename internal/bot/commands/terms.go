@@ -3,11 +3,12 @@ package commands
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
 
 func termsHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error {
-	description := "📋 **Terms & Privacy Policy**: https://chronosrmd.com/terms\n\n" +
+	description := "📋 **Terms & Privacy Policy**: " + config.URLWebApp + "/terms\n\n" +
 		"Chronos is a personal project with no company, no investors, and no monetization plans.\n\n" +
 		"**Key points:**\n" +
 		"🔒 Your password is bcrypt-hashed - nobody can read it, including the developer\n" +

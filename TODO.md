@@ -1,6 +1,6 @@
 # TODOs
 
-## Chronos v1.2.0 Roadmap
+## Chronos v1.3.0 Roadmap
 
 ### Web Application
 
@@ -23,5 +23,3 @@
 
 - [ ] Add API Key badge to user profiles
 - [ ] Badge shop
-- [ ] Put Email, Discord Invite Link, Version in the config file instead of hardcoding them
-- [ ] Streamline versioning

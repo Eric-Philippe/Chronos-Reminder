@@ -203,7 +203,7 @@ export function ReminderDetailsPage() {
         time: editData.time,
         recurrence: editData.recurrence,
         destinations: editData.destinations.map((d) => ({
-          type: d.type as "discord_dm" | "discord_channel" | "webhook" | "email",
+          type: d.type as "discord_dm" | "discord_channel" | "webhook" | "email" | "android_push",
           metadata: d.metadata,
         })),
       });
@@ -711,6 +711,25 @@ export function ReminderDetailsPage() {
                                 </p>
                                 <p className="text-xs text-muted-foreground ml-auto truncate">
                                   {(dest.metadata.email as string) || "N/A"}
+                                </p>
+                              </>
+                            )}
+                            {dest.type === "android_push" && (
+                              <>
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                                  <svg
+                                    className="w-4 h-4 text-emerald-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                                    <line x1="12" y1="18" x2="12.01" y2="18" />
+                                  </svg>
+                                </div>
+                                <p className="text-sm font-medium text-foreground">
+                                  {t("reminderCreation.destinations.androidPush")}
                                 </p>
                               </>
                             )}

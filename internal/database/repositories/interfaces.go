@@ -119,6 +119,15 @@ type EmailVerificationRepository interface {
 	Delete(id uuid.UUID) error
 }
 
+// FcmTokenRepository interface defines operations for FCM registration tokens
+type FcmTokenRepository interface {
+	// Upsert registers or updates the token for an (account, device) pair.
+	Upsert(token *models.FcmToken) error
+	GetByAccountID(accountID uuid.UUID) ([]models.FcmToken, error)
+	DeleteByToken(token string) error
+	DeleteByAccountAndDevice(accountID uuid.UUID, deviceID string) error
+}
+
 // PasswordResetRepository interface defines operations for password reset data
 type PasswordResetRepository interface {
 	Create(reset *models.PasswordReset) error

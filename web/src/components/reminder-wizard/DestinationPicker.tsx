@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Trash2, Plus, MessageCircle, Megaphone, Link2, Mail } from "lucide-react";
+import { Trash2, Plus, MessageCircle, Megaphone, Link2, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,8 @@ export type ReminderDestinationType =
   | "discord_dm"
   | "discord_channel"
   | "webhook"
-  | "email";
+  | "email"
+  | "android_push";
 
 export type WebhookPlatform = "generic" | "discord" | "slack";
 
@@ -45,6 +46,7 @@ export function DestinationPicker({
   const [hasDiscordIdentity, setHasDiscordIdentity] = useState(false);
   const [hasEmail, setHasEmail] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [hasAndroidPush, setHasAndroidPush] = useState(false);
 
   // Load user identities on component mount
   useEffect(() => {
@@ -54,11 +56,13 @@ export function DestinationPicker({
         setHasDiscordIdentity(capabilities.hasDiscordIdentity);
         setHasEmail(capabilities.hasEmail);
         setUserEmail(capabilities.userEmail);
+        setHasAndroidPush(capabilities.hasAndroidPush);
       } catch (error) {
         console.error("Failed to load identity capabilities:", error);
         setHasDiscordIdentity(false);
         setHasEmail(false);
         setUserEmail(null);
+        setHasAndroidPush(false);
       }
     };
 
@@ -72,14 +76,24 @@ export function DestinationPicker({
   ).length;
   const webhookCount = destinations.filter((d) => d.type === "webhook").length;
   const emailCount = destinations.filter((d) => d.type === "email").length;
+  const pushCount = destinations.filter((d) => d.type === "android_push").length;
 
   // Destination limits
   const MAX_DM = 1;
   const MAX_CHANNELS = 5;
   const MAX_WEBHOOKS = 5;
   const MAX_EMAILS = 1;
+  const MAX_PUSH = 1;
 
   const isHourlyRecurrence = recurrence === "HOURLY";
+
+  const handleAddPush = () => {
+    if (!hasAndroidPush || pushCount >= MAX_PUSH) return;
+    onDestinationsChange([
+      ...destinations,
+      { type: "android_push" as const, metadata: {} },
+    ]);
+  };
 
   const handleAddEmail = () => {
     if (!hasEmail || emailCount >= MAX_EMAILS || isHourlyRecurrence) return;
@@ -289,6 +303,36 @@ export function DestinationPicker({
                       {!compact && (
                         <p className="text-xs text-muted-foreground mt-1 truncate">
                           {dest.metadata.email as string}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleRemoveDestination(idx)}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+
+              {dest.type === "android_push" && (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Smartphone className="w-4 h-4 text-accent flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`font-semibold text-foreground truncate ${
+                          compact ? "text-xs" : "text-sm"
+                        }`}
+                      >
+                        {t("reminderCreation.destinations.androidPush")}
+                      </p>
+                      {!compact && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t("reminderCreation.destinations.androidPushDesc")}
                         </p>
                       )}
                     </div>
@@ -665,6 +709,61 @@ export function DestinationPicker({
                 }
                 className={`border-accent/50 flex-shrink-0 ${
                   hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
+                    ? "text-accent hover:bg-accent/10"
+                    : "text-muted-foreground opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          </Card>
+
+          {/* Android Push Option */}
+          <Card
+            className={`border-border bg-secondary/20 transition-colors ${
+              hasAndroidPush && pushCount < MAX_PUSH
+                ? "hover:border-accent/50 cursor-pointer"
+                : "opacity-60 cursor-not-allowed"
+            }`}
+            onClick={
+              hasAndroidPush && pushCount < MAX_PUSH
+                ? handleAddPush
+                : undefined
+            }
+          >
+            <div className="p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Smartphone className="w-4 h-4 text-accent" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {t("reminderCreation.destinations.androidPush")}
+                  </p>
+                  {!compact && (
+                    <p className="text-xs text-muted-foreground">
+                      {!hasAndroidPush
+                        ? t("reminderCreation.destinations.androidPushNoApp")
+                        : pushCount >= MAX_PUSH
+                        ? t("reminderCreation.destinations.limitReached")
+                        : t("reminderCreation.destinations.androidPushDesc")}
+                    </p>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                  {pushCount}/{MAX_PUSH}
+                </span>
+              </div>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddPush();
+                }}
+                variant="outline"
+                size="sm"
+                disabled={!hasAndroidPush || pushCount >= MAX_PUSH}
+                className={`border-accent/50 flex-shrink-0 ${
+                  hasAndroidPush && pushCount < MAX_PUSH
                     ? "text-accent hover:bg-accent/10"
                     : "text-muted-foreground opacity-50 cursor-not-allowed"
                 }`}

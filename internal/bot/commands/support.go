@@ -3,14 +3,15 @@ package commands
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
 
 func supportHandler(session *discordgo.Session, interaction *discordgo.InteractionCreate, account *models.Account) error {
 	description := "Need help? Here are the resources available:\n\n" +
-		"📖 **Documentation & Contact**: https://chronosrmd.com/\n" +
+		"📖 **Documentation & Contact**: " + config.URLWebApp + "\n" +
 		"Visit our website for full documentation, FAQ, and contact information.\n\n" +
-		"💬 **Official Discord Server**: https://discord.gg/m3MsM922QD\n" +
+		"💬 **Official Discord Server**: " + config.URLDiscordInvite + "\n" +
 		"Join our community to get support, share feedback, and connect with other users."
 
 	return utils.SendEmbed(session, interaction, "💡 Need Support?", description, nil)

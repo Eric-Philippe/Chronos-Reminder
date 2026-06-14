@@ -319,6 +319,23 @@ export function RemindersList({
                                   </span>
                                 </>
                               )}
+                              {dest.type === "android_push" && (
+                                <>
+                                  <svg
+                                    className="w-3 h-3 text-emerald-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                                    <line x1="12" y1="18" x2="12.01" y2="18" />
+                                  </svg>
+                                  <span className="text-xs font-medium text-foreground">
+                                    Push
+                                  </span>
+                                </>
+                              )}
                             </div>
                           ))}
                         </div>

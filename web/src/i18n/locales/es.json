@@ -241,7 +241,10 @@
       "emailDesc": "Enviar a tu dirección de correo registrada",
       "noEmailConfigured": "Regístrate con email/contraseña para usar esto",
       "emailHourlyDisabled": "Email no disponible para recordatorios por hora",
-      "limitReached": "Límite alcanzado"
+      "limitReached": "Límite alcanzado",
+      "androidPush": "Notificación Push Android",
+      "androidPushDesc": "Enviar a tu dispositivo Android mediante la app Chronos",
+      "androidPushNoApp": "Instala la app Android Chronos para usar esto"
     },
     "review": {
       "title": "Revisa Tu Recordatorio",
@@ -370,8 +373,10 @@
     "apiKeyDesc": "Autentica y gestiona todas las integraciones a través de claves API seguras",
     "apiKeyFeature1": "API pública para integrar tú mismo los recordatorios",
     "apiKeyFeature2": "2 solicitudes por segundo",
-    "supportsEmail": "Email",
-    "emailComingSoonDesc": "El soporte de correo electrónico viene pronto. ¡Mantente atento!",
+    "emailSupportTitle": "Soporte de Correo Electrónico",
+    "emailSupportDesc": "Recibe recordatorios directamente en tu bandeja de entrada de correo electrónico",
+    "emailSupportFeature1": "Notificaciones por correo electrónico para recordatorios",
+    "emailSupportFeature2": "Soporte para todos los tipos de recordatorios",
     "benefitsTitle": "¿Por Qué Elegir Chronos?",
     "benefitsSubtitle": "Únete a cientos de usuarios que confían en Chronos para sus recordatorios importantes",
     "benefit1Title": "Fácil de Usar",

@@ -22,6 +22,7 @@ const (
 	DestinationDiscordChannel DestinationType = "discord_channel"
 	DestinationWebhook        DestinationType = "webhook"
 	DestinationEmail          DestinationType = "email"
+	DestinationAndroidPush    DestinationType = "android_push"
 )
 
 // WebhookPlatform represents the optional platform for webhook destinations
@@ -80,7 +81,7 @@ func (d DestinationType) String() string {
 
 // IsValid checks if the destination type is valid
 func (d DestinationType) IsValid() bool {
-	return d == DestinationDiscordDM || d == DestinationDiscordChannel || d == DestinationWebhook || d == DestinationEmail
+	return d == DestinationDiscordDM || d == DestinationDiscordChannel || d == DestinationWebhook || d == DestinationEmail || d == DestinationAndroidPush
 }
 
 // JSONB is a custom type for JSONB fields
@@ -178,6 +179,10 @@ func (rd *ReminderDestination) ValidateMetadata() error {
 	case DestinationEmail:
 		if _, exists := rd.Metadata["email"]; !exists {
 			return fmt.Errorf("email destination requires email in metadata")
+		}
+	case DestinationAndroidPush:
+		if _, exists := rd.Metadata["account_id"]; !exists {
+			return fmt.Errorf("android_push destination requires account_id in metadata")
 		}
 	default:
 		return fmt.Errorf("invalid destination type: %s", rd.Type)

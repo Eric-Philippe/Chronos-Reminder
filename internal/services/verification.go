@@ -16,7 +16,9 @@ import (
 type VerificationService struct {
 	verificationRepo repositories.EmailVerificationRepository
 	accountRepo      repositories.AccountRepository
+	identityRepo     repositories.IdentityRepository
 	mailerService    *MailerService
+	webAppURL        string
 	verificationTTL  time.Duration // Time-to-live for verification codes (default 24 hours)
 }
 
@@ -24,14 +26,69 @@ type VerificationService struct {
 func NewVerificationService(
 	verificationRepo repositories.EmailVerificationRepository,
 	accountRepo repositories.AccountRepository,
+	identityRepo repositories.IdentityRepository,
 	mailerService *MailerService,
+	webAppURL string,
 ) *VerificationService {
 	return &VerificationService{
 		verificationRepo: verificationRepo,
 		accountRepo:      accountRepo,
+		identityRepo:     identityRepo,
 		mailerService:    mailerService,
+		webAppURL:        webAppURL,
 		verificationTTL:  24 * time.Hour, // Codes expire after 24 hours
 	}
+}
+
+// SendAccountVerification creates a verification record for an account and emails
+// the code + link. Used at registration, Discord signup, and resend.
+func (v *VerificationService) SendAccountVerification(email string, accountID string) error {
+	code, err := v.CreateVerification(email, accountID)
+	if err != nil {
+		return err
+	}
+	verificationLink := v.webAppURL + "/verify?email=" + email + "&code=" + code
+	if _, err := v.SendVerificationEmail(email, code, verificationLink); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ResendVerification re-sends a verification email for the given address. It is
+// idempotent and intentionally quiet about whether the email maps to an account,
+// to avoid leaking which addresses are registered. Returns true when an email
+// was actually dispatched.
+func (v *VerificationService) ResendVerification(email string) (bool, error) {
+	accountID, ok := v.resolveAccountID(email)
+	if !ok {
+		// Unknown email — silently succeed to avoid enumeration.
+		return false, nil
+	}
+
+	// Already verified? Nothing to do.
+	account, err := v.accountRepo.GetByID(accountID)
+	if err == nil && account != nil && account.EmailVerified {
+		return false, nil
+	}
+
+	if err := v.SendAccountVerification(email, accountID.String()); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// resolveAccountID finds the account owning an email, via the app identity first
+// and then any prior verification record (covers Discord-only accounts).
+func (v *VerificationService) resolveAccountID(email string) (uuid.UUID, bool) {
+	if identity, err := v.identityRepo.GetByProviderAndExternalID(models.ProviderApp, email); err == nil && identity != nil {
+		return identity.AccountID, true
+	}
+	if record, err := v.verificationRepo.GetByEmail(email); err == nil && record != nil {
+		if id, err := uuid.Parse(record.AccountID); err == nil {
+			return id, true
+		}
+	}
+	return uuid.Nil, false
 }
 
 // GenerateVerificationCode generates a 6-digit verification code

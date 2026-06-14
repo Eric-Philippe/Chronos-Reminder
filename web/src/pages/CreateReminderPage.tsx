@@ -7,6 +7,7 @@ import {
   Megaphone,
   Link2,
   Mail,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -316,6 +317,12 @@ export function CreateReminderPage() {
                                   <span className="text-xs text-muted-foreground ml-1">
                                     ({dest.metadata.email as string})
                                   </span>
+                                </>
+                              )}
+                              {dest.type === "android_push" && (
+                                <>
+                                  <Smartphone className="w-4 h-4 flex-shrink-0" />
+                                  {t("reminderCreation.destinations.androidPush")}
                                 </>
                               )}
                             </div>

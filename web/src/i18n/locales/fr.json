@@ -240,7 +240,10 @@
       "emailDesc": "Envoyer à votre adresse email enregistrée",
       "noEmailConfigured": "Inscrivez-vous avec email/mot de passe pour utiliser ceci",
       "emailHourlyDisabled": "Email non disponible pour les rappels horaires",
-      "limitReached": "Limite atteinte"
+      "limitReached": "Limite atteinte",
+      "androidPush": "Notification Push Android",
+      "androidPushDesc": "Envoyer sur votre appareil Android via l'appli Chronos",
+      "androidPushNoApp": "Installez l'appli Android Chronos pour utiliser ceci"
     },
     "review": {
       "title": "Vérifiez Votre Rappel",
@@ -369,8 +372,10 @@
     "apiKeyDesc": "Authentifiez et gérez toutes les intégrations via des clés API sécurisées",
     "apiKeyFeature1": "API publique pour intégrer vous-même les rappels",
     "apiKeyFeature2": "2 requêtes par seconde",
-    "supportsEmail": "Email",
-    "emailComingSoonDesc": "Le support Email arrive bientôt. Restez à l'écoute !",
+    "emailSupportTitle": "Support par E-mail",
+    "emailSupportDesc": "Recevez des rappels directement dans votre boîte de réception",
+    "emailSupportFeature1": "Notifications par e-mail pour les rappels",
+    "emailSupportFeature2": "Supporte tous les types de rappels",
     "benefitsTitle": "Pourquoi Choisir Chronos ?",
     "benefitsSubtitle": "Rejoignez des centaines d'utilisateurs qui font confiance à Chronos pour leurs rappels importants",
     "benefit1Title": "Facile à Utiliser",

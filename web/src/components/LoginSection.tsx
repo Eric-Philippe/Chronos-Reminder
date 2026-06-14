@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { authService } from "@/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,6 +41,26 @@ export function LoginSection({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [resendState, setResendState] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+
+  const errorMessage = localError || authError?.message || "";
+  // Show a resend-verification action whenever the failure is a verification wall.
+  const isUnverified = /not verified|non vérifié|no verificad/i.test(
+    errorMessage
+  );
+
+  const handleResend = async () => {
+    if (!email) return;
+    setResendState("sending");
+    try {
+      await authService.resendVerification(email);
+      setResendState("sent");
+    } catch {
+      setResendState("error");
+    }
+  };
 
   return (
     <Card className="border-border bg-card/95 backdrop-blur">
@@ -52,9 +73,32 @@ export function LoginSection({
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           {/* Error Alert */}
-          {(localError || authError?.message) && (
-            <div className="bg-red-500/10 border border-red-500 rounded-md p-3 text-sm text-red-600">
-              {localError || authError?.message}
+          {errorMessage && (
+            <div className="bg-red-500/10 border border-red-500 rounded-md p-3 text-sm text-red-600 space-y-2">
+              <div>{errorMessage}</div>
+              {isUnverified &&
+                (resendState === "sent" ? (
+                  <p className="text-foreground/80">
+                    {t(
+                      "login.verificationResent",
+                      "Verification email sent. Check your inbox."
+                    )}
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendState === "sending" || !email}
+                    className="text-accent hover:text-accent/80 underline transition-colors disabled:opacity-50"
+                  >
+                    {resendState === "sending"
+                      ? t("login.sending", "Sending…")
+                      : t(
+                          "login.resendVerification",
+                          "Resend verification email"
+                        )}
+                  </button>
+                ))}
             </div>
           )}
           {/* Email Field */}

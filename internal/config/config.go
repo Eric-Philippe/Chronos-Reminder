@@ -40,6 +40,11 @@ type Config struct {
 	// Web app configuration
 	WebAppURL string
 
+	// Firebase Cloud Messaging configuration
+	// Path to the Google service account JSON (standard Google ADC).
+	// When empty, push notifications are disabled and the dispatcher degrades gracefully.
+	GoogleAppCredentials string      `env:"GOOGLE_APPLICATION_CREDENTIALS" envDefault:"../google-service.json"`
+
 	// Rate limiting configuration
 	RateLimitRequestsPerWindow int    `env:"RATE_LIMIT_REQUESTS_PER_WINDOW" envDefault:"100"`
 	RateLimitWindowSeconds     int    `env:"RATE_LIMIT_WINDOW_SECONDS" envDefault:"60"`
@@ -79,13 +84,16 @@ func Load() *Config {
 		// Discord OAuth configuration
 		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", ""),
 		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", ""),
-		DiscordRedirectURI:  getEnv("DISCORD_REDIRECT_URI", "https://chronosrmd.com/auth/callback/discord"),
+		DiscordRedirectURI:  getEnv("DISCORD_REDIRECT_URI", URLWebApp+"/auth/callback/discord"),
 
 		// Resend email service configuration
 		ResendAPIKey: getEnv("RESEND_API_KEY", ""),
 
 		// Web app URL for verification links
-		WebAppURL: getEnv("WEB_APP_URL", "https://chronosrmd.com"),
+		WebAppURL: getEnv("WEB_APP_URL", URLWebApp),
+
+		// Firebase Cloud Messaging (Google Application Default Credentials)
+		GoogleAppCredentials: getEnv("GOOGLE_APPLICATION_CREDENTIALS", ""),
 
 		// Rate limiting configuration
 		RateLimitRequestsPerWindow: parseInt(getEnv("RATE_LIMIT_REQUESTS_PER_WINDOW", "100")),

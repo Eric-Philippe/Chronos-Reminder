@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 )
 
 const (
-	chronosWebURL      = "https://chronosrmd.com"
 	chronosLogoURL     = "https://snapfilething.homeserver-ericp.fr/uploads/logo_chronos_1762633109_5a630a73_.png"
 	helpColorPrimary   = 0x5b5bff
 	helpColorCategory  = 0x7b7bff
@@ -215,7 +215,7 @@ func sendGeneralHelp(session *discordgo.Session, interaction *discordgo.Interact
 						discordgo.Button{
 							Style: discordgo.LinkButton,
 							Label: "🌐 Visit Chronos Web Platform",
-							URL:   chronosWebURL,
+							URL:   config.URLWebApp,
 						},
 					},
 				},
@@ -292,7 +292,7 @@ func sendCommandDetailedHelp(session *discordgo.Session, interaction *discordgo.
 						discordgo.Button{
 							Style: discordgo.LinkButton,
 							Label: "🌐 Web Platform",
-							URL:   chronosWebURL,
+							URL:   config.URLWebApp,
 						},
 					},
 				},

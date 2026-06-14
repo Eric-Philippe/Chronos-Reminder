@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { MENU_GROUPS, ROUTES } from "@/config/routes";
+import { VERSION } from "@/config/constants";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -34,7 +35,7 @@ export function Footer() {
               {t("vitrine.footerDesc")}
             </p>
             <br />
-            <p className="text-sm text-muted-foreground">v1.1.0</p>
+            <p className="text-sm text-muted-foreground">v{VERSION}</p>
           </div>
 
           {/* Dynamic Menu Groups - Filter by requiresAuth */}
