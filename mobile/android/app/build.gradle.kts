@@ -39,7 +39,7 @@ android {
 
         testInstrumentationRunner = "com.chronos.reminder.HiltTestRunner"
 
-        buildConfigField("String", "1434481615517515827", "\"\"")
+        buildConfigField("String", "DISCORD_CLIENT_ID", "\"1434481615517515827\"")
     }
 
     buildTypes {
