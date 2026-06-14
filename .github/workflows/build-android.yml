@@ -62,12 +62,12 @@ jobs:
 
       # ── Firebase: write google-services.json (optional) ─────────────────────
       - name: Write google-services.json
-        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        if: env.HAS_GOOGLE_SERVICES == 'true'
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > mobile/android/app/google-services.json
 
       # ── Signing: decode keystore (optional) ─────────────────────────────────
       - name: Decode keystore
-        if: ${{ secrets.KEYSTORE_B64 != '' }}
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           echo "${{ secrets.KEYSTORE_B64 }}" | base64 --decode > mobile/android/app/release.jks
           echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/mobile/android/app/release.jks" >> $GITHUB_ENV
