@@ -359,7 +359,7 @@ export function AccountPage() {
             {discordIdentity?.avatar && (
               <div className="flex items-center gap-4 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
                 <img
-                  src={`https://cdn.discordapp.com/avatars/${discordIdentity.provider_id}/${discordIdentity.avatar}.webp?size=80`}
+                  src={`https://cdn.discordapp.com/avatars/${discordIdentity.external_id}/${discordIdentity.avatar}.webp?size=80`}
                   alt="Discord avatar"
                   className="w-14 h-14 rounded-full ring-2 ring-indigo-500/40 flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

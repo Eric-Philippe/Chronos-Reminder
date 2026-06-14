@@ -136,7 +136,7 @@ fun AccountScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         var avatarLoadFailed by remember { mutableStateOf(false) }
-                        val avatarUrl = if (discordIdentity?.avatar != null && discordIdentity.externalId != null) {
+                        val avatarUrl = if (!discordIdentity?.avatar.isNullOrBlank() && !discordIdentity?.externalId.isNullOrBlank()) {
                             "https://cdn.discordapp.com/avatars/${discordIdentity.externalId}/${discordIdentity.avatar}.png"
                         } else null
 
