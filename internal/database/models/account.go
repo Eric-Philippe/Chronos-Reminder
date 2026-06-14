@@ -15,6 +15,9 @@ func (Account) TableName() string {
 type Account struct {
 	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	TimezoneID    *uint     `gorm:"index" json:"timezone_id"`
+	Email         *string   `gorm:"uniqueIndex" json:"email"` // login email, nullable (Discord-only accounts have none)
+	Username      *string   `json:"username"`                 // display name, nullable
+	PasswordHash  *string   `json:"-"`                        // login password, nullable; hidden in JSON
 	EmailVerified bool      `gorm:"type:boolean;default:false" json:"email_verified"`
 	CreatedAt     time.Time `gorm:"not null;default:now()" json:"created_at"`
 	UpdatedAt     time.Time `gorm:"not null;default:now()" json:"updated_at"`

@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
 
     private var pendingReminderId by mutableStateOf<String?>(null)
+    private var pendingDiscordLinkCode by mutableStateOf<String?>(null)
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best effort */ }
@@ -78,6 +79,8 @@ class MainActivity : ComponentActivity() {
                     isOnline = isOnline,
                     pendingReminderId = pendingReminderId,
                     onPendingReminderConsumed = { pendingReminderId = null },
+                    pendingDiscordLinkCode = pendingDiscordLinkCode,
+                    onPendingDiscordLinkConsumed = { pendingDiscordLinkCode = null },
                     onDiscordUnconfigured = {
                         authViewModel.setError(getString(R.string.error_discord_not_configured))
                     },
@@ -99,7 +102,13 @@ class MainActivity : ComponentActivity() {
         }
         when (data.host) {
             "auth" -> data.getQueryParameter("code")?.let { code ->
-                authViewModel.handleDiscordCode(code)
+                // If already authenticated, this OAuth round-trip is a "link Discord
+                // to my existing account" flow; otherwise it's a login/signup.
+                if (authViewModel.uiState.value.isLoggedIn) {
+                    pendingDiscordLinkCode = code
+                } else {
+                    authViewModel.handleDiscordCode(code)
+                }
             }
             "reminder" -> data.getQueryParameter("id")?.let { id ->
                 pendingReminderId = id

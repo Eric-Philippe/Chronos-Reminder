@@ -12,6 +12,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericp/chronos-bot-reminder/internal/bot/utils"
+	"github.com/ericp/chronos-bot-reminder/internal/config"
 	"github.com/ericp/chronos-bot-reminder/internal/database/models"
 	"github.com/ericp/chronos-bot-reminder/internal/services"
 )
@@ -22,6 +23,7 @@ func ProfileHandler(session *discordgo.Session, interaction *discordgo.Interacti
 
 	var targetUser *discordgo.User
 	var targetAccount *models.Account
+	isSelf := false
 
 	// Check if a user was specified
 	if len(options) > 0 && options[0].Name == "user" {
@@ -42,6 +44,7 @@ func ProfileHandler(session *discordgo.Session, interaction *discordgo.Interacti
 			targetUser = interaction.User
 		}
 		targetAccount = account
+		isSelf = true
 	}
 
 	if targetUser == nil || targetAccount == nil {
@@ -96,17 +99,37 @@ func ProfileHandler(session *discordgo.Session, interaction *discordgo.Interacti
 		return utils.SendError(session, interaction, "Error", "Failed to encode profile image.")
 	}
 
+	// Build the response data with the profile image.
+	responseData := &discordgo.InteractionResponseData{
+		Files: []*discordgo.File{
+			{
+				Name:   "profile.png",
+				Reader: bytes.NewReader(buf.Bytes()),
+			},
+		},
+	}
+
+	// If the invoker's own account is Discord-only (no email/password login),
+	// nudge them to add web/mobile access so the same account works everywhere.
+	if isSelf && !services.DiscordUserUsesApp(targetAccount) {
+		responseData.Content = "💡 Your account is Discord-only. Add an email & password on the web app to use Chronos on the **web and mobile apps** with the same reminders — just sign in with Discord there, then set up your login."
+		responseData.Components = []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label: "Set up web & mobile login",
+						Style: discordgo.LinkButton,
+						URL:   config.URLWebApp + "/account",
+					},
+				},
+			},
+		}
+	}
+
 	// Send response with image attachment
 	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Files: []*discordgo.File{
-				{
-					Name:   "profile.png",
-					Reader: bytes.NewReader(buf.Bytes()),
-				},
-			},
-		},
+		Data: responseData,
 	})
 }
 

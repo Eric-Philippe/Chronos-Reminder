@@ -19,6 +19,9 @@ interface AuthApi {
     @POST("api/auth/discord/callback")
     suspend fun discordCallback(@Body body: DiscordCallbackRequest): Response<DiscordCallbackResponseDto>
 
+    @POST("api/auth/discord/setup")
+    suspend fun discordSetup(@Body body: DiscordSetupRequest): Response<DiscordCallbackResponseDto>
+
     @POST("api/auth/password-reset/request")
     suspend fun requestPasswordReset(@Body body: PasswordResetRequest): Response<MessageResponse>
 

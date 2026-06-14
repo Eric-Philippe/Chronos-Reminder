@@ -60,7 +60,7 @@ class AuthRepository @Inject constructor(
     ): ApiResult<Unit> =
         safeApiCall { api.register(RegisterRequest(email, username, password, timezone)) }.map { }
 
-    suspend fun loginWithDiscordCode(code: String): ApiResult<Unit> {
+    suspend fun loginWithDiscordCode(code: String): ApiResult<DiscordLoginResult> {
         val result = safeApiCall { api.discordCallback(DiscordCallbackRequest(code)) }
         return when (result) {
             is ApiResult.Success -> {
@@ -69,10 +69,45 @@ class AuthRepository @Inject constructor(
                     !data.token.isNullOrBlank() -> {
                         tokenStore.saveToken(data.token)
                         onAuthenticated()
-                        ApiResult.Success(Unit)
+                        ApiResult.Success(DiscordLoginResult.LoggedIn)
                     }
-                    data.needsSetup -> ApiResult.Error(NEEDS_SETUP_CODE, data.message ?: "Account setup required")
+                    data.needsSetup && !data.accountId.isNullOrBlank() ->
+                        ApiResult.Success(
+                            DiscordLoginResult.NeedsSetup(
+                                accountId = data.accountId,
+                                email = data.discordEmail,
+                                username = data.discordUsername,
+                            ),
+                        )
                     else -> ApiResult.Error(-1, data.message ?: "Discord login failed")
+                }
+            }
+            is ApiResult.Error -> result
+            is ApiResult.NetworkError -> result
+        }
+    }
+
+    // Completes the Discord-first onboarding: attaches an email/password identity
+    // to the freshly created Discord account and logs the user in.
+    suspend fun completeDiscordSetup(
+        accountId: String,
+        email: String,
+        username: String,
+        password: String,
+        timezone: String,
+    ): ApiResult<Unit> {
+        val result = safeApiCall {
+            api.discordSetup(DiscordSetupRequest(accountId, email, username, password, timezone))
+        }
+        return when (result) {
+            is ApiResult.Success -> {
+                val token = result.data.token
+                if (token.isNullOrBlank()) {
+                    ApiResult.Error(-1, result.data.message ?: "Setup failed")
+                } else {
+                    tokenStore.saveToken(token)
+                    onAuthenticated()
+                    ApiResult.Success(Unit)
                 }
             }
             is ApiResult.Error -> result
@@ -95,10 +130,5 @@ class AuthRepository @Inject constructor(
     suspend fun clearLocalData() {
         tokenStore.clearToken()
         withContext(Dispatchers.IO) { database.clearAllTables() }
-    }
-
-    companion object {
-        // Discord account exists but has no Chronos account; setup happens on the web app
-        const val NEEDS_SETUP_CODE = -2
     }
 }

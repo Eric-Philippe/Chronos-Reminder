@@ -207,7 +207,7 @@ func NewSchedulerService(reminderRepo repositories.ReminderRepository, reminderE
 	var dfmScheduler *DFMScheduler
 	if repos := database.GetRepositories(); repos != nil {
 		dfmDispatcher := dispatchers.NewDFMDispatcher(mailer, cfg.WebAppURL)
-		dfmScheduler = NewDFMScheduler(repos.DFMNote, repos.Identity, dfmDispatcher)
+		dfmScheduler = NewDFMScheduler(repos.DFMNote, repos.Identity, repos.Account, dfmDispatcher)
 		// Expose the immediate send for callers that cannot import the engine (bot commands)
 		services.DFMSendNow = dfmScheduler.SendNoteNow
 	}

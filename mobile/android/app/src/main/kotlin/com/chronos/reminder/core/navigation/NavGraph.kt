@@ -48,6 +48,7 @@ import com.chronos.reminder.R
 import com.chronos.reminder.account.ui.AccountScreen
 import com.chronos.reminder.account.ui.ApiKeysScreen
 import com.chronos.reminder.auth.ui.AuthViewModel
+import com.chronos.reminder.auth.ui.DiscordSetupScreen
 import com.chronos.reminder.auth.ui.ForgotPasswordScreen
 import com.chronos.reminder.auth.ui.LoginScreen
 import com.chronos.reminder.auth.ui.RegisterScreen
@@ -123,6 +124,8 @@ fun ChronosNavGraph(
     isOnline: Boolean,
     pendingReminderId: String?,
     onPendingReminderConsumed: () -> Unit,
+    pendingDiscordLinkCode: String? = null,
+    onPendingDiscordLinkConsumed: () -> Unit = {},
     onDiscordUnconfigured: () -> Unit,
 ) {
     var lastLoggedIn by rememberSaveable { mutableStateOf(uiState.isLoggedIn) }
@@ -144,6 +147,21 @@ fun ChronosNavGraph(
         if (pendingReminderId != null && uiState.isLoggedIn) {
             navController.navigate(Screen.ReminderDetail(pendingReminderId))
             onPendingReminderConsumed()
+        }
+    }
+
+    // A returning Discord-link OAuth deep link: make sure the Account screen is
+    // on top so it can consume the code and show the result.
+    LaunchedEffect(pendingDiscordLinkCode, uiState.isLoggedIn) {
+        if (pendingDiscordLinkCode != null && uiState.isLoggedIn) {
+            navController.navigate(Screen.Account) { launchSingleTop = true }
+        }
+    }
+
+    // A new Discord-only account needs an email/password to finish onboarding.
+    LaunchedEffect(uiState.discordSetup, uiState.isLoggedIn) {
+        if (uiState.discordSetup != null && !uiState.isLoggedIn) {
+            navController.navigate(Screen.DiscordSetup) { launchSingleTop = true }
         }
     }
 
@@ -255,6 +273,22 @@ fun ChronosNavGraph(
                         onClearError = authViewModel::clearError,
                     )
                 }
+                composable<Screen.DiscordSetup> {
+                    val setup = uiState.discordSetup
+                    if (setup != null) {
+                        DiscordSetupScreen(
+                            uiState = uiState,
+                            setup = setup,
+                            onComplete = authViewModel::completeDiscordSetup,
+                            onLoadTimezones = authViewModel::loadTimezones,
+                            onCancel = {
+                                authViewModel.cancelDiscordSetup()
+                                navController.popBackStack()
+                            },
+                            onClearError = authViewModel::clearError,
+                        )
+                    }
+                }
             }
 
             navigation<Screen.MainGraph>(startDestination = Screen.Home) {
@@ -309,6 +343,8 @@ fun ChronosNavGraph(
                         onOpenAbout = { navController.navigate(Screen.About) },
                         onLogout = authViewModel::logout,
                         onAccountDeleted = authViewModel::logout,
+                        pendingDiscordLinkCode = pendingDiscordLinkCode,
+                        onPendingDiscordLinkConsumed = onPendingDiscordLinkConsumed,
                     )
                 }
                 composable<Screen.ApiKeys> {

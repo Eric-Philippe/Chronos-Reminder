@@ -427,6 +427,23 @@
     "connected": "Connecté",
     "notConnected": "Non connecté",
     "connectDiscord": "Connecter Discord",
+    "addApp": {
+      "button": "Ajouter une connexion",
+      "cancel": "Annuler",
+      "help": "Ajoutez une adresse e-mail et un mot de passe pour vous connecter sur les applications web et mobile avec le même compte.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "vous@exemple.com",
+      "usernameLabel": "Nom d'utilisateur",
+      "usernamePlaceholder": "Votre nom",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Au moins 8 caractères",
+      "submit": "Ajouter la connexion e-mail et mot de passe",
+      "allFieldsRequired": "L'e-mail et le nom d'utilisateur sont requis",
+      "passwordTooShort": "Le mot de passe doit comporter au moins 8 caractères",
+      "success": "Connexion ajoutée",
+      "successDesc": "Vous pouvez désormais vous connecter avec votre e-mail et votre mot de passe.",
+      "failed": "Échec de l'ajout de la connexion e-mail/mot de passe"
+    },
     "manageKeys": "Gérer les Clés",
     "changePassword": "Changer le Mot de Passe",
     "currentPassword": "Mot de Passe Actuel",
@@ -469,7 +486,17 @@
     "deletingAccount": "Suppression du Compte...",
     "accountDeleted": "Compte supprimé avec succès",
     "accountDeletedDesc": "Votre compte a été supprimé. Vous êtes en train d'être déconnecté.",
-    "deleteAccountFailed": "Échec de la suppression du compte"
+    "deleteAccountFailed": "Échec de la suppression du compte",
+    "merge": {
+      "title": "Fusionner les comptes ?",
+      "description": "Le compte Discord {{username}} appartient déjà à un autre compte Chronos. La fusion déplacera tous ses rappels et données dans votre compte actuel, puis supprimera l'autre compte. Cette action est irréversible.",
+      "confirm": "Oui, fusionner les comptes",
+      "cancel": "Annuler",
+      "merging": "Fusion en cours...",
+      "success": "Comptes fusionnés avec succès",
+      "successDesc": "Toutes les données de l'autre compte ont été transférées dans le vôtre.",
+      "failed": "Échec de la fusion des comptes"
+    }
   },
   "apiKeys": {
     "title": "Clés API",

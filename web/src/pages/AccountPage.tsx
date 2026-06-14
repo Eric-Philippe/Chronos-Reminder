@@ -72,6 +72,15 @@ export function AccountPage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Add app identity (email/password) state — for Discord/mobile-first accounts
+  const [showAddAppForm, setShowAddAppForm] = useState(false);
+  const [addAppEmail, setAddAppEmail] = useState("");
+  const [addAppUsername, setAddAppUsername] = useState("");
+  const [addAppPassword, setAddAppPassword] = useState("");
+  const [showAddAppPassword, setShowAddAppPassword] = useState(false);
+  const [isAddingApp, setIsAddingApp] = useState(false);
+  const [addAppError, setAddAppError] = useState<string | null>(null);
+
   // Fetch account info
   useEffect(() => {
     const fetchAccount = async () => {
@@ -172,6 +181,52 @@ export function AccountPage() {
     }
   };
 
+  // Handle adding an email/password (app) identity to a Discord/mobile-first account
+  const handleAddAppIdentity = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!addAppEmail.trim() || !addAppUsername.trim()) {
+      setAddAppError(t("account.addApp.allFieldsRequired"));
+      return;
+    }
+    if (addAppPassword.length < 8) {
+      setAddAppError(t("account.addApp.passwordTooShort"));
+      return;
+    }
+
+    try {
+      setIsAddingApp(true);
+      setAddAppError(null);
+
+      await accountService.addAppIdentity(
+        addAppEmail.trim(),
+        addAppUsername.trim(),
+        addAppPassword,
+      );
+
+      // Refresh the account so the new identity shows as connected.
+      const refreshed = await accountService.getAccount();
+      if (refreshed) setAccount(refreshed);
+
+      setShowAddAppForm(false);
+      setAddAppEmail("");
+      setAddAppUsername("");
+      setAddAppPassword("");
+
+      toast.success(t("account.addApp.success"), {
+        description: t("account.addApp.successDesc"),
+      });
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : t("account.addApp.failed");
+      setAddAppError(errorMsg);
+      toast.error(t("account.error"), { description: errorMsg });
+    } finally {
+      setIsAddingApp(false);
+    }
+  };
+
   // Handle timezone change
   const handleTimezoneChange = async (timezone: string) => {
     try {
@@ -214,9 +269,8 @@ export function AccountPage() {
         description: t("account.usernameUpdatedDesc"),
       });
 
-      if (account && appIdentity) {
-        appIdentity.username = newUsername;
-        setAccount({ ...account });
+      if (account) {
+        setAccount({ ...account, username: newUsername });
       }
 
       setEditingUsername(false);
@@ -257,9 +311,8 @@ export function AccountPage() {
         description: t("account.emailUpdatedDesc"),
       });
 
-      if (account && appIdentity) {
-        appIdentity.external_id = newEmail;
-        setAccount({ ...account });
+      if (account) {
+        setAccount({ ...account, email: newEmail });
       }
 
       setEditingEmail(false);
@@ -310,8 +363,8 @@ export function AccountPage() {
     }
   };
 
-  // Get app identity
-  const appIdentity = account?.identities?.find((id) => id.provider === "app");
+  // Account has email/password credentials iff account.email is set
+  const hasAppCredentials = !!(account?.email);
   const mobileIdentity = account?.identities?.find(
     (id) => id.provider === "mobile",
   );
@@ -390,14 +443,14 @@ export function AccountPage() {
                       className="mt-2 flex items-center gap-2 p-3 bg-secondary/30 rounded-md border border-border group hover:bg-secondary/50 transition-colors cursor-pointer"
                       onClick={() => {
                         setNewUsername(
-                          appIdentity?.username || account.username,
+                          account.username,
                         );
                         setEditingUsername(true);
                         setUsernameError(null);
                       }}
                     >
                       <p className="text-foreground flex-1">
-                        {appIdentity?.username || account.username}
+                        {account.username}
                       </p>
                       <Button
                         size="sm"
@@ -467,14 +520,14 @@ export function AccountPage() {
                     <div
                       className="mt-2 flex items-center gap-2 p-3 bg-secondary/30 rounded-md border border-border group hover:bg-secondary/50 transition-colors cursor-pointer"
                       onClick={() => {
-                        setNewEmail(appIdentity?.external_id || account.email);
+                        setNewEmail(account.email);
                         setEditingEmail(true);
                         setEmailError(null);
                       }}
                     >
                       <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       <p className="text-foreground flex-1">
-                        {appIdentity?.external_id || account.email}
+                        {account.email}
                       </p>
                       <Button
                         size="sm"
@@ -608,31 +661,131 @@ export function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* App Identity */}
-                <div className="p-4 bg-secondary/20 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
-                      <Lock className="w-5 h-5 flex-shrink-0 text-accent" />
+                <div className="p-4 bg-secondary/20 rounded-lg border border-border">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
+                        <Lock className="w-5 h-5 flex-shrink-0 text-accent" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {t("account.appIdentity")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("account.appIdentityDesc")}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {t("account.appIdentity")}
-                      </p>
+                    <div className="flex items-center justify-end flex-shrink-0">
+                      {hasAppCredentials ? (
+                        <span className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 whitespace-nowrap">
+                          {t("account.connected")}
+                        </span>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="border-accent/30 text-accent hover:bg-accent/10"
+                          onClick={() => {
+                            setAddAppError(null);
+                            setAddAppUsername(
+                              account?.username ||
+                                discordIdentity?.username ||
+                                "",
+                            );
+                            setShowAddAppForm((v) => !v);
+                          }}
+                        >
+                          {showAddAppForm
+                            ? t("account.addApp.cancel")
+                            : t("account.addApp.button")}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {!hasAppCredentials && showAddAppForm && (
+                    <form
+                      onSubmit={handleAddAppIdentity}
+                      className="mt-4 space-y-3 border-t border-border pt-4"
+                    >
                       <p className="text-xs text-muted-foreground">
-                        {t("account.appIdentityDesc")}
+                        {t("account.addApp.help")}
                       </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end flex-shrink-0">
-                    {appIdentity ? (
-                      <span className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 whitespace-nowrap">
-                        {t("account.connected")}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400 border border-gray-500/30">
-                        {t("account.notConnected")}
-                      </span>
-                    )}
-                  </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="add-app-email">
+                          {t("account.addApp.emailLabel")}
+                        </Label>
+                        <Input
+                          id="add-app-email"
+                          type="email"
+                          autoComplete="email"
+                          value={addAppEmail}
+                          onChange={(e) => setAddAppEmail(e.target.value)}
+                          placeholder={t("account.addApp.emailPlaceholder")}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="add-app-username">
+                          {t("account.addApp.usernameLabel")}
+                        </Label>
+                        <Input
+                          id="add-app-username"
+                          type="text"
+                          autoComplete="username"
+                          value={addAppUsername}
+                          onChange={(e) => setAddAppUsername(e.target.value)}
+                          placeholder={t("account.addApp.usernamePlaceholder")}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="add-app-password">
+                          {t("account.addApp.passwordLabel")}
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="add-app-password"
+                            type={showAddAppPassword ? "text" : "password"}
+                            autoComplete="new-password"
+                            value={addAppPassword}
+                            onChange={(e) => setAddAppPassword(e.target.value)}
+                            placeholder={t("account.addApp.passwordPlaceholder")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowAddAppPassword((v) => !v)
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showAddAppPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                        <PasswordStrengthIndicator password={addAppPassword} />
+                      </div>
+                      {addAppError && (
+                        <Alert variant="destructive" className="text-sm">
+                          {addAppError}
+                        </Alert>
+                      )}
+                      <Button
+                        type="submit"
+                        disabled={isAddingApp}
+                        className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                      >
+                        {isAddingApp ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          t("account.addApp.submit")
+                        )}
+                      </Button>
+                    </form>
+                  )}
                 </div>
 
                 {/* Discord Identity */}
@@ -677,9 +830,11 @@ export function AccountPage() {
                             return;
                           }
 
+                          // Mark this OAuth flow as a "link to existing account"
+                          // so the callback links instead of logging in/signing up.
                           const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
                             redirectUri,
-                          )}&response_type=code&scope=identify%20email%20guilds%20guilds.members.read`;
+                          )}&response_type=code&scope=identify%20email%20guilds%20guilds.members.read&state=link`;
                           window.location.href = discordAuthUrl;
                         }}
                         variant="outline"
@@ -759,7 +914,7 @@ export function AccountPage() {
             </Card>
 
             {/* Change Password Section - Only show if app identity exists */}
-            {appIdentity && (
+            {hasAppCredentials && (
               <Card className="border-border bg-card/95 backdrop-blur">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

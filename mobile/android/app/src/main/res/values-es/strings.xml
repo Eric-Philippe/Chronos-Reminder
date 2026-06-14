@@ -30,6 +30,9 @@
     <string name="confirm_password">Confirmar contraseña</string>
     <string name="timezone">Zona horaria</string>
     <string name="create_account">Crear cuenta</string>
+    <string name="discord_setup_title">Finalizar configuración</string>
+    <string name="discord_setup_subtitle">Añade un correo y una contraseña a tu cuenta de Discord para iniciar sesión también en las aplicaciones web y móvil.</string>
+    <string name="discord_setup_submit">Completar configuración</string>
     <string name="have_account_sign_in">¿Ya tienes cuenta? Iniciar sesión</string>
     <string name="register_success">Revisa tu correo para verificar tu cuenta</string>
     <string name="error_passwords_mismatch">Las contraseñas no coinciden</string>
@@ -181,12 +184,22 @@
     <string name="provider_discord">Discord</string>
     <string name="provider_mobile">Aplicación móvil</string>
     <string name="linked_badge">Vinculado</string>
+    <string name="connect_discord">Conectar</string>
+    <string name="discord_linked">Cuenta de Discord vinculada</string>
+    <string name="section_add_login">Añadir inicio de sesión con correo y contraseña</string>
+    <string name="add_login_help">Añade un correo y una contraseña para iniciar sesión en las aplicaciones web y móvil con la misma cuenta.</string>
+    <string name="add_login_submit">Añadir</string>
+    <string name="app_login_added">Inicio de sesión con correo y contraseña añadido</string>
     <string name="manage_api_keys">Administrar claves API</string>
     <string name="sign_out">Cerrar sesión</string>
     <string name="delete_account">Eliminar cuenta</string>
     <string name="delete_account_title">¿Eliminar cuenta?</string>
     <string name="delete_account_text">Todos tus recordatorios y datos se eliminarán permanentemente. Escribe ELIMINAR para confirmar.</string>
     <string name="delete_confirm_word">ELIMINAR</string>
+    <string name="merge_title">¿Fusionar cuentas?</string>
+    <string name="merge_description">La cuenta de Discord %1$s ya pertenece a otra cuenta de Chronos. La fusión moverá todos sus recordatorios y datos a tu cuenta actual y luego eliminará la otra cuenta. Esta acción no se puede deshacer.</string>
+    <string name="merge_confirm">Sí, fusionar cuentas</string>
+    <string name="merge_success">Cuentas fusionadas con éxito</string>
 
     <!-- Links -->
     <string name="link_web_app">Abrir aplicación web</string>

@@ -15,7 +15,7 @@ import (
 // PasswordResetService handles password reset operations
 type PasswordResetService struct {
 	passwordResetRepo repositories.PasswordResetRepository
-	identityRepo      repositories.IdentityRepository
+	accountRepo       repositories.AccountRepository
 	mailerService     *MailerService
 	resetTokenTTL     time.Duration // Time-to-live for reset tokens (default 24 hours)
 }
@@ -23,12 +23,12 @@ type PasswordResetService struct {
 // NewPasswordResetService creates a new password reset service instance
 func NewPasswordResetService(
 	passwordResetRepo repositories.PasswordResetRepository,
-	identityRepo repositories.IdentityRepository,
+	accountRepo repositories.AccountRepository,
 	mailerService *MailerService,
 ) *PasswordResetService {
 	return &PasswordResetService{
 		passwordResetRepo: passwordResetRepo,
-		identityRepo:      identityRepo,
+		accountRepo:       accountRepo,
 		mailerService:     mailerService,
 		resetTokenTTL:     24 * time.Hour, // Tokens expire after 24 hours
 	}
@@ -45,13 +45,13 @@ func (p *PasswordResetService) GenerateResetToken() (string, error) {
 
 // RequestPasswordReset creates a password reset token and sends an email to the user
 func (p *PasswordResetService) RequestPasswordReset(email string) error {
-	// Check if identity exists with this email
-	identity, err := p.identityRepo.GetByProviderAndExternalID(models.ProviderApp, email)
+	// Check if an account exists with this email
+	account, err := p.accountRepo.GetByEmail(email)
 	if err != nil {
 		return fmt.Errorf("email not found")
 	}
 
-	if identity == nil {
+	if account == nil || account.PasswordHash == nil {
 		// Return generic message for security (don't reveal if email exists)
 		return nil
 	}
@@ -65,7 +65,7 @@ func (p *PasswordResetService) RequestPasswordReset(email string) error {
 	// Create password reset record
 	expiresAt := time.Now().Add(p.resetTokenTTL)
 	passwordReset := &models.PasswordReset{
-		AccountID: identity.AccountID,
+		AccountID: account.ID,
 		Email:     email,
 		Token:     token,
 		ExpiresAt: expiresAt,
@@ -179,19 +179,19 @@ func (p *PasswordResetService) ResetPassword(email string, token string, newPass
 		return fmt.Errorf("error hashing password: %w", err)
 	}
 
-	// Get identity for app provider
-	identity, err := p.identityRepo.GetByProviderAndExternalID(models.ProviderApp, email)
+	// Get the account for this email
+	account, err := p.accountRepo.GetByEmail(email)
 	if err != nil {
-		return fmt.Errorf("identity not found: %w", err)
+		return fmt.Errorf("account not found: %w", err)
 	}
 
-	if identity == nil {
-		return fmt.Errorf("identity not found")
+	if account == nil {
+		return fmt.Errorf("account not found")
 	}
 
-	// Update password
-	identity.PasswordHash = &hashedPassword
-	if err := p.identityRepo.Update(identity); err != nil {
+	// Update password at the account level
+	account.PasswordHash = &hashedPassword
+	if err := p.accountRepo.Update(account); err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 

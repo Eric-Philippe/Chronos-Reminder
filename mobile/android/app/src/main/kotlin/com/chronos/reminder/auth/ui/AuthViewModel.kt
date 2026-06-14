@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.chronos.reminder.account.data.AccountRepository
 import com.chronos.reminder.account.data.TimezoneDto
 import com.chronos.reminder.auth.data.AuthRepository
+import com.chronos.reminder.auth.data.DiscordLoginResult
 import com.chronos.reminder.auth.domain.LoginUseCase
 import com.chronos.reminder.core.network.ApiResult
 import com.chronos.reminder.core.network.AuthEvent
@@ -25,6 +26,15 @@ data class AuthUiState(
     val resetEmailSent: Boolean = false,
     val resendState: ResendState = ResendState.Idle,
     val timezones: List<TimezoneDto> = emptyList(),
+    // Set when a Discord login created a new Discord-only account that needs
+    // an email/password to finish onboarding.
+    val discordSetup: DiscordSetupState? = null,
+)
+
+data class DiscordSetupState(
+    val accountId: String,
+    val email: String?,
+    val username: String?,
 )
 
 enum class ResendState { Idle, Sending, Sent, Error }
@@ -67,10 +77,50 @@ class AuthViewModel @Inject constructor(
     }
 
     fun handleDiscordCode(code: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(loading = true, error = null) }
+            when (val result = authRepository.loginWithDiscordCode(code)) {
+                is ApiResult.Success -> when (val outcome = result.data) {
+                    is DiscordLoginResult.LoggedIn ->
+                        _uiState.update { it.copy(loading = false, isLoggedIn = true) }
+                    is DiscordLoginResult.NeedsSetup ->
+                        _uiState.update {
+                            it.copy(
+                                loading = false,
+                                discordSetup = DiscordSetupState(
+                                    accountId = outcome.accountId,
+                                    email = outcome.email,
+                                    username = outcome.username,
+                                ),
+                            )
+                        }
+                }
+                is ApiResult.Error -> _uiState.update { it.copy(loading = false, error = result.message) }
+                is ApiResult.NetworkError -> _uiState.update {
+                    it.copy(loading = false, error = "No internet connection")
+                }
+            }
+        }
+    }
+
+    fun completeDiscordSetup(email: String, username: String, password: String, timezone: String) {
+        val setup = _uiState.value.discordSetup ?: return
         runAuthOp(
-            op = { authRepository.loginWithDiscordCode(code) },
-            onSuccess = { state -> state.copy(isLoggedIn = true) },
+            op = {
+                authRepository.completeDiscordSetup(
+                    accountId = setup.accountId,
+                    email = email.trim(),
+                    username = username.trim(),
+                    password = password,
+                    timezone = timezone,
+                )
+            },
+            onSuccess = { state -> state.copy(isLoggedIn = true, discordSetup = null) },
         )
+    }
+
+    fun cancelDiscordSetup() {
+        _uiState.update { it.copy(discordSetup = null, error = null) }
     }
 
     fun resendVerification(email: String) {

@@ -94,13 +94,76 @@ func runMigrations() error {
 	
 	// Create unique constraint for provider + external_id combination
 	if err := DB.Exec(`
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_identities_provider_external_id 
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_identities_provider_external_id
 		ON identities(provider, external_id)
 	`).Error; err != nil {
 		return err
 	}
-	
+
+	// One-shot cutover: move credentials from legacy `app` identities to accounts
+	if err := migrateCredentials(); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// migrateCredentials is a one-shot, idempotent cutover that moves the email /
+// password / username from legacy `app` identity rows onto the accounts table,
+// then drops the now-unused password_hash column from identities.
+//
+// It is a no-op when identities.password_hash no longer exists (i.e. once the
+// cutover has already run).
+func migrateCredentials() error {
+	// Check whether the column still exists — this is the signal that the
+	// cutover has not yet run on this database.
+	var colCount int
+	if err := DB.Raw(`
+		SELECT COUNT(*)
+		FROM information_schema.columns
+		WHERE table_name = 'identities' AND column_name = 'password_hash'
+	`).Scan(&colCount).Error; err != nil {
+		return fmt.Errorf("checking identities.password_hash column: %w", err)
+	}
+	if colCount == 0 {
+		return nil // already migrated
+	}
+
+	log.Println("[DATABASE] - ⏳ Migrating legacy app-identity credentials to accounts table…")
+
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// Copy email / password / username up to each account that still has an
+		// `app` identity. Raw SQL because the Go model no longer knows the `app`
+		// provider.
+		res := tx.Exec(`
+			UPDATE accounts a
+			SET email         = i.external_id,
+			    password_hash = i.password_hash,
+			    username      = COALESCE(a.username, i.username)
+			FROM identities i
+			WHERE i.account_id = a.id
+			  AND i.provider   = 'app'
+		`)
+		if res.Error != nil {
+			return fmt.Errorf("copying credentials to accounts: %w", res.Error)
+		}
+		log.Printf("[DATABASE] - ✅ Copied credentials onto %d account(s)", res.RowsAffected)
+
+		// Remove the now-redundant `app` identity rows.
+		res = tx.Exec(`DELETE FROM identities WHERE provider = 'app'`)
+		if res.Error != nil {
+			return fmt.Errorf("deleting app identities: %w", res.Error)
+		}
+		log.Printf("[DATABASE] - ✅ Removed %d legacy app identity row(s)", res.RowsAffected)
+
+		// Drop the column so this function becomes a no-op on next startup.
+		if err := tx.Exec(`ALTER TABLE identities DROP COLUMN IF EXISTS password_hash`).Error; err != nil {
+			return fmt.Errorf("dropping identities.password_hash: %w", err)
+		}
+		log.Println("[DATABASE] - ✅ Dropped identities.password_hash — migration complete")
+
+		return nil
+	})
 }
 
 // createEnumTypes creates custom PostgreSQL enum types

@@ -283,15 +283,10 @@ func (h *UserHandler) CreateReminder(w http.ResponseWriter, r *http.Request) {
 		// Handle email destination
 		if destType == models.DestinationEmail {
 			if _, hasEmail := dest.Metadata["email"]; !hasEmail {
-				// Auto-fill from app identity
-				accountWithIdentities, err := h.accountRepo.GetWithIdentities(accountID)
-				if err == nil && accountWithIdentities != nil {
-					for _, identity := range accountWithIdentities.Identities {
-						if identity.Provider == models.ProviderApp {
-							dest.Metadata["email"] = identity.ExternalID
-							break
-						}
-					}
+				// Auto-fill from account-level email
+				acct, err := h.accountRepo.GetByID(accountID)
+				if err == nil && acct != nil && acct.Email != nil {
+					dest.Metadata["email"] = *acct.Email
 				}
 				if _, still := dest.Metadata["email"]; !still {
 					continue
@@ -528,6 +523,94 @@ func (h *UserHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, account)
 }
 
+// AddAppIdentity creates an email/password (app) identity for the currently
+// authenticated account. This is the inverse of linking Discord: it lets a
+// Discord-first (or mobile-first) account add email/password login so the same
+// account can be reached from every surface.
+// @Route: POST /api/account/identity/app
+func (h *UserHandler) AddAppIdentity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	accountID, err := h.extractAccountIDFromToken(r)
+	if err != nil {
+		WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	var req struct {
+		Email    string `json:"email"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	req.Email = strings.TrimSpace(req.Email)
+	req.Username = strings.TrimSpace(req.Username)
+	if req.Email == "" {
+		WriteError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+	if req.Username == "" {
+		WriteError(w, http.StatusBadRequest, "Username is required")
+		return
+	}
+	if len(req.Password) < 8 {
+		WriteError(w, http.StatusBadRequest, "Password must be at least 8 characters")
+		return
+	}
+
+	account, err := h.accountRepo.GetWithIdentities(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
+		return
+	}
+	if account == nil {
+		WriteError(w, http.StatusNotFound, "Account not found")
+		return
+	}
+
+	// Reject if this account already has email/password credentials.
+	if account.Email != nil {
+		WriteError(w, http.StatusConflict, "This account already has email/password login")
+		return
+	}
+
+	// Reject if the email is already used by another account.
+	existing, err := h.accountRepo.GetByEmail(req.Email)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to check email availability")
+		return
+	}
+	if existing != nil {
+		WriteError(w, http.StatusConflict, "This email is already in use")
+		return
+	}
+
+	hashedPassword, err := services.HashPassword(req.Password)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to secure password")
+		return
+	}
+
+	account.Email = &req.Email
+	account.Username = &req.Username
+	account.PasswordHash = &hashedPassword
+	account.EmailVerified = true
+	if err := h.accountRepo.Update(account); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to add login credentials")
+		return
+	}
+
+	WriteJSON(w, http.StatusCreated, map[string]string{"message": "Login credentials added successfully"})
+}
+
 // ChangeAppIdentityPassword changes the password for the app identity
 // @Route: POST /api/account/identity/app/change-password
 func (h *UserHandler) ChangeAppIdentityPassword(w http.ResponseWriter, r *http.Request) {
@@ -565,8 +648,7 @@ func (h *UserHandler) ChangeAppIdentityPassword(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Get the account with identities
-	account, err := h.accountRepo.GetWithIdentities(accountID)
+	account, err := h.accountRepo.GetByID(accountID)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
 		return
@@ -577,27 +659,13 @@ func (h *UserHandler) ChangeAppIdentityPassword(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Find the app identity
-	var appIdentity *models.Identity
-	for i := range account.Identities {
-		if account.Identities[i].Provider == models.ProviderApp {
-			appIdentity = &account.Identities[i]
-			break
-		}
-	}
-
-	if appIdentity == nil {
-		WriteError(w, http.StatusNotFound, "App identity not found")
-		return
-	}
-
-	if appIdentity.PasswordHash == nil {
-		WriteError(w, http.StatusBadRequest, "App identity does not have a password set")
+	if account.PasswordHash == nil {
+		WriteError(w, http.StatusBadRequest, "This account does not have a password set")
 		return
 	}
 
 	// Verify current password
-	if err := services.VerifyPassword(*appIdentity.PasswordHash, req.CurrentPassword); err != nil {
+	if err := services.VerifyPassword(*account.PasswordHash, req.CurrentPassword); err != nil {
 		WriteError(w, http.StatusUnauthorized, "Current password is incorrect")
 		return
 	}
@@ -609,9 +677,8 @@ func (h *UserHandler) ChangeAppIdentityPassword(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Update the identity with new password hash
-	appIdentity.PasswordHash = &hashedPassword
-	if err := h.identityRepo.Update(appIdentity); err != nil {
+	account.PasswordHash = &hashedPassword
+	if err := h.accountRepo.Update(account); err != nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to update password")
 		return
 	}
@@ -726,8 +793,7 @@ func (h *UserHandler) UpdateAppIdentityUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Get the account with identities
-	account, err := h.accountRepo.GetWithIdentities(accountID)
+	account, err := h.accountRepo.GetByID(accountID)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
 		return
@@ -738,37 +804,10 @@ func (h *UserHandler) UpdateAppIdentityUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Find app and mobile identities
-	var appIdentity *models.Identity
-	var mobileIdentity *models.Identity
-	for i := range account.Identities {
-		switch account.Identities[i].Provider {
-		case models.ProviderApp:
-			appIdentity = &account.Identities[i]
-		case models.ProviderMobile:
-			mobileIdentity = &account.Identities[i]
-		}
-	}
-
-	if appIdentity == nil {
-		WriteError(w, http.StatusNotFound, "App identity not found")
-		return
-	}
-
-	// Update app identity username
-	appIdentity.Username = &req.Username
-	if err := h.identityRepo.Update(appIdentity); err != nil {
+	account.Username = &req.Username
+	if err := h.accountRepo.Update(account); err != nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to update username")
 		return
-	}
-
-	// Mirror the username to the mobile identity if it exists
-	if mobileIdentity != nil {
-		mobileIdentity.Username = &req.Username
-		if err := h.identityRepo.Update(mobileIdentity); err != nil {
-			// Non-fatal: log but don't fail the request
-			fmt.Printf("[UPDATE_USERNAME] Failed to mirror username to mobile identity: %v\n", err)
-		}
 	}
 
 	WriteJSON(w, http.StatusOK, map[string]string{
@@ -819,23 +858,13 @@ func (h *UserHandler) UpdateAppIdentityEmail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Find the app identity
-	var appIdentity *models.Identity
-	for i := range account.Identities {
-		if account.Identities[i].Provider == models.ProviderApp {
-			appIdentity = &account.Identities[i]
-			break
-		}
-	}
-
-	if appIdentity == nil {
-		WriteError(w, http.StatusNotFound, "App identity not found")
+	if account.Email == nil {
+		WriteError(w, http.StatusNotFound, "This account does not have an email login")
 		return
 	}
 
-	// Update the external_id (email)
-	appIdentity.ExternalID = req.Email
-	if err := h.identityRepo.Update(appIdentity); err != nil {
+	account.Email = &req.Email
+	if err := h.accountRepo.Update(account); err != nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to update email")
 		return
 	}

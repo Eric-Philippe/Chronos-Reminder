@@ -171,10 +171,5 @@ func createFromDiscordUser(discordUser *discordgo.User) (*models.Account, error)
 }
 
 func DiscordUserUsesApp(account *models.Account) bool {
-	for _, identity := range account.Identities {
-		if identity.Provider == models.ProviderApp {
-			return true
-		}
-	}
-	return false
+	return account.PasswordHash != nil
 }

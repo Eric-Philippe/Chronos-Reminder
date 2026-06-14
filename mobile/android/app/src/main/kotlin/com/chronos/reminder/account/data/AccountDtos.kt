@@ -6,10 +6,27 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AccountDto(
     val id: String,
+    val email: String? = null,
+    val username: String? = null,
     @SerialName("email_verified") val emailVerified: Boolean = false,
     val timezone: TimezoneDto? = null,
     val identities: List<IdentityDto> = emptyList(),
     @SerialName("created_at") val createdAt: String? = null,
+)
+
+@Serializable
+data class LinkDiscordResponse(
+    val message: String = "",
+    val username: String? = null,
+    @SerialName("merge_required") val mergeRequired: Boolean = false,
+    @SerialName("other_account_id") val otherAccountId: String? = null,
+    @SerialName("discord_username") val discordUsername: String? = null,
+    @SerialName("merge_token") val mergeToken: String? = null,
+)
+
+@Serializable
+data class MergeRequest(
+    @SerialName("merge_token") val mergeToken: String,
 )
 
 @Serializable
@@ -36,6 +53,16 @@ data class TimezoneRequest(val timezone: String)
 @Serializable
 data class MobileIdentityRequest(
     @SerialName("device_name") val deviceName: String,
+)
+
+@Serializable
+data class DiscordLinkRequest(val code: String)
+
+@Serializable
+data class AddAppIdentityRequest(
+    val email: String,
+    val username: String,
+    val password: String,
 )
 
 @Serializable

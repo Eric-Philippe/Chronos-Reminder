@@ -36,19 +36,10 @@ func (d *DFMDispatcher) NoteWebURL() string {
 }
 
 // Dispatch sends the note to its owner on every enabled private channel
-// (Discord DM and/or email). A failure on one channel does not prevent the
-// other from being attempted.
-func (d *DFMDispatcher) Dispatch(note *models.DFMNote, identities []models.Identity) error {
-	var discordIdentity, appIdentity *models.Identity
-	for i := range identities {
-		switch identities[i].Provider {
-		case models.ProviderDiscord:
-			discordIdentity = &identities[i]
-		case models.ProviderApp:
-			appIdentity = &identities[i]
-		}
-	}
-
+// (Discord DM and/or email). discordUserID and email may be empty string if
+// the respective channel is not available. A failure on one channel does not
+// prevent the other from being attempted.
+func (d *DFMDispatcher) Dispatch(note *models.DFMNote, discordUserID string, email string) error {
 	if !note.SendDiscordDM && !note.SendEmail {
 		return fmt.Errorf("no destination enabled for DFM note %s", note.ID)
 	}
@@ -56,17 +47,17 @@ func (d *DFMDispatcher) Dispatch(note *models.DFMNote, identities []models.Ident
 	var errs []error
 
 	if note.SendDiscordDM {
-		if discordIdentity == nil || d.session == nil {
+		if discordUserID == "" || d.session == nil {
 			errs = append(errs, fmt.Errorf("no Discord identity linked for DFM note %s", note.ID))
-		} else if err := d.dispatchDiscordDM(note, discordIdentity.ExternalID); err != nil {
+		} else if err := d.dispatchDiscordDM(note, discordUserID); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
 	if note.SendEmail {
-		if appIdentity == nil {
-			errs = append(errs, fmt.Errorf("no email identity linked for DFM note %s", note.ID))
-		} else if err := d.dispatchEmail(note, appIdentity.ExternalID); err != nil {
+		if email == "" {
+			errs = append(errs, fmt.Errorf("no email linked for DFM note %s", note.ID))
+		} else if err := d.dispatchEmail(note, email); err != nil {
 			errs = append(errs, err)
 		}
 	}

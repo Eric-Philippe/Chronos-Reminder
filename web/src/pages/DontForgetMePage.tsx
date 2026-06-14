@@ -144,7 +144,7 @@ export function DontForgetMePage() {
     if (fetchedAccount) {
       const identities = fetchedAccount.identities ?? [];
       const discordLinked = identities.some((i) => i.provider === "discord");
-      const emailLinked = identities.some((i) => i.provider === "app");
+      const emailLinked = !!fetchedAccount.email;
       setHasDiscord(discordLinked);
       setHasEmail(emailLinked);
       // Default to a destination the user can actually receive

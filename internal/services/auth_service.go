@@ -45,12 +45,12 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *RegisterUserRequest
 		return nil, errors.New("registration request is nil")
 	}
 
-	// Check if email already exists
-	existingIdentity, err := s.identityRepo.GetByProviderAndExternalID(models.ProviderApp, req.Email)
+	// Check if email already exists at the account level
+	existingAccount, err := s.accountRepo.GetByEmail(req.Email)
 	if err != nil {
 		return nil, fmt.Errorf("error checking email: %w", err)
 	}
-	if existingIdentity != nil {
+	if existingAccount != nil {
 		return nil, errors.New("email already exists")
 	}
 
@@ -69,34 +69,21 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *RegisterUserRequest
 		return nil, fmt.Errorf("error hashing password: %w", err)
 	}
 
-	// Create new account
+	// Create new account with account-level credentials
+	email := req.Email
+	username := req.Username
 	account := &models.Account{
-		ID:         uuid.New(),
-		TimezoneID: &timezone.ID,
+		ID:           uuid.New(),
+		TimezoneID:   &timezone.ID,
+		Email:        &email,
+		Username:     &username,
+		PasswordHash: &hashedPassword,
 	}
 
 	if err := s.accountRepo.Create(account); err != nil {
 		return nil, fmt.Errorf("error creating account: %w", err)
 	}
 
-	// Create identity with app provider
-	identity := &models.Identity{
-		ID:           uuid.New(),
-		AccountID:    account.ID,
-		Provider:     models.ProviderApp,
-		ExternalID:   req.Email,
-		Username:     &req.Username,
-		PasswordHash: &hashedPassword,
-	}
-
-	if err := s.identityRepo.Create(identity); err != nil {
-		// Clean up the created account on identity creation failure
-		s.accountRepo.Delete(account.ID)
-		return nil, fmt.Errorf("error creating identity: %w", err)
-	}
-
-	// Load the full account with identities
-	account.Identities = []models.Identity{*identity}
 	account.Timezone = timezone
 
 	return account, nil

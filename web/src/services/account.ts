@@ -134,6 +134,28 @@ class AccountService {
   }
 
   /**
+   * Add an email/password (app) identity to the current account.
+   * Used by Discord-first (or mobile-first) accounts to enable web/mobile login.
+   */
+  async addAppIdentity(
+    email: string,
+    username: string,
+    password: string
+  ): Promise<void> {
+    try {
+      await httpClient.post<ApiResponse<{ message: string }>>(
+        "/api/account/identity/app",
+        { email, username, password }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to add email/password login");
+    }
+  }
+
+  /**
    * Delete the current account
    */
   async deleteAccount(): Promise<void> {

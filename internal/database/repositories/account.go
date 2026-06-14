@@ -35,6 +35,19 @@ func (r *accountRepository) GetByID(id uuid.UUID) (*models.Account, error) {
 	return &account, nil
 }
 
+// GetByEmail looks up an account by its (account-level) login email.
+func (r *accountRepository) GetByEmail(email string) (*models.Account, error) {
+	var account models.Account
+	err := r.db.Preload("Timezone").First(&account, "email = ?", email).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &account, nil
+}
+
 func (r *accountRepository) Update(account *models.Account) error {
 	return r.db.Save(account).Error
 }

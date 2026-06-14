@@ -24,6 +24,9 @@ data class AccountUiState(
     // API keys
     val apiKeys: List<ApiKeyDto> = emptyList(),
     val createdKey: ApiKeyDto? = null, // full key shown once
+    // Merge state
+    val pendingMergeToken: String? = null,
+    val pendingMergeDiscordUsername: String? = null,
 )
 
 @HiltViewModel
@@ -65,6 +68,41 @@ class AccountViewModel @Inject constructor(
 
     fun changePassword(current: String, new: String, successMessage: String) =
         runOp(successMessage) { repository.changePassword(current, new) }
+
+    fun linkDiscord(code: String, successMessage: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, error = null, successMessage = null) }
+            when (val result = repository.linkDiscord(code)) {
+                is ApiResult.Success -> {
+                    val data = result.data
+                    if (data.mergeRequired) {
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                pendingMergeToken = data.mergeToken,
+                                pendingMergeDiscordUsername = data.discordUsername,
+                            )
+                        }
+                    } else {
+                        _state.update { it.copy(loading = false, successMessage = successMessage) }
+                    }
+                }
+                is ApiResult.Error -> _state.update { it.copy(loading = false, error = result.message) }
+                is ApiResult.NetworkError -> _state.update { it.copy(loading = false, error = "No internet connection") }
+            }
+        }
+    }
+
+    fun confirmMerge(successMessage: String) {
+        val token = _state.value.pendingMergeToken ?: return
+        _state.update { it.copy(pendingMergeToken = null, pendingMergeDiscordUsername = null) }
+        runOp(successMessage) { repository.mergeAccounts(token) }
+    }
+
+    fun dismissMerge() = _state.update { it.copy(pendingMergeToken = null, pendingMergeDiscordUsername = null) }
+
+    fun addAppIdentity(email: String, username: String, password: String, successMessage: String) =
+        runOp(successMessage) { repository.addAppIdentity(email.trim(), username.trim(), password) }
 
     fun deleteAccount() {
         viewModelScope.launch {

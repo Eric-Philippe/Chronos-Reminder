@@ -57,7 +57,7 @@ fun discordOAuthUrl(): String =
         "?client_id=${BuildConfig.DISCORD_CLIENT_ID}" +
         "&redirect_uri=${Uri.encode(DISCORD_REDIRECT_URI)}" +
         "&response_type=code" +
-        "&scope=identify+email"
+        "&scope=identify+email+guilds+guilds.members.read"
 
 @Composable
 fun LoginScreen(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { DiscordSetupSection } from "@/components/DiscordSetupSection";
 import { authService } from "@/services";
 
@@ -12,13 +13,21 @@ interface SetupData {
   needs_setup: boolean;
 }
 
+interface MergeData {
+  discord_username: string;
+  merge_token: string;
+}
+
 export function OAuthCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [setupData, setSetupData] = useState<SetupData | null>(null);
   const [isCompletingSetup, setIsCompletingSetup] = useState(false);
+  const [mergeData, setMergeData] = useState<MergeData | null>(null);
+  const [isMerging, setIsMerging] = useState(false);
 
   useEffect(() => {
     // Prevent duplicate requests in development (React StrictMode calls effects twice)
@@ -28,6 +37,7 @@ export function OAuthCallbackPage() {
     const handleCallback = async () => {
       const code = searchParams.get("code");
       const errorParam = searchParams.get("error");
+      const state = searchParams.get("state");
 
       // Only process once
       if (hasProcessed) {
@@ -51,11 +61,63 @@ export function OAuthCallbackPage() {
         return;
       }
 
-      try {
-        // Get the API URL from environment or use localhost as default
-        const apiUrl =
-          import.meta.env.VITE_API_URL || "https://api.chronosrmd.com";
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "https://api.chronosrmd.com";
 
+      // "link" flow: an already-authenticated user is connecting Discord to
+      // their existing account. Call the authenticated link endpoint instead
+      // of the login/signup callback.
+      if (state === "link") {
+        try {
+          const token = localStorage.getItem("auth_token");
+          const response = await fetch(
+            `${apiUrl}/api/account/identity/discord/link`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              credentials: "include",
+              body: JSON.stringify({ code }),
+            },
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || "Failed to link Discord account");
+          }
+
+          const linkData = await response.json().catch(() => ({}));
+
+          if (linkData.merge_required) {
+            if (isMounted) {
+              setMergeData({
+                discord_username: linkData.discord_username || "",
+                merge_token: linkData.merge_token || "",
+              });
+              setIsLoading(false);
+            }
+            return;
+          }
+
+          if (isMounted) {
+            navigate("/account", { replace: true });
+          }
+        } catch (err) {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : "Failed to link Discord account";
+          if (isMounted) {
+            setError(errorMessage);
+            setIsLoading(false);
+          }
+        }
+        return;
+      }
+
+      try {
         // Send code to backend
         const response = await fetch(`${apiUrl}/api/auth/discord/callback`, {
           method: "POST",
@@ -195,6 +257,64 @@ export function OAuthCallbackPage() {
       setIsCompletingSetup(false);
     }
   };
+
+  const handleConfirmMerge = async () => {
+    if (!mergeData) return;
+    const apiUrl = import.meta.env.VITE_API_URL || "https://api.chronosrmd.com";
+    try {
+      setIsMerging(true);
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`${apiUrl}/api/account/merge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ merge_token: mergeData.merge_token }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || t("account.merge.failed"));
+      }
+      navigate("/account", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("account.merge.failed"));
+      setMergeData(null);
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
+  // Show merge confirmation dialog
+  if (mergeData && !error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background-main to-background-secondary flex items-center justify-center p-4">
+        <div className="bg-card rounded-lg shadow-lg p-8 max-w-md w-full space-y-4">
+          <h2 className="text-xl font-bold text-foreground">{t("account.merge.title")}</h2>
+          <p className="text-muted-foreground text-sm">
+            {t("account.merge.description", { username: mergeData.discord_username })}
+          </p>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={handleConfirmMerge}
+              disabled={isMerging}
+              className="flex-1 px-4 py-2 bg-accent hover:bg-accent/90 disabled:opacity-50 text-accent-foreground rounded font-medium transition-colors"
+            >
+              {isMerging ? t("account.merge.merging") : t("account.merge.confirm")}
+            </button>
+            <button
+              onClick={() => navigate("/account", { replace: true })}
+              disabled={isMerging}
+              className="flex-1 px-4 py-2 border border-border hover:bg-secondary/30 text-foreground rounded font-medium transition-colors"
+            >
+              {t("account.merge.cancel")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

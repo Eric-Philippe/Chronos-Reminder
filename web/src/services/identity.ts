@@ -42,12 +42,9 @@ class IdentityService {
       const hasDiscordIdentity = identities.some(
         (identity: AccountIdentity) => identity.provider === "discord"
       );
-      const appIdentity = identities.find(
-        (identity: AccountIdentity) => identity.provider === "app"
-      );
-      const hasAppIdentity = !!appIdentity;
-      const hasEmail = hasAppIdentity && !!appIdentity?.external_id;
-      const userEmail = appIdentity?.external_id ?? null;
+      const hasAppIdentity = !!account.email;
+      const hasEmail = hasAppIdentity;
+      const userEmail = account.email ?? null;
       const hasAndroidPush = identities.some(
         (identity: AccountIdentity) => identity.provider === "mobile"
       );

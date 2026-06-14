@@ -428,6 +428,23 @@
     "connected": "Connected",
     "notConnected": "Not Connected",
     "connectDiscord": "Connect Discord",
+    "addApp": {
+      "button": "Add login",
+      "cancel": "Cancel",
+      "help": "Add an email and password so you can sign in on the web and mobile apps with the same account.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Your name",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "submit": "Add email & password login",
+      "allFieldsRequired": "Email and username are required",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "success": "Login added",
+      "successDesc": "You can now sign in with your email and password.",
+      "failed": "Failed to add email/password login"
+    },
     "manageKeys": "Manage Keys",
     "changePassword": "Change Password",
     "currentPassword": "Current Password",
@@ -470,7 +487,17 @@
     "deletingAccount": "Deleting Account...",
     "accountDeleted": "Account deleted successfully",
     "accountDeletedDesc": "Your account has been deleted. You are being logged out.",
-    "deleteAccountFailed": "Failed to delete account"
+    "deleteAccountFailed": "Failed to delete account",
+    "merge": {
+      "title": "Merge accounts?",
+      "description": "The Discord account {{username}} already belongs to another Chronos account. Merging will move all its reminders and data into your current account, then delete the other account. This cannot be undone.",
+      "confirm": "Yes, merge accounts",
+      "cancel": "Cancel",
+      "merging": "Merging...",
+      "success": "Accounts merged successfully",
+      "successDesc": "All data from the other account has been moved to yours.",
+      "failed": "Failed to merge accounts"
+    }
   },
   "apiKeys": {
     "title": "API Keys",

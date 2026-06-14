@@ -3,7 +3,9 @@ package com.chronos.reminder.account.ui
 import android.app.Activity
 import android.app.LocaleManager
 import android.content.Context
+import android.net.Uri
 import android.os.Build
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,8 +52,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.chronos.reminder.BuildConfig
 import com.chronos.reminder.R
 import com.chronos.reminder.auth.ui.TimezonePickerSheetContent
+import com.chronos.reminder.auth.ui.discordOAuthUrl
 import com.chronos.reminder.core.ui.components.ChronosButton
 import com.chronos.reminder.core.ui.components.ChronosButtonStyle
 import com.chronos.reminder.core.ui.components.ChronosCard
@@ -73,6 +77,8 @@ fun AccountScreen(
     onOpenAbout: () -> Unit,
     onLogout: () -> Unit,
     onAccountDeleted: () -> Unit,
+    pendingDiscordLinkCode: String? = null,
+    onPendingDiscordLinkConsumed: () -> Unit = {},
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -89,14 +95,18 @@ fun AccountScreen(
     var oldPassword by rememberSaveable { mutableStateOf("") }
     var newPassword by rememberSaveable { mutableStateOf("") }
     var confirmNewPassword by rememberSaveable { mutableStateOf("") }
+    var addAppEmail by rememberSaveable { mutableStateOf("") }
+    var addAppUsername by rememberSaveable { mutableStateOf("") }
+    var addAppPassword by rememberSaveable { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val tzUpdated = stringResource(R.string.timezone_updated)
     val usernameUpdated = stringResource(R.string.username_updated)
     val emailUpdated = stringResource(R.string.email_updated)
     val passwordChanged = stringResource(R.string.password_changed)
+    val appLoginAdded = stringResource(R.string.app_login_added)
 
-    val appIdentity = account?.identities?.firstOrNull { it.provider == "app" }
+    val hasAppCredentials = account?.email != null
     val discordIdentity = account?.identities?.firstOrNull { it.provider == "discord" }
     val mobileIdentity = account?.identities?.firstOrNull { it.provider == "mobile" }
 
@@ -108,6 +118,13 @@ fun AccountScreen(
     }
     LaunchedEffect(state.accountDeleted) {
         if (state.accountDeleted) onAccountDeleted()
+    }
+    val discordLinkedMsg = stringResource(R.string.discord_linked)
+    LaunchedEffect(pendingDiscordLinkCode) {
+        pendingDiscordLinkCode?.let {
+            viewModel.linkDiscord(it, discordLinkedMsg)
+            onPendingDiscordLinkConsumed()
+        }
     }
 
     Scaffold(
@@ -160,10 +177,10 @@ fun AccountScreen(
                         Spacer(Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = appIdentity?.username ?: mobileIdentity?.username ?: discordIdentity?.username ?: "—",
+                                text = account?.username ?: mobileIdentity?.username ?: discordIdentity?.username ?: "—",
                                 style = MaterialTheme.typography.titleMedium,
                             )
-                            appIdentity?.externalId?.let { email ->
+                            account?.email?.let { email ->
                                 Text(email, style = MaterialTheme.typography.bodyMedium, color = ForegroundMuted)
                             }
                             discordIdentity?.username?.let { tag ->
@@ -192,7 +209,7 @@ fun AccountScreen(
                     )
                 }
 
-                if (appIdentity != null) {
+                if (hasAppCredentials) {
                     // --- Username ---
                     SectionHeader(stringResource(R.string.section_username))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -200,7 +217,7 @@ fun AccountScreen(
                             value = newUsername,
                             onValueChange = { newUsername = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = appIdentity.username ?: stringResource(R.string.username),
+                            placeholder = account?.username ?: stringResource(R.string.username),
                         )
                         Spacer(Modifier.width(8.dp))
                         ChronosButton(
@@ -217,7 +234,7 @@ fun AccountScreen(
                             value = newEmail,
                             onValueChange = { newEmail = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = appIdentity.externalId ?: stringResource(R.string.email),
+                            placeholder = account?.email ?: stringResource(R.string.email),
                         )
                         Spacer(Modifier.width(8.dp))
                         ChronosButton(
@@ -272,6 +289,52 @@ fun AccountScreen(
                                 newPassword == confirmNewPassword,
                         )
                     }
+                } else {
+                    // No email/password identity yet (e.g. Discord-first account).
+                    // Let the user add one so the same account works on web & mobile.
+                    SectionHeader(stringResource(R.string.section_add_login))
+                    Text(
+                        text = stringResource(R.string.add_login_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ForegroundMuted,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                    ChronosTextField(
+                        value = addAppEmail,
+                        onValueChange = { addAppEmail = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = stringResource(R.string.email),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    ChronosTextField(
+                        value = addAppUsername,
+                        onValueChange = { addAppUsername = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = stringResource(R.string.username),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    ChronosTextField(
+                        value = addAppPassword,
+                        onValueChange = { addAppPassword = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = stringResource(R.string.password),
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = addAppPassword.isNotEmpty() && addAppPassword.length < 8,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    ChronosButton(
+                        text = stringResource(R.string.add_login_submit),
+                        onClick = {
+                            viewModel.addAppIdentity(addAppEmail, addAppUsername, addAppPassword, appLoginAdded)
+                            addAppEmail = ""
+                            addAppUsername = ""
+                            addAppPassword = ""
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = addAppEmail.contains('@') &&
+                            addAppUsername.isNotBlank() &&
+                            addAppPassword.length >= 8,
+                    )
                 }
 
                 // --- Identities ---
@@ -280,13 +343,19 @@ fun AccountScreen(
                     Column(Modifier.padding(16.dp)) {
                         IdentityRow(
                             label = stringResource(R.string.provider_app),
-                            linked = appIdentity != null,
+                            linked = hasAppCredentials,
                         )
                         Spacer(Modifier.height(8.dp))
                         IdentityRow(
                             label = stringResource(R.string.provider_discord),
                             linked = discordIdentity != null,
                             detail = discordIdentity?.username,
+                            onConnect = {
+                                if (BuildConfig.DISCORD_CLIENT_ID.isNotBlank()) {
+                                    CustomTabsIntent.Builder().build()
+                                        .launchUrl(context, Uri.parse(discordOAuthUrl()))
+                                }
+                            },
                         )
                         if (mobileIdentity != null) {
                             Spacer(Modifier.height(8.dp))
@@ -478,6 +547,33 @@ fun AccountScreen(
         }
     }
 
+    // Merge confirmation dialog
+    val mergeSuccessMsg = stringResource(R.string.merge_success)
+    if (state.pendingMergeToken != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissMerge() },
+            title = { Text(stringResource(R.string.merge_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.merge_description,
+                        state.pendingMergeDiscordUsername ?: "",
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmMerge(mergeSuccessMsg) }) {
+                    Text(stringResource(R.string.merge_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissMerge() }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+
     if (showDeleteDialog) {
         val confirmWord = stringResource(R.string.delete_confirm_word)
         ConfirmDeleteDialog(
@@ -540,7 +636,12 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun IdentityRow(label: String, linked: Boolean, detail: String? = null) {
+private fun IdentityRow(
+    label: String,
+    linked: Boolean,
+    detail: String? = null,
+    onConnect: (() -> Unit)? = null,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         detail?.let {
@@ -553,6 +654,14 @@ private fun IdentityRow(label: String, linked: Boolean, detail: String? = null) 
                 style = MaterialTheme.typography.labelSmall,
                 color = LinkedGreen,
             )
+        } else if (onConnect != null) {
+            TextButton(onClick = onConnect) {
+                Text(
+                    stringResource(R.string.connect_discord),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AccentOrange,
+                )
+            }
         }
     }
 }

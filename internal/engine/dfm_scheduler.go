@@ -22,6 +22,7 @@ const dfmPollInterval = time.Minute
 type DFMScheduler struct {
 	noteRepo     repositories.DFMNoteRepository
 	identityRepo repositories.IdentityRepository
+	accountRepo  repositories.AccountRepository
 	dispatcher   *dispatchers.DFMDispatcher
 	stopChan     chan struct{}
 	running      bool
@@ -31,11 +32,13 @@ type DFMScheduler struct {
 func NewDFMScheduler(
 	noteRepo repositories.DFMNoteRepository,
 	identityRepo repositories.IdentityRepository,
+	accountRepo repositories.AccountRepository,
 	dispatcher *dispatchers.DFMDispatcher,
 ) *DFMScheduler {
 	return &DFMScheduler{
 		noteRepo:     noteRepo,
 		identityRepo: identityRepo,
+		accountRepo:  accountRepo,
 		dispatcher:   dispatcher,
 		stopChan:     make(chan struct{}),
 	}
@@ -97,12 +100,12 @@ func (s *DFMScheduler) SendNoteNow(accountID uuid.UUID) error {
 		return fmt.Errorf("no DFM note found for account %s", accountID)
 	}
 
-	identities, err := s.identityRepo.GetByAccountID(accountID)
+	discordID, email, err := s.resolveDeliveryAddresses(accountID)
 	if err != nil {
 		return err
 	}
 
-	return s.dispatcher.Dispatch(note, identities)
+	return s.dispatcher.Dispatch(note, discordID, email)
 }
 
 // SendDFMNoteNow dispatches the account's note immediately through the running scheduler service
@@ -128,15 +131,37 @@ func (s *DFMScheduler) processDueNotes() {
 	}
 }
 
+// resolveDeliveryAddresses returns the Discord user ID and email for an account.
+// Either may be empty string if not linked.
+func (s *DFMScheduler) resolveDeliveryAddresses(accountID uuid.UUID) (discordID string, email string, err error) {
+	identities, err := s.identityRepo.GetByAccountID(accountID)
+	if err != nil {
+		return "", "", err
+	}
+	for _, id := range identities {
+		if id.Provider == models.ProviderDiscord {
+			discordID = id.ExternalID
+		}
+	}
+	account, err := s.accountRepo.GetByID(accountID)
+	if err != nil {
+		return "", "", err
+	}
+	if account != nil && account.Email != nil {
+		email = *account.Email
+	}
+	return discordID, email, nil
+}
+
 // processNote dispatches a single note, records the delivery and computes the next fire time
 func (s *DFMScheduler) processNote(note *models.DFMNote) {
-	identities, err := s.identityRepo.GetByAccountID(note.AccountID)
+	discordID, email, err := s.resolveDeliveryAddresses(note.AccountID)
 	if err != nil {
-		log.Printf("[ENGINE] - Error fetching identities for DFM note %s: %v", note.ID, err)
+		log.Printf("[ENGINE] - Error fetching delivery addresses for DFM note %s: %v", note.ID, err)
 		return
 	}
 
-	if err := s.dispatcher.Dispatch(note, identities); err != nil {
+	if err := s.dispatcher.Dispatch(note, discordID, email); err != nil {
 		log.Printf("[ENGINE] - Error dispatching DFM note %s: %v", note.ID, err)
 	} else if config.IsDebugMode() {
 		log.Printf("[ENGINE] - DFM note %s dispatched", note.ID)

@@ -257,22 +257,9 @@ func HandleDFMSetReminder(session *discordgo.Session, interaction *discordgo.Int
 		return utils.SendError(session, interaction, "Invalid Destination", "The destination must be Discord DM, Email or Both.")
 	}
 
-	// Email delivery requires a linked app identity holding the email address
-	if sendEmail {
-		identities, err := repo.Identity.GetByAccountID(account.ID)
-		if err != nil {
-			return utils.SendError(session, interaction, "Database Error", "Failed to check your linked identities.")
-		}
-		hasEmail := false
-		for _, identity := range identities {
-			if identity.Provider == models.ProviderApp {
-				hasEmail = true
-				break
-			}
-		}
-		if !hasEmail {
-			return utils.SendError(session, interaction, "No Email Linked", "You need a Chronos web account with an email address to receive your note by email. You can link one from the web application.")
-		}
+	// Email delivery requires an account-level email address
+	if sendEmail && account.Email == nil {
+		return utils.SendError(session, interaction, "No Email Linked", "You need a Chronos web account with an email address to receive your note by email. You can link one from the web application.")
 	}
 
 	fullAccount, err := repo.Account.GetWithTimezone(account.ID)

@@ -30,6 +30,9 @@
     <string name="confirm_password">Confirmer le mot de passe</string>
     <string name="timezone">Fuseau horaire</string>
     <string name="create_account">Créer un compte</string>
+    <string name="discord_setup_title">Terminer la configuration</string>
+    <string name="discord_setup_subtitle">Ajoutez une adresse e-mail et un mot de passe à votre compte Discord pour vous connecter aussi sur les applications web et mobile.</string>
+    <string name="discord_setup_submit">Terminer la configuration</string>
     <string name="have_account_sign_in">Déjà un compte ? Se connecter</string>
     <string name="register_success">Vérifiez votre e-mail pour activer votre compte</string>
     <string name="error_passwords_mismatch">Les mots de passe ne correspondent pas</string>
@@ -181,12 +184,22 @@
     <string name="provider_discord">Discord</string>
     <string name="provider_mobile">Application mobile</string>
     <string name="linked_badge">Lié</string>
+    <string name="connect_discord">Connecter</string>
+    <string name="discord_linked">Compte Discord lié</string>
+    <string name="section_add_login">Ajouter une connexion e-mail et mot de passe</string>
+    <string name="add_login_help">Ajoutez une adresse e-mail et un mot de passe pour vous connecter sur les applications web et mobile avec le même compte.</string>
+    <string name="add_login_submit">Ajouter</string>
+    <string name="app_login_added">Connexion e-mail et mot de passe ajoutée</string>
     <string name="manage_api_keys">Gérer les clés API</string>
     <string name="sign_out">Se déconnecter</string>
     <string name="delete_account">Supprimer le compte</string>
     <string name="delete_account_title">Supprimer le compte ?</string>
     <string name="delete_account_text">Tous vos rappels et données seront supprimés définitivement. Tapez SUPPRIMER pour confirmer.</string>
     <string name="delete_confirm_word">SUPPRIMER</string>
+    <string name="merge_title">Fusionner les comptes ?</string>
+    <string name="merge_description">Le compte Discord %1$s appartient déjà à un autre compte Chronos. La fusion déplacera tous ses rappels et données dans votre compte actuel, puis supprimera l\'autre compte. Cette action est irréversible.</string>
+    <string name="merge_confirm">Oui, fusionner les comptes</string>
+    <string name="merge_success">Comptes fusionnés avec succès</string>
 
     <!-- Links -->
     <string name="link_web_app">Ouvrir l\'application web</string>

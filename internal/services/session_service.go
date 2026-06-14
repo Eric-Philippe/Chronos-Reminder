@@ -81,33 +81,19 @@ func (s *SessionService) LoginUser(ctx context.Context, req *LoginRequest) (*Ses
 		return nil, "", errors.New("login request is nil")
 	}
 
-	// Find identity by email and provider
-	identity, err := s.identityRepo.GetByProviderAndExternalID(models.ProviderApp, req.Email)
+	// Find the account by its login email (credentials live on the account now)
+	account, err := s.accountRepo.GetByEmail(req.Email)
 	if err != nil {
-		return nil, "", fmt.Errorf("error finding identity: %w", err)
+		return nil, "", fmt.Errorf("error finding account: %w", err)
 	}
 
-	if identity == nil {
+	if account == nil || account.PasswordHash == nil {
 		return nil, "", errors.New("invalid email or password")
 	}
 
 	// Verify password
-	if identity.PasswordHash == nil {
+	if err := VerifyPassword(*account.PasswordHash, req.Password); err != nil {
 		return nil, "", errors.New("invalid email or password")
-	}
-
-	if err := VerifyPassword(*identity.PasswordHash, req.Password); err != nil {
-		return nil, "", errors.New("invalid email or password")
-	}
-
-	// Get full account with timezone
-	account, err := s.accountRepo.GetWithTimezone(identity.AccountID)
-	if err != nil {
-		return nil, "", fmt.Errorf("error fetching account: %w", err)
-	}
-
-	if account == nil {
-		return nil, "", errors.New("account not found")
 	}
 
 	// Check if email has been verified on the account
@@ -124,22 +110,21 @@ func (s *SessionService) LoginUser(ctx context.Context, req *LoginRequest) (*Ses
 	}
 
 	// Create JWT token
-	token, err := s.generateToken(account, identity, sessionDuration)
+	token, err := s.generateToken(account, nil, sessionDuration)
 	if err != nil {
 		return nil, "", fmt.Errorf("error generating token: %w", err)
 	}
 
-	// Get username
-	var username string
-	if identity.Username != nil {
-		username = *identity.Username
+	username := ""
+	if account.Username != nil {
+		username = *account.Username
 	}
 
 	// Create session data
 	sessionData := &SessionData{
 		AccountID:  account.ID,
-		IdentityID: identity.ID,
-		Email:      identity.ExternalID,
+		IdentityID: uuid.Nil,
+		Email:      req.Email,
 		Username:   username,
 		ExpiresAt:  time.Now().Add(sessionDuration),
 		RememberMe: req.RememberMe,
@@ -238,8 +223,8 @@ func (s *SessionService) LoginUserWithID(ctx context.Context, req *LoginWithIDRe
 		return nil, "", errors.New("invalid account ID")
 	}
 
-	// Get full account with timezone and identities
-	account, err := s.accountRepo.GetWithIdentities(accountID)
+	// Get full account with timezone
+	account, err := s.accountRepo.GetWithTimezone(accountID)
 	if err != nil {
 		return nil, "", fmt.Errorf("error fetching account: %w", err)
 	}
@@ -248,41 +233,32 @@ func (s *SessionService) LoginUserWithID(ctx context.Context, req *LoginWithIDRe
 		return nil, "", errors.New("account not found")
 	}
 
-	// Get the app identity - find the first app provider identity
-	var identity *models.Identity
-	for _, id := range account.Identities {
-		if id.Provider == models.ProviderApp {
-			identity = &id
-			break
-		}
-	}
-
-	if identity == nil {
-		return nil, "", errors.New("identity not found")
-	}
-
 	// Check if email has been verified on the account
 	if !account.EmailVerified {
 		return nil, "", errors.New("email not verified")
 	}
 
 	// Create JWT token (24 hour session)
-	token, err := s.generateToken(account, identity, 24*time.Hour)
+	token, err := s.generateToken(account, nil, 24*time.Hour)
 	if err != nil {
 		return nil, "", fmt.Errorf("error generating token: %w", err)
 	}
 
-	// Get username
-	var username string
-	if identity.Username != nil {
-		username = *identity.Username
+	// Get email/username from the account
+	email := ""
+	if account.Email != nil {
+		email = *account.Email
+	}
+	username := ""
+	if account.Username != nil {
+		username = *account.Username
 	}
 
 	// Create session data
 	sessionData := &SessionData{
 		AccountID:  account.ID,
-		IdentityID: identity.ID,
-		Email:      identity.ExternalID,
+		IdentityID: uuid.Nil,
+		Email:      email,
 		Username:   username,
 		ExpiresAt:  time.Now().Add(24 * time.Hour),
 		RememberMe: false,
@@ -297,20 +273,33 @@ func (s *SessionService) LoginUserWithID(ctx context.Context, req *LoginWithIDRe
 	return sessionData, token, nil
 }
 
-// generateToken creates a JWT token
+// generateToken builds a JWT for an account. identity is optional: pass the
+// provider identity used to authenticate (e.g. Discord) for the IdentityID
+// claim, or nil for email/password login. Email/username come from the account.
 func (s *SessionService) generateToken(account *models.Account, identity *models.Identity, duration time.Duration) (string, error) {
 	now := time.Now()
 	expiresAt := now.Add(duration)
 
+	email := ""
+	if account.Email != nil {
+		email = *account.Email
+	}
 	username := ""
-	if identity.Username != nil {
-		username = *identity.Username
+	if account.Username != nil {
+		username = *account.Username
+	}
+	identityID := ""
+	if identity != nil {
+		identityID = identity.ID.String()
+		if username == "" && identity.Username != nil {
+			username = *identity.Username
+		}
 	}
 
 	claims := SessionToken{
 		AccountID:  account.ID.String(),
-		IdentityID: identity.ID.String(),
-		Email:      identity.ExternalID,
+		IdentityID: identityID,
+		Email:      email,
 		Username:   username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
@@ -358,27 +347,8 @@ func GenerateSessionID() (string, error) {
 
 // generateTokenForAccount creates a JWT token directly for an account and identity
 // This is used for OAuth flows where we don't have a password
+// generateTokenForAccount is an alias of generateToken kept for the Discord
+// OAuth call sites; email/username are sourced from the account.
 func (s *SessionService) generateTokenForAccount(account *models.Account, identity *models.Identity, duration time.Duration) (string, error) {
-	now := time.Now()
-	expiresAt := now.Add(duration)
-
-	username := ""
-	if identity.Username != nil {
-		username = *identity.Username
-	}
-
-	claims := SessionToken{
-		AccountID:  account.ID.String(),
-		IdentityID: identity.ID.String(),
-		Email:      identity.ExternalID,
-		Username:   username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expiresAt),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	return s.generateToken(account, identity, duration)
 }

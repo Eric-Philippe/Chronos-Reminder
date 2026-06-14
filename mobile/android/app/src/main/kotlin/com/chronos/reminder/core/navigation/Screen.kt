@@ -17,6 +17,9 @@ sealed interface Screen {
     data object ForgotPassword : Screen
 
     @Serializable
+    data object DiscordSetup : Screen
+
+    @Serializable
     data object MainGraph : Screen
 
     @Serializable

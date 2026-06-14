@@ -257,30 +257,6 @@ func (h *DFMHandler) SetReminder(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Each chosen destination must match a linked identity
-	identities, err := h.identityRepo.GetByAccountID(accountID)
-	if err != nil {
-		WriteError(w, http.StatusInternalServerError, "Failed to retrieve identities")
-		return
-	}
-	hasDiscord, hasEmail := false, false
-	for _, identity := range identities {
-		if identity.Provider == models.ProviderDiscord {
-			hasDiscord = true
-		}
-		if identity.Provider == models.ProviderApp {
-			hasEmail = true
-		}
-	}
-	if sendDiscordDM && !hasDiscord {
-		WriteError(w, http.StatusBadRequest, "No Discord account linked")
-		return
-	}
-	if sendEmail && !hasEmail {
-		WriteError(w, http.StatusBadRequest, "No email identity linked")
-		return
-	}
-
 	account, err := h.accountRepo.GetWithTimezone(accountID)
 	if err != nil || account == nil {
 		WriteError(w, http.StatusInternalServerError, "Failed to retrieve account")
@@ -288,6 +264,27 @@ func (h *DFMHandler) SetReminder(w http.ResponseWriter, r *http.Request) {
 	}
 	if account.Timezone == nil {
 		WriteError(w, http.StatusBadRequest, "Account timezone not set")
+		return
+	}
+
+	// Each chosen destination must be available on the account
+	identities, err := h.identityRepo.GetByAccountID(accountID)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to retrieve identities")
+		return
+	}
+	hasDiscord := false
+	for _, identity := range identities {
+		if identity.Provider == models.ProviderDiscord {
+			hasDiscord = true
+		}
+	}
+	if sendDiscordDM && !hasDiscord {
+		WriteError(w, http.StatusBadRequest, "No Discord account linked")
+		return
+	}
+	if sendEmail && account.Email == nil {
+		WriteError(w, http.StatusBadRequest, "No email linked to this account")
 		return
 	}
 

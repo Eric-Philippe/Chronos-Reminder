@@ -34,6 +34,28 @@ data class DiscordCallbackRequest(
     val state: String = "",
 )
 
+// Outcome of a Discord OAuth callback on mobile.
+sealed interface DiscordLoginResult {
+    // Existing account with credentials — the user is now logged in.
+    data object LoggedIn : DiscordLoginResult
+
+    // Brand-new Discord-only account that needs an email/password to finish.
+    data class NeedsSetup(
+        val accountId: String,
+        val email: String?,
+        val username: String?,
+    ) : DiscordLoginResult
+}
+
+@Serializable
+data class DiscordSetupRequest(
+    @SerialName("account_id") val accountId: String,
+    val email: String,
+    val username: String,
+    val password: String,
+    val timezone: String,
+)
+
 @Serializable
 data class DiscordCallbackResponseDto(
     val id: String? = null,

@@ -77,11 +77,12 @@ func (v *VerificationService) ResendVerification(email string) (bool, error) {
 	return true, nil
 }
 
-// resolveAccountID finds the account owning an email, via the app identity first
-// and then any prior verification record (covers Discord-only accounts).
+// resolveAccountID finds the account owning an email, via the account-level
+// email first and then any prior verification record (covers accounts created
+// via Discord before credentials were set).
 func (v *VerificationService) resolveAccountID(email string) (uuid.UUID, bool) {
-	if identity, err := v.identityRepo.GetByProviderAndExternalID(models.ProviderApp, email); err == nil && identity != nil {
-		return identity.AccountID, true
+	if account, err := v.accountRepo.GetByEmail(email); err == nil && account != nil {
+		return account.ID, true
 	}
 	if record, err := v.verificationRepo.GetByEmail(email); err == nil && record != nil {
 		if id, err := uuid.Parse(record.AccountID); err == nil {

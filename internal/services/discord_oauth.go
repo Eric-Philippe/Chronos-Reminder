@@ -203,17 +203,8 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 			fmt.Printf("[DISCORD_AUTH] Warning: Failed to update access token: %v\n", err)
 		}
 
-		// Check if account has app identity
-		hasAppIdentity := false
-		for _, identity := range account.Identities {
-			if identity.Provider == models.ProviderApp {
-				hasAppIdentity = true
-				break
-			}
-		}
-
-		// If only Discord identity exists, prompt for setup
-		if !hasAppIdentity && len(account.Identities) == 1 {
+		// If account has no email/password credentials, prompt for setup
+		if account.Email == nil && len(account.Identities) == 1 {
 			return account, "SETUP_REQUIRED", nil
 		}
 
@@ -226,26 +217,26 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 		return account, token, nil
 	}
 
-	// Step 2: Check if email exists
+	// Step 2: Check if an account already exists with this email (account-level
+	// credential). If so, this is the same person — link Discord and log in.
 	if userInfo.Email != "" {
-		// Check for app provider identity with this email
-		appIdentity, err := s.identityRepo.GetByProviderAndExternalID(models.ProviderApp, userInfo.Email)
+		existingAccount, err := s.accountRepo.GetByEmail(userInfo.Email)
 		if err != nil {
-			return nil, "", fmt.Errorf("error checking app email identity: %w", err)
+			return nil, "", fmt.Errorf("error checking account email: %w", err)
 		}
 
-		if appIdentity != nil {
-			// Case 2: Email exists as app provider - link Discord identity, login
-			account, err := s.accountRepo.GetWithIdentities(appIdentity.AccountID)
+		if existingAccount != nil {
+			// Case 2: account with this email exists - link Discord, login
+			account, err := s.accountRepo.GetWithIdentities(existingAccount.ID)
 			if err != nil {
 				return nil, "", fmt.Errorf("error loading account: %w", err)
 			}
 			if account == nil {
-				return nil, "", errors.New("account not found for existing app email identity")
+				return nil, "", errors.New("account not found for existing email")
 			}
 
 			// Create session token for this account
-			token, err := s.sessionService.generateTokenForAccount(account, appIdentity, 30*24*time.Hour)
+			token, err := s.sessionService.generateTokenForAccount(account, nil, 30*24*time.Hour)
 			if err != nil {
 				return nil, "", fmt.Errorf("error creating session: %w", err)
 			}
@@ -253,43 +244,19 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 			// Link Discord identity in the background (non-blocking)
 			go func() {
 				newDiscordIdentity := &models.Identity{
-					ID:           uuid.New(),
-					AccountID:    account.ID,
-					Provider:     models.ProviderDiscord,
-					ExternalID:   userInfo.ID,
-					Username:     &userInfo.Username,
-					Avatar:       &userInfo.Avatar,
-					AccessToken:  &accessToken,
+					ID:          uuid.New(),
+					AccountID:   account.ID,
+					Provider:    models.ProviderDiscord,
+					ExternalID:  userInfo.ID,
+					Username:    &userInfo.Username,
+					Avatar:      &userInfo.Avatar,
+					AccessToken: &accessToken,
 				}
 				if refreshToken != "" {
 					newDiscordIdentity.RefreshToken = &refreshToken
 				}
 				_ = s.identityRepo.Create(newDiscordIdentity)
 			}()
-
-			return account, token, nil
-		}
-
-		// Check if email exists as a Discord provider identity
-		discordEmailIdentity, err := s.identityRepo.GetByProviderAndExternalID(models.ProviderDiscord, userInfo.Email)
-		if err != nil {
-			return nil, "", fmt.Errorf("error checking discord email identity: %w", err)
-		}
-
-		if discordEmailIdentity != nil {
-			// Case 3: Email exists as Discord provider - login with that account
-			account, err := s.accountRepo.GetWithIdentities(discordEmailIdentity.AccountID)
-			if err != nil {
-				return nil, "", fmt.Errorf("error loading account: %w", err)
-			}
-			if account == nil {
-				return nil, "", errors.New("account not found for existing discord email identity")
-			}
-
-			token, err := s.sessionService.generateTokenForAccount(account, discordEmailIdentity, 30*24*time.Hour)
-			if err != nil {
-				return nil, "", fmt.Errorf("error creating session: %w", err)
-			}
 
 			return account, token, nil
 		}
@@ -357,15 +324,56 @@ func (s *DiscordOAuthService) ProcessDiscordAuth(ctx context.Context, userInfo *
 	return account, "SETUP_REQUIRED", nil
 }
 
-// LinkDiscordToAccount links a Discord identity to an existing account
-func (s *DiscordOAuthService) LinkDiscordToAccount(ctx context.Context, accountID uuid.UUID, userInfo *DiscordUserInfo) error {
-	// Check if this Discord ID is already linked to another account
+// LinkDiscordToAccount links a Discord identity to an existing account.
+// ErrDiscordLinkedToOtherAccount is returned by LinkDiscordToAccount when the
+// Discord ID belongs to a different account. The handler can use this sentinel
+// to distinguish a "merge required" situation from hard errors.
+var ErrDiscordLinkedToOtherAccount = errors.New("discord account already linked to another account")
+
+// LinkDiscordResult carries the outcome of a link attempt.
+type LinkDiscordResult struct {
+	// OtherAccountID is set when ErrDiscordLinkedToOtherAccount is returned.
+	OtherAccountID uuid.UUID
+	// OtherDiscordUsername is the Discord username of the conflicting identity.
+	OtherDiscordUsername string
+}
+
+// LinkDiscordToAccount links a Discord identity to an existing account.
+// accessToken/refreshToken are stored so Discord guild features work for the
+// linked account; pass empty strings if unavailable.
+// Returns (LinkDiscordResult{}, nil) on success.
+// Returns (result, ErrDiscordLinkedToOtherAccount) when the Discord ID already
+// belongs to a different account — the caller should offer a merge.
+func (s *DiscordOAuthService) LinkDiscordToAccount(ctx context.Context, accountID uuid.UUID, userInfo *DiscordUserInfo, accessToken, refreshToken string) (LinkDiscordResult, error) {
+	// Check if this Discord ID is already linked to an account
 	existingIdentity, err := s.identityRepo.GetByProviderAndExternalID(models.ProviderDiscord, userInfo.ID)
 	if err != nil {
-		return fmt.Errorf("error checking discord identity: %w", err)
+		return LinkDiscordResult{}, fmt.Errorf("error checking discord identity: %w", err)
 	}
 	if existingIdentity != nil {
-		return errors.New("this discord account is already linked to another account")
+		// Already linked to THIS account: refresh the snapshot/tokens instead of erroring.
+		if existingIdentity.AccountID == accountID {
+			existingIdentity.Username = &userInfo.Username
+			existingIdentity.Avatar = &userInfo.Avatar
+			if accessToken != "" {
+				existingIdentity.AccessToken = &accessToken
+			}
+			if refreshToken != "" {
+				existingIdentity.RefreshToken = &refreshToken
+			}
+			if err := s.identityRepo.Update(existingIdentity); err != nil {
+				return LinkDiscordResult{}, fmt.Errorf("error updating discord identity: %w", err)
+			}
+			return LinkDiscordResult{}, nil
+		}
+		username := userInfo.Username
+		if existingIdentity.Username != nil {
+			username = *existingIdentity.Username
+		}
+		return LinkDiscordResult{
+			OtherAccountID:       existingIdentity.AccountID,
+			OtherDiscordUsername: username,
+		}, ErrDiscordLinkedToOtherAccount
 	}
 
 	// Create Discord identity for this account
@@ -377,16 +385,23 @@ func (s *DiscordOAuthService) LinkDiscordToAccount(ctx context.Context, accountI
 		Username:   &userInfo.Username,
 		Avatar:     &userInfo.Avatar,
 	}
-
-	if err := s.identityRepo.Create(discordIdentity); err != nil {
-		return fmt.Errorf("error creating discord identity: %w", err)
+	if accessToken != "" {
+		discordIdentity.AccessToken = &accessToken
+	}
+	if refreshToken != "" {
+		discordIdentity.RefreshToken = &refreshToken
 	}
 
-	return nil
+	if err := s.identityRepo.Create(discordIdentity); err != nil {
+		return LinkDiscordResult{}, fmt.Errorf("error creating discord identity: %w", err)
+	}
+
+	return LinkDiscordResult{}, nil
 }
 
-// CreateAppIdentityForDiscordAccount creates an app identity (email/password) for a Discord-only user.
-// This is called during the setup flow after Discord OAuth to enable dual-login capability.
+// CreateAppIdentityForDiscordAccount sets the account-level email/password for a
+// Discord-only account. This is called during the setup flow after Discord OAuth
+// to enable email/password login on web and mobile.
 func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 	ctx context.Context,
 	accountIDStr string,
@@ -410,13 +425,18 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 		return "", errors.New("account not found")
 	}
 
-	// Check if app identity already exists
-	existingAppIdentity, err := s.identityRepo.GetByProviderAndExternalID(models.ProviderApp, email)
-	if err != nil {
-		return "", fmt.Errorf("error checking app identity: %w", err)
+	// Reject if this account already has credentials.
+	if account.PasswordHash != nil {
+		return "", errors.New("account already has email/password login")
 	}
-	if existingAppIdentity != nil {
-		return "", errors.New("app identity already exists for this email")
+
+	// Reject if the email is already used by another account.
+	existingAccount, err := s.accountRepo.GetByEmail(email)
+	if err != nil {
+		return "", fmt.Errorf("error checking email: %w", err)
+	}
+	if existingAccount != nil && existingAccount.ID != accountID {
+		return "", errors.New("email already in use")
 	}
 
 	// Hash password
@@ -425,43 +445,27 @@ func (s *DiscordOAuthService) CreateAppIdentityForDiscordAccount(
 		return "", fmt.Errorf("error hashing password: %w", err)
 	}
 
-	// Create app identity with username
-	appIdentity := &models.Identity{
-		ID:           uuid.New(),
-		AccountID:    accountID,
-		Provider:     models.ProviderApp,
-		ExternalID:   email,
-		Username:     &username,
-		PasswordHash: &hashedPassword,
-	}
-
-	if err := s.identityRepo.Create(appIdentity); err != nil {
-		return "", fmt.Errorf("error creating app identity: %w", err)
-	}
+	// Set account-level credentials. The user has verified via Discord OAuth, so
+	// mark the email verified immediately.
+	account.Email = &email
+	account.Username = &username
+	account.PasswordHash = &hashedPassword
+	account.EmailVerified = true
 
 	// Update timezone if provided and valid
 	if timezone != "" {
 		tz, err := s.timezoneRepo.GetByIANALocation(timezone)
 		if err == nil && tz != nil {
-			_ = s.accountRepo.UpdateTimezone(accountID, tz.ID)
+			account.TimezoneID = &tz.ID
 		}
 	}
 
-	// Load full account with all identities
-	account, err = s.accountRepo.GetWithIdentities(accountID)
-	if err != nil {
-		return "", fmt.Errorf("error loading account: %w", err)
-	}
-
-	// Update the account variable to reflect any changes
-	// We want to set the emailVerified to true since they have verified via Discord OAuth
-	account.EmailVerified = true
 	if err := s.accountRepo.Update(account); err != nil {
 		return "", fmt.Errorf("error updating account: %w", err)
 	}
 
 	// Create session token for the account
-	token, err := s.sessionService.generateTokenForAccount(account, appIdentity, 30*24*time.Hour)
+	token, err := s.sessionService.generateTokenForAccount(account, nil, 30*24*time.Hour)
 	if err != nil {
 		return "", fmt.Errorf("error creating session: %w", err)
 	}

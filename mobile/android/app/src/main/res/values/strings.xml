@@ -32,6 +32,9 @@
     <string name="confirm_password">Confirm password</string>
     <string name="timezone">Timezone</string>
     <string name="create_account">Create Account</string>
+    <string name="discord_setup_title">Finish setting up</string>
+    <string name="discord_setup_subtitle">Add an email and password to your Discord account so you can also sign in on the web and mobile apps.</string>
+    <string name="discord_setup_submit">Complete setup</string>
     <string name="have_account_sign_in">Already have an account? Sign in</string>
     <string name="register_success">Check your email to verify your account</string>
     <string name="error_passwords_mismatch">Passwords do not match</string>
@@ -159,6 +162,12 @@
     <string name="provider_discord">Discord</string>
     <string name="provider_mobile">Mobile App</string>
     <string name="linked_badge">Linked</string>
+    <string name="connect_discord">Connect</string>
+    <string name="discord_linked">Discord account linked</string>
+    <string name="section_add_login">Add Email &amp; Password Login</string>
+    <string name="add_login_help">Add an email and password so you can sign in on the web and mobile apps with the same account.</string>
+    <string name="add_login_submit">Add login</string>
+    <string name="app_login_added">Email &amp; password login added</string>
     <string name="manage_api_keys">Manage API Keys</string>
     <string name="sign_out">Sign Out</string>
     <string name="delete_account">Delete Account</string>
@@ -166,6 +175,10 @@
     <string name="delete_account_text">All your reminders and data will be permanently deleted. Type DELETE to confirm.</string>
     <string name="delete_confirm_word">DELETE</string>
     <string name="avatar">Avatar</string>
+    <string name="merge_title">Merge accounts?</string>
+    <string name="merge_description">The Discord account %1$s already belongs to another Chronos account. Merging will move all its reminders and data into your current account, then delete the other account. This cannot be undone.</string>
+    <string name="merge_confirm">Yes, merge accounts</string>
+    <string name="merge_success">Accounts merged successfully</string>
 
     <!-- API keys -->
     <string name="api_keys_title">API Keys</string>

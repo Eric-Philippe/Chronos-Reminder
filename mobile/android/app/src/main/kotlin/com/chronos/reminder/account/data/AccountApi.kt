@@ -32,6 +32,15 @@ interface AccountApi {
     @POST("api/account/identity/mobile")
     suspend fun ensureMobileIdentity(@Body body: MobileIdentityRequest): Response<IdentityDto>
 
+    @POST("api/account/identity/discord/link")
+    suspend fun linkDiscord(@Body body: DiscordLinkRequest): Response<LinkDiscordResponse>
+
+    @POST("api/account/merge")
+    suspend fun mergeAccounts(@Body body: MergeRequest): Response<MessageResponse>
+
+    @POST("api/account/identity/app")
+    suspend fun addAppIdentity(@Body body: AddAppIdentityRequest): Response<IdentityDto>
+
     @GET("api/timezones")
     suspend fun getTimezones(): Response<List<TimezoneDto>>
 

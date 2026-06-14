@@ -59,6 +59,20 @@ class AccountRepository @Inject constructor(
     suspend fun deleteAccount(): ApiResult<Unit> =
         safeApiCall { api.deleteAccount() }.map { }
 
+    suspend fun linkDiscord(code: String): ApiResult<LinkDiscordResponse> =
+        safeApiCall { api.linkDiscord(DiscordLinkRequest(code)) }
+            .onSuccess { if (!it.mergeRequired) refreshAccount() }
+
+    suspend fun mergeAccounts(mergeToken: String): ApiResult<Unit> =
+        safeApiCall { api.mergeAccounts(MergeRequest(mergeToken)) }
+            .onSuccess { refreshAccount() }
+            .map { }
+
+    suspend fun addAppIdentity(email: String, username: String, password: String): ApiResult<Unit> =
+        safeApiCall { api.addAppIdentity(AddAppIdentityRequest(email, username, password)) }
+            .onSuccess { refreshAccount() }
+            .map { }
+
     suspend fun getApiKeys(): ApiResult<List<ApiKeyDto>> =
         safeApiCall { api.getApiKeys() }.map { it.keys }
 

@@ -16,10 +16,12 @@ func (Identity) TableName() string {
 // ProviderType represents the provider enum
 type ProviderType string
 
-// Providers enum
+// Providers enum.
+// NOTE: the legacy 'app' provider has been removed — email/password now live on
+// the accounts table. The 'app' value may still exist in the DB enum but is
+// never written or read by the application.
 const (
 	ProviderDiscord ProviderType = "discord"
-	ProviderApp     ProviderType = "app"
 	ProviderAPIKey  ProviderType = "api_key"
 	ProviderMobile  ProviderType = "mobile"
 )
@@ -46,10 +48,10 @@ func (p *ProviderType) Scan(value interface{}) error {
 	}
 	
 	// Validate the scanned value
-	if *p != ProviderDiscord && *p != ProviderApp && *p != ProviderAPIKey && *p != ProviderMobile {
+	if *p != ProviderDiscord && *p != ProviderAPIKey && *p != ProviderMobile {
 		return fmt.Errorf("invalid provider type: %s", *p)
 	}
-	
+
 	return nil
 }
 
@@ -60,7 +62,7 @@ func (p ProviderType) String() string {
 
 // IsValid checks if the provider type is valid
 func (p ProviderType) IsValid() bool {
-	return p == ProviderDiscord || p == ProviderApp || p == ProviderAPIKey || p == ProviderMobile
+	return p == ProviderDiscord || p == ProviderAPIKey || p == ProviderMobile
 }
 
 // Identity represents the identities table
@@ -68,10 +70,9 @@ type Identity struct {
 	ID           uuid.UUID    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	AccountID    uuid.UUID    `gorm:"type:uuid;not null;index" json:"account_id"`
 	Provider     ProviderType `gorm:"type:provider_type;not null" json:"provider"` // enum type from database
-	ExternalID   string    `gorm:"not null" json:"external_id"`  // e.g., discord_id or app email
+	ExternalID   string    `gorm:"not null" json:"external_id"`  // discord_id, account-id (mobile), or api-key id
 	Username     *string   `json:"username"`                     // snapshot for display purposes
 	Avatar       *string   `json:"avatar"`                       // optional, snapshot of Discord avatar
-	PasswordHash *string   `json:"-"`                            // only for app identities, hidden in JSON
 	AccessToken  *string   `json:"-"`                            // Discord OAuth access token or API key hash, hidden in JSON
 	RefreshToken *string   `json:"-"`                            // Discord OAuth refresh token, hidden in JSON
 	Scopes       *string   `gorm:"type:text" json:"scopes,omitempty"`        // comma-separated scopes for API keys (e.g., "reminders.read")

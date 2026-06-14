@@ -71,7 +71,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	// Initialize password reset service
 	passwordResetService := services.NewPasswordResetService(
 		repos.PasswordReset,
-		repos.Identity,
+		repos.Account,
 		mailerService,
 	)
 
@@ -83,7 +83,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 
 	// Initialize handlers
 	authHandler := NewAuthHandler(authService, sessionService, verificationService, passwordResetService, cfg.WebAppURL)
-	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService)
+	discordOAuthHandler := NewDiscordOAuthHandler(discordOAuthService, repos)
 	discordGuildHandler := NewDiscordGuildHandler(discordOAuthService)
 	userHandler := NewUserHandler(repos.Reminder, repos.ReminderError, repos.Account, sessionService)
 	userHandler.SetReminderDestinationRepository(repos.ReminderDestination)
@@ -144,7 +144,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	registerAuthRoutes(wrappedMux, authHandler)
 	registerDiscordOAuthRoutes(wrappedMux, discordOAuthHandler)
 	registerDiscordGuildRoutes(wrappedMux, discordGuildHandler)
-	registerUserRoutes(wrappedMux, userHandler, sessionService, apiKeyService, rateLimitMiddleware)
+	registerUserRoutes(wrappedMux, userHandler, discordOAuthHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerReminderRoutes(wrappedMux, reminderHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerDFMRoutes(wrappedMux, dfmHandler, sessionService, apiKeyService, rateLimitMiddleware)
 	registerTimezoneRoutes(wrappedMux, timezoneHandler)
@@ -211,7 +211,7 @@ func registerDiscordGuildRoutes(mux *WrappedMux, discordGuildHandler *DiscordGui
 }
 
 // registerUserRoutes registers authenticated user routes with auth and rate limit middleware
-func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
+func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, discordOAuthHandler *DiscordOAuthHandler, sessionService *services.SessionService, apiKeyService *services.APIKeyService, rateLimitMiddleware func(http.Handler) http.Handler) {
 	// Apply auth middleware to user routes
 	authMiddleware := AuthMiddleware(sessionService, apiKeyService)
 
@@ -231,6 +231,9 @@ func registerUserRoutes(mux *WrappedMux, userHandler *UserHandler, sessionServic
 	mux.Handle("PUT /api/account/identity/app/email", chainMiddleware(http.HandlerFunc(userHandler.UpdateAppIdentityEmail)))
 	mux.Handle("DELETE /api/account", chainMiddleware(http.HandlerFunc(userHandler.DeleteAccount)))
 	mux.Handle("POST /api/account/identity/mobile", chainMiddleware(http.HandlerFunc(userHandler.EnsureMobileIdentity)))
+	mux.Handle("POST /api/account/identity/app", chainMiddleware(http.HandlerFunc(userHandler.AddAppIdentity)))
+	mux.Handle("POST /api/account/identity/discord/link", chainMiddleware(http.HandlerFunc(discordOAuthHandler.LinkDiscordIdentity)))
+	mux.Handle("POST /api/account/merge", chainMiddleware(http.HandlerFunc(discordOAuthHandler.MergeDiscordAccounts)))
 }
 
 // registerReminderRoutes registers reminder-specific routes with auth and rate limit middleware
