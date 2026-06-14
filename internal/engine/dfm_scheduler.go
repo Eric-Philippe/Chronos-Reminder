@@ -72,7 +72,7 @@ func (s *DFMScheduler) Start(ctx context.Context) {
 		}
 	}()
 
-	log.Println("[ENGINE] - DFM scheduler started")
+	log.Println("[ENGINE] - ✅ DFM scheduler started")
 }
 
 // Stop gracefully stops the DFM scheduler

@@ -100,126 +100,27 @@ func runMigrations() error {
 		return err
 	}
 
-	// One-shot cutover: move credentials from legacy `app` identities to accounts
-	if err := migrateCredentials(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-// migrateCredentials is a one-shot, idempotent cutover that moves the email /
-// password / username from legacy `app` identity rows onto the accounts table,
-// then drops the now-unused password_hash column from identities.
-//
-// It is a no-op when identities.password_hash no longer exists (i.e. once the
-// cutover has already run).
-func migrateCredentials() error {
-	// Check whether the column still exists — this is the signal that the
-	// cutover has not yet run on this database.
-	var colCount int
-	if err := DB.Raw(`
-		SELECT COUNT(*)
-		FROM information_schema.columns
-		WHERE table_name = 'identities' AND column_name = 'password_hash'
-	`).Scan(&colCount).Error; err != nil {
-		return fmt.Errorf("checking identities.password_hash column: %w", err)
-	}
-	if colCount == 0 {
-		return nil // already migrated
-	}
-
-	log.Println("[DATABASE] - ⏳ Migrating legacy app-identity credentials to accounts table…")
-
-	return DB.Transaction(func(tx *gorm.DB) error {
-		// Copy email / password / username up to each account that still has an
-		// `app` identity. Raw SQL because the Go model no longer knows the `app`
-		// provider.
-		res := tx.Exec(`
-			UPDATE accounts a
-			SET email         = i.external_id,
-			    password_hash = i.password_hash,
-			    username      = COALESCE(a.username, i.username)
-			FROM identities i
-			WHERE i.account_id = a.id
-			  AND i.provider   = 'app'
-		`)
-		if res.Error != nil {
-			return fmt.Errorf("copying credentials to accounts: %w", res.Error)
-		}
-		log.Printf("[DATABASE] - ✅ Copied credentials onto %d account(s)", res.RowsAffected)
-
-		// Remove the now-redundant `app` identity rows.
-		res = tx.Exec(`DELETE FROM identities WHERE provider = 'app'`)
-		if res.Error != nil {
-			return fmt.Errorf("deleting app identities: %w", res.Error)
-		}
-		log.Printf("[DATABASE] - ✅ Removed %d legacy app identity row(s)", res.RowsAffected)
-
-		// Drop the column so this function becomes a no-op on next startup.
-		if err := tx.Exec(`ALTER TABLE identities DROP COLUMN IF EXISTS password_hash`).Error; err != nil {
-			return fmt.Errorf("dropping identities.password_hash: %w", err)
-		}
-		log.Println("[DATABASE] - ✅ Dropped identities.password_hash — migration complete")
-
-		return nil
-	})
-}
-
-// createEnumTypes creates custom PostgreSQL enum types
+// createEnumTypes creates custom PostgreSQL enum types if they don't already exist.
 func createEnumTypes() error {
-	// Add 'mobile' to provider_type enum (best-effort; ignored if it already exists)
-	if err := DB.Exec(`ALTER TYPE provider_type ADD VALUE IF NOT EXISTS 'mobile';`).Error; err != nil {
-		log.Printf("[DATABASE] - ⚠️  Could not add 'mobile' to provider_type enum: %v", err)
-	} else {
-		log.Println("[DATABASE] - ✅ 'mobile' value ensured in provider_type enum")
-	}
-
-	// Try to add api_key to existing provider_type enum first
-	if err := DB.Exec(`ALTER TYPE provider_type ADD VALUE IF NOT EXISTS 'api_key';`).Error; err == nil {
-		// Successfully added or already exists
-		log.Println("[DATABASE] - ✅ 'api_key' value added to provider_type enum (or already existed)")
-	} else {
-		// If ALTER fails, try to recreate the enum
-		log.Printf("[DATABASE] - ⚠️  Could not alter provider_type enum, attempting to recreate: %v", err)
-		
-		// Try to drop and recreate - wrap in transaction to handle constraints
-		if err := DB.Exec(`
-			DO $$ BEGIN
-				DROP TYPE IF EXISTS provider_type CASCADE;
-				CREATE TYPE provider_type AS ENUM ('discord', 'app', 'api_key', 'mobile');
-			EXCEPTION WHEN OTHERS THEN
-				NULL;
-			END $$;
-		`).Error; err != nil {
-			log.Printf("[DATABASE] - ⚠️  Could not recreate provider_type enum: %v", err)
-			// Continue anyway - the table might auto-handle it
-		}
-	}
-
-	// Create destination_type enum if it doesn't exist
 	if err := DB.Exec(`
 		DO $$ BEGIN
-			CREATE TYPE destination_type AS ENUM ('discord_dm', 'discord_channel', 'webhook');
-		EXCEPTION
-			WHEN duplicate_object THEN null;
+			CREATE TYPE provider_type AS ENUM ('discord', 'app', 'api_key', 'mobile');
+		EXCEPTION WHEN duplicate_object THEN NULL;
+		END $$;
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create provider_type enum: %w", err)
+	}
+
+	if err := DB.Exec(`
+		DO $$ BEGIN
+			CREATE TYPE destination_type AS ENUM ('discord_dm', 'discord_channel', 'webhook', 'email', 'android_push');
+		EXCEPTION WHEN duplicate_object THEN NULL;
 		END $$;
 	`).Error; err != nil {
 		return fmt.Errorf("failed to create destination_type enum: %w", err)
-	}
-
-	// Add 'email' to destination_type enum if not already present
-	if err := DB.Exec(`ALTER TYPE destination_type ADD VALUE IF NOT EXISTS 'email';`).Error; err != nil {
-		log.Printf("[DATABASE] - ⚠️  Could not add 'email' to destination_type enum: %v", err)
-	} else {
-		log.Println("[DATABASE] - ✅ 'email' value ensured in destination_type enum")
-	}
-
-	// Add 'android_push' to destination_type enum if not already present
-	if err := DB.Exec(`ALTER TYPE destination_type ADD VALUE IF NOT EXISTS 'android_push';`).Error; err != nil {
-		log.Printf("[DATABASE] - ⚠️  Could not add 'android_push' to destination_type enum: %v", err)
-	} else {
-		log.Println("[DATABASE] - ✅ 'android_push' value ensured in destination_type enum")
 	}
 
 	return nil

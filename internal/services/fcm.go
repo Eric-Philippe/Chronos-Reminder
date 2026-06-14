@@ -29,7 +29,6 @@ func NewFcmService(credentialsPath string) *FcmService {
 	}
 
 	ctx := context.Background()
-	log.Printf("[FCM] - 🕒 Initializing Firebase Cloud Messaging with credentials from: %s", option.WithCredentialsFile(credentialsPath))
 	app, err := firebase.NewApp(ctx, nil, option.WithCredentialsFile(credentialsPath))
 	if err != nil {
 		log.Printf("[FCM] - ⚠️  Failed to initialize Firebase app, push disabled: %v", err)
