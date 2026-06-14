@@ -96,7 +96,6 @@ fun AccountScreen(
     var newPassword by rememberSaveable { mutableStateOf("") }
     var confirmNewPassword by rememberSaveable { mutableStateOf("") }
     var addAppEmail by rememberSaveable { mutableStateOf("") }
-    var addAppUsername by rememberSaveable { mutableStateOf("") }
     var addAppPassword by rememberSaveable { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -177,7 +176,7 @@ fun AccountScreen(
                         Spacer(Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = account?.username ?: mobileIdentity?.username ?: discordIdentity?.username ?: "—",
+                                text = account?.username ?: discordIdentity?.username ?: "—",
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             account?.email?.let { email ->
@@ -209,24 +208,27 @@ fun AccountScreen(
                     )
                 }
 
-                if (hasAppCredentials) {
-                    // --- Username ---
-                    SectionHeader(stringResource(R.string.section_username))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ChronosTextField(
-                            value = newUsername,
-                            onValueChange = { newUsername = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = account?.username ?: stringResource(R.string.username),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        ChronosButton(
-                            text = stringResource(R.string.save),
-                            onClick = { viewModel.updateUsername(newUsername, usernameUpdated) },
-                            enabled = newUsername.isNotBlank(),
-                        )
-                    }
+                // --- Username (available to all users) ---
+                SectionHeader(stringResource(R.string.section_username))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ChronosTextField(
+                        value = newUsername,
+                        onValueChange = { newUsername = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = account?.username ?: discordIdentity?.username ?: stringResource(R.string.username),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    ChronosButton(
+                        text = stringResource(R.string.save),
+                        onClick = {
+                            viewModel.updateUsername(newUsername, usernameUpdated)
+                            newUsername = ""
+                        },
+                        enabled = newUsername.isNotBlank(),
+                    )
+                }
 
+                if (hasAppCredentials) {
                     // --- Email ---
                     SectionHeader(stringResource(R.string.section_email))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -239,7 +241,10 @@ fun AccountScreen(
                         Spacer(Modifier.width(8.dp))
                         ChronosButton(
                             text = stringResource(R.string.save),
-                            onClick = { viewModel.updateEmail(newEmail, emailUpdated) },
+                            onClick = {
+                                viewModel.updateEmail(newEmail, emailUpdated)
+                                newEmail = ""
+                            },
                             enabled = newEmail.contains('@'),
                         )
                     }
@@ -307,13 +312,6 @@ fun AccountScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     ChronosTextField(
-                        value = addAppUsername,
-                        onValueChange = { addAppUsername = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = stringResource(R.string.username),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    ChronosTextField(
                         value = addAppPassword,
                         onValueChange = { addAppPassword = it },
                         modifier = Modifier.fillMaxWidth(),
@@ -325,14 +323,13 @@ fun AccountScreen(
                     ChronosButton(
                         text = stringResource(R.string.add_login_submit),
                         onClick = {
-                            viewModel.addAppIdentity(addAppEmail, addAppUsername, addAppPassword, appLoginAdded)
+                            val username = account?.username ?: discordIdentity?.username ?: ""
+                            viewModel.addAppIdentity(addAppEmail, username, addAppPassword, appLoginAdded)
                             addAppEmail = ""
-                            addAppUsername = ""
                             addAppPassword = ""
                         },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = addAppEmail.contains('@') &&
-                            addAppUsername.isNotBlank() &&
                             addAppPassword.length >= 8,
                     )
                 }

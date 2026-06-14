@@ -95,9 +95,7 @@ fun HomeScreen(
             )
             Spacer(Modifier.height(6.dp))
             val identities = state.account?.identities ?: emptyList()
-            val username = identities.firstOrNull { it.provider == "app" }?.username
-                ?: identities.firstOrNull { it.provider == "mobile" }?.username
-                ?: identities.firstOrNull { it.provider == "discord" }?.username
+            val username = state.account?.username ?: identities.firstOrNull()?.username
             if (!username.isNullOrEmpty()) {
                 Text(
                     text = stringResource(R.string.home_greeting, username),
