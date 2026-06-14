@@ -79,6 +79,7 @@ type UserHandler struct {
 	identityRepo            repositories.IdentityRepository
 	timezoneRepo            repositories.TimezoneRepository
 	sessionService          *services.SessionService
+	discordOAuthService     *services.DiscordOAuthService
 }
 
 // NewUserHandler creates a new user handler
@@ -109,6 +110,11 @@ func (h *UserHandler) SetIdentityRepository(repo repositories.IdentityRepository
 // SetTimezoneRepository sets the timezone repository
 func (h *UserHandler) SetTimezoneRepository(repo repositories.TimezoneRepository) {
 	h.timezoneRepo = repo
+}
+
+// SetDiscordOAuthService sets the Discord OAuth service (used for avatar refresh)
+func (h *UserHandler) SetDiscordOAuthService(svc *services.DiscordOAuthService) {
+	h.discordOAuthService = svc
 }
 
 // CreateReminder creates a new reminder for the authenticated user
@@ -518,6 +524,18 @@ func (h *UserHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	if account == nil {
 		WriteError(w, http.StatusNotFound, "Account not found")
 		return
+	}
+
+	// Background-refresh the Discord avatar/username so the snapshot stays current
+	// even when the user changes their Discord profile picture between logins.
+	if h.discordOAuthService != nil {
+		for i := range account.Identities {
+			if account.Identities[i].Provider == models.ProviderDiscord {
+				identity := &account.Identities[i]
+				go h.discordOAuthService.RefreshDiscordSnapshot(context.Background(), identity)
+				break
+			}
+		}
 	}
 
 	WriteJSON(w, http.StatusOK, account)

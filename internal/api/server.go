@@ -89,6 +89,7 @@ func NewServer(cfg *config.Config, repos *repositories.Repositories) *Server {
 	userHandler.SetReminderDestinationRepository(repos.ReminderDestination)
 	userHandler.SetIdentityRepository(repos.Identity)
 	userHandler.SetTimezoneRepository(repos.Timezone)
+	userHandler.SetDiscordOAuthService(discordOAuthService)
 
 	// Initialize reminder handler
 	reminderHandler := NewReminderHandler(

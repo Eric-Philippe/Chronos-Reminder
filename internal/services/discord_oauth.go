@@ -107,6 +107,51 @@ func NewDiscordOAuthService(
 	}
 }
 
+// RefreshDiscordSnapshot fetches fresh Discord user info (avatar, username) using
+// the stored access/refresh tokens and persists any changes to the identity row.
+// It is safe to call in a goroutine — errors are logged but not propagated.
+func (s *DiscordOAuthService) RefreshDiscordSnapshot(ctx context.Context, identity *models.Identity) {
+	if identity == nil || identity.AccessToken == nil {
+		return
+	}
+
+	accessToken := *identity.AccessToken
+
+	userInfo, err := s.GetUserInfo(ctx, accessToken)
+	if err != nil {
+		// Access token may be expired — try to refresh it.
+		if identity.RefreshToken == nil {
+			return
+		}
+		newAccess, newRefresh, rerr := s.RefreshDiscordToken(ctx, *identity.RefreshToken)
+		if rerr != nil {
+			return
+		}
+		accessToken = newAccess
+		identity.AccessToken = &newAccess
+		identity.RefreshToken = &newRefresh
+
+		userInfo, err = s.GetUserInfo(ctx, accessToken)
+		if err != nil {
+			return
+		}
+	}
+
+	changed := false
+	if userInfo.Avatar != "" && (identity.Avatar == nil || *identity.Avatar != userInfo.Avatar) {
+		identity.Avatar = &userInfo.Avatar
+		changed = true
+	}
+	if userInfo.Username != "" && (identity.Username == nil || *identity.Username != userInfo.Username) {
+		identity.Username = &userInfo.Username
+		changed = true
+	}
+
+	if changed {
+		_ = s.identityRepo.Update(identity)
+	}
+}
+
 // ExchangeCodeForToken exchanges Discord authorization code for access token and refresh token
 func (s *DiscordOAuthService) ExchangeCodeForToken(ctx context.Context, code string) (string, string, error) {
 	if s.clientID == "" || s.clientSecret == "" {
