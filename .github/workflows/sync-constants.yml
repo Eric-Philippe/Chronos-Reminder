@@ -30,7 +30,7 @@ jobs:
         with:
           # Use a PAT when available so the resulting push triggers downstream
           # workflows (Go container, web container, Android build).
-          token: ${{ secrets.CONSTANTS_SYNC_PAT != '' && secrets.CONSTANTS_SYNC_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CONSTANTS_SYNC_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Run sync script
         run: python3 scripts/sync-constants.py
@@ -51,13 +51,7 @@ jobs:
           # Nothing changed → generated files were already in sync
           git diff --staged --quiet && echo "All generated files are already up to date." && exit 0
 
-          VERSION=$(python3 - <<'EOF'
-import re, sys
-text = open("constants.yaml").read()
-m = re.search(r'^version:\s*"?([^"\n]+)"?', text, re.M)
-print(m.group(1) if m else "unknown")
-EOF
-          )
+          VERSION=$(sed -n 's/^version: *"\([^"]*\)".*/\1/p' constants.yaml)
 
           git commit -m "chore: sync generated constants to v${VERSION}"
           git push
