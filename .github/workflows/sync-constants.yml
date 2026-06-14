@@ -17,6 +17,7 @@ on:
     paths:
       - constants.yaml
       - scripts/sync-constants.py
+      - .github/workflows/sync-constants.yml
 
 jobs:
   sync:

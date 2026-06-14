@@ -34,6 +34,9 @@ jobs:
   build-release:
     name: Build & sign release artifacts
     runs-on: ubuntu-latest
+    env:
+      HAS_GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+      HAS_KEYSTORE: ${{ secrets.KEYSTORE_B64 != '' }}
 
     steps:
       # ── Checkout ────────────────────────────────────────────────────────────
