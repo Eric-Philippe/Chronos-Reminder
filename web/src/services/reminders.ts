@@ -112,7 +112,7 @@ class RemindersService {
     message: string;
     recurrence: string; // Uppercase string (e.g., "DAILY")
     destinations: Array<{
-      type: "discord_dm" | "discord_channel" | "webhook" | "email";
+      type: "discord_dm" | "discord_channel" | "webhook" | "email" | "android_push";
       metadata: Record<string, unknown>;
     }>;
   }): Promise<Reminder | null> {
@@ -142,7 +142,7 @@ class RemindersService {
       time?: string;
       recurrence?: string; // Uppercase string (e.g., "DAILY")
       destinations?: Array<{
-        type: "discord_dm" | "discord_channel" | "webhook" | "email";
+        type: "discord_dm" | "discord_channel" | "webhook" | "email" | "android_push";
         metadata: Record<string, unknown>;
       }>;
     },

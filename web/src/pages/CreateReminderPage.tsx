@@ -31,7 +31,7 @@ export interface ReminderFormData {
   message: string;
   recurrence: string; // Uppercase string (e.g., "DAILY", "WEEKLY")
   destinations: Array<{
-    type: "discord_dm" | "discord_channel" | "webhook" | "email";
+    type: "discord_dm" | "discord_channel" | "webhook" | "email" | "android_push";
     metadata: Record<string, unknown>;
   }>;
 }
