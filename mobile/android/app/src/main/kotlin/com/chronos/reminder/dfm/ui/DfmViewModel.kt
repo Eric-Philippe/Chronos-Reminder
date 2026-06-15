@@ -25,6 +25,7 @@ data class DfmUiState(
     val refreshing: Boolean = false,
     val error: String? = null,
     val noteSent: Boolean = false,
+    val itemAdded: Boolean = false,
     val sendingNow: Boolean = false,
     val hasDiscordIdentity: Boolean = false,
     val hasEmailIdentity: Boolean = false,
@@ -51,11 +52,12 @@ class DfmViewModel @Inject constructor(
             if (accountRepository.account.value == null) {
                 accountRepository.refreshAccount()
             }
-            val identities = accountRepository.account.value?.identities.orEmpty()
+            val account = accountRepository.account.value
+            val identities = account?.identities.orEmpty()
             _state.update {
                 it.copy(
                     hasDiscordIdentity = identities.any { id -> id.provider == "discord" },
-                    hasEmailIdentity = identities.any { id -> id.provider == "app" },
+                    hasEmailIdentity = account?.email != null,
                     userTimezone = accountRepository.userTimezone,
                 )
             }
@@ -74,9 +76,11 @@ class DfmViewModel @Inject constructor(
         if (content.isBlank()) return
         viewModelScope.launch {
             val result = repository.addItem(content.trim())
-            _state.update { it.copy(error = result.errorOrNull()) }
+            _state.update { it.copy(error = result.errorOrNull(), itemAdded = result.errorOrNull() == null) }
         }
     }
+
+    fun consumeItemAdded() = _state.update { it.copy(itemAdded = false) }
 
     fun toggleItem(item: DfmItem, checked: Boolean) {
         viewModelScope.launch {

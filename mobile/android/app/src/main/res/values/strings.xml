@@ -138,6 +138,7 @@
     <string name="dfm_empty_subtitle">Add the things you don\'t want to forget.</string>
     <string name="dfm_destinations">Send it to</string>
     <string name="dfm_item_checkbox">Toggle item</string>
+    <string name="dfm_item_added">Item added</string>
 
     <!-- Account -->
     <string name="account_title">Account</string>

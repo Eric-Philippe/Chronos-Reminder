@@ -83,11 +83,18 @@ fun DfmScreen(viewModel: DfmViewModel = hiltViewModel()) {
     var itemPendingDelete by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val noteSentText = stringResource(R.string.dfm_note_sent)
+    val itemAddedText = stringResource(R.string.dfm_item_added)
 
     LaunchedEffect(state.noteSent) {
         if (state.noteSent) {
             snackbarHostState.showSnackbar(noteSentText)
             viewModel.consumeNoteSent()
+        }
+    }
+    LaunchedEffect(state.itemAdded) {
+        if (state.itemAdded) {
+            snackbarHostState.showSnackbar(itemAddedText)
+            viewModel.consumeItemAdded()
         }
     }
 

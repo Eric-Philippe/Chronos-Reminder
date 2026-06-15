@@ -68,12 +68,11 @@ class CreateReminderViewModel @Inject constructor(
             }
             val account = accountRepository.account.value
             val discord = account?.identities?.firstOrNull { it.provider == "discord" }
-            val app = account?.identities?.firstOrNull { it.provider == "app" }
             _uiState.update {
                 it.copy(
                     hasDiscordIdentity = discord != null,
-                    hasEmailIdentity = app != null,
-                    accountEmail = app?.externalId,
+                    hasEmailIdentity = account?.email != null,
+                    accountEmail = account?.email,
                     discordUserId = discord?.externalId,
                     accountId = account?.id,
                     userTimezone = accountRepository.userTimezone,

@@ -138,6 +138,7 @@
     <string name="notification_snoozed_1d">Nous vous rappellerons demain</string>
     <string name="dfm_send_now">Envoyer maintenant</string>
     <string name="dfm_note_sent">Note envoyée</string>
+    <string name="dfm_item_added">Élément ajouté</string>
     <string name="dfm_set_reminder">Configurer l\'envoi auto</string>
     <string name="dfm_description">Notez les choses que vous ne voulez pas oublier et recevez l\'intégralité de la note par rappel récurrent.</string>
     <string name="dfm_set_reminder_confirm">Enregistrer la planification</string>
