@@ -402,6 +402,9 @@
   "account": {
     "title": "My Account",
     "subtitle": "Manage your account settings and security preferences",
+    "emailNotVerified": "Please verify your email address",
+    "emailNotVerifiedDesc": "A verification email has been sent to {{email}}. Check your inbox (and spam folder) and click the link to activate your account.",
+    "resendVerification": "Resend email",
     "accountInfo": "Account Information",
     "username": "Username",
     "email": "Email Address",

@@ -127,6 +127,7 @@ export interface Account {
   id: string;
   email: string;
   username: string;
+  email_verified: boolean;
   timezone: string;
   created_at: string;
   identities?: AccountIdentity[];

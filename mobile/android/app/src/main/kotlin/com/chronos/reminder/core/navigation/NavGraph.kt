@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -318,15 +319,22 @@ fun ChronosNavGraph(
                         },
                     )
                 }
-                composable<Screen.Reminders> {
+                composable<Screen.Reminders> { backStackEntry ->
+                    val createdFlow = backStackEntry.savedStateHandle.getStateFlow("reminder_created", false)
+                    val reminderCreated by createdFlow.collectAsStateWithLifecycle()
                     RemindersScreen(
                         onCreateReminder = { navController.navigate(Screen.CreateReminder) },
                         onOpenReminder = { id -> navController.navigate(Screen.ReminderDetail(id)) },
+                        showCreatedBanner = reminderCreated,
+                        onCreatedBannerConsumed = { backStackEntry.savedStateHandle["reminder_created"] = false },
                     )
                 }
                 composable<Screen.CreateReminder> {
                     CreateReminderScreen(
-                        onCreated = { navController.popBackStack() },
+                        onCreated = {
+                            navController.previousBackStackEntry?.savedStateHandle?.set("reminder_created", true)
+                            navController.popBackStack()
+                        },
                         onBack = { navController.popBackStack() },
                     )
                 }

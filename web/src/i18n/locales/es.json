@@ -402,6 +402,9 @@
   "account": {
     "title": "Mi Cuenta",
     "subtitle": "Administra la configuración de tu cuenta y las preferencias de seguridad",
+    "emailNotVerified": "Por favor verifica tu dirección de correo electrónico",
+    "emailNotVerifiedDesc": "Se ha enviado un correo de verificación a {{email}}. Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.",
+    "resendVerification": "Reenviar correo",
     "accountInfo": "Información de la Cuenta",
     "username": "Nombre de Usuario",
     "email": "Dirección de Correo Electrónico",

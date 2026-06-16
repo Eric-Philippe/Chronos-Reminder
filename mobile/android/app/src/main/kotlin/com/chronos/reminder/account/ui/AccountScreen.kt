@@ -6,8 +6,10 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -185,6 +187,42 @@ fun AccountScreen(
                             discordIdentity?.username?.let { tag ->
                                 Text(tag, style = MaterialTheme.typography.bodyMedium, color = ForegroundMuted)
                             }
+                        }
+                    }
+                }
+
+                // --- Email verification banner ---
+                if (account?.email != null && account?.emailVerified == false) {
+                    val resendSentMsg = stringResource(R.string.resend_verification_sent)
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                            .background(
+                                color = AccentOrange.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(12.dp),
+                            )
+                            .padding(12.dp),
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.email_not_verified),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = AccentOrange,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = stringResource(R.string.email_not_verified_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = ForegroundMuted,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            ChronosButton(
+                                text = stringResource(R.string.resend_verification),
+                                onClick = { viewModel.resendVerificationEmail(account!!.email!!, resendSentMsg) },
+                                style = ChronosButtonStyle.Secondary,
+                            )
                         }
                     }
                 }

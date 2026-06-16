@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chronos.reminder.account.data.AccountRepository
 import com.chronos.reminder.core.network.ApiResult
+import com.chronos.reminder.core.storage.DestinationPreferencesStore
 import com.chronos.reminder.reminders.data.ChannelDto
 import com.chronos.reminder.reminders.data.DiscordApi
 import com.chronos.reminder.reminders.data.GuildChannelsRequest
@@ -49,6 +50,7 @@ class CreateReminderViewModel @Inject constructor(
     private val remindersRepository: RemindersRepository,
     private val accountRepository: AccountRepository,
     private val discordApi: DiscordApi,
+    private val destinationPrefs: DestinationPreferencesStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -68,15 +70,37 @@ class CreateReminderViewModel @Inject constructor(
             }
             val account = accountRepository.account.value
             val discord = account?.identities?.firstOrNull { it.provider == "discord" }
+            val hasDiscord = discord != null
+            val hasEmail = account?.email != null
+            val email = account?.email
+
             _uiState.update {
                 it.copy(
-                    hasDiscordIdentity = discord != null,
-                    hasEmailIdentity = account?.email != null,
-                    accountEmail = account?.email,
+                    hasDiscordIdentity = hasDiscord,
+                    hasEmailIdentity = hasEmail,
+                    accountEmail = email,
                     discordUserId = discord?.externalId,
                     accountId = account?.id,
                     userTimezone = accountRepository.userTimezone,
                 )
+            }
+
+            // Pre-select the last destinations the user picked, if still available
+            val lastDestinations = destinationPrefs.getLast()
+            val preSelected = mutableListOf<FormDestination>()
+            for (type in lastDestinations) {
+                when (type) {
+                    Destination.TYPE_DISCORD_DM -> if (hasDiscord && discord?.externalId != null)
+                        preSelected.add(FormDestination(Destination.TYPE_DISCORD_DM, mapOf("user_id" to discord.externalId!!)))
+                    Destination.TYPE_EMAIL -> if (hasEmail && email != null)
+                        preSelected.add(FormDestination(Destination.TYPE_EMAIL, mapOf("email" to email), detail = email))
+                    Destination.TYPE_ANDROID_PUSH -> account?.id?.let { id ->
+                        preSelected.add(FormDestination(Destination.TYPE_ANDROID_PUSH, mapOf("account_id" to id)))
+                    }
+                }
+            }
+            if (preSelected.isNotEmpty()) {
+                updateForm { it.copy(destinations = preSelected) }
             }
         }
     }
@@ -179,7 +203,10 @@ class CreateReminderViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(submitting = true, error = null) }
             when (val result = remindersRepository.createReminder(state.form.toRequest())) {
-                is ApiResult.Success -> _uiState.update { it.copy(submitting = false, created = true) }
+                is ApiResult.Success -> {
+                    destinationPrefs.save(state.form.destinations.map { it.type })
+                    _uiState.update { it.copy(submitting = false, created = true) }
+                }
                 is ApiResult.Error -> _uiState.update { it.copy(submitting = false, error = result.message) }
                 is ApiResult.NetworkError -> _uiState.update {
                     it.copy(submitting = false, error = "No internet connection")

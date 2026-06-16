@@ -20,7 +20,7 @@ import {
   Key,
   Smartphone,
 } from "lucide-react";
-import { accountService, type Account } from "@/services";
+import { accountService, authService, type Account } from "@/services";
 import { TimezoneSelect } from "@/components/common/TimezoneSelect";
 import { PasswordStrengthIndicator } from "@/components/common/PasswordStrengthIndicator";
 import { useToast } from "@/hooks/useToast";
@@ -421,6 +421,34 @@ export function AccountPage() {
                   <p className="font-semibold text-foreground">{discordIdentity.username}</p>
                   <p className="text-xs text-muted-foreground">{t("account.discordIdentity")}</p>
                 </div>
+              </div>
+            )}
+
+            {/* Email verification banner */}
+            {account.email && !account.email_verified && (
+              <div className="flex items-start gap-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground">{t("account.emailNotVerified")}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {t("account.emailNotVerifiedDesc", { email: account.email })}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0 border-yellow-500/50 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/10"
+                  onClick={async () => {
+                    try {
+                      await authService.resendVerification(account.email);
+                      toast.success(t("account.resendVerification"));
+                    } catch {
+                      toast.error(t("common.error"));
+                    }
+                  }}
+                >
+                  {t("account.resendVerification")}
+                </Button>
               </div>
             )}
 

@@ -28,11 +28,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,15 +69,27 @@ import com.chronos.reminder.reminders.domain.Reminder
 fun RemindersScreen(
     onCreateReminder: () -> Unit,
     onOpenReminder: (String) -> Unit,
+    showCreatedBanner: Boolean = false,
+    onCreatedBannerConsumed: () -> Unit = {},
     viewModel: RemindersViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
     var deleteCandidate by rememberSaveable { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val reminderCreatedText = stringResource(R.string.reminder_created)
+
+    LaunchedEffect(showCreatedBanner) {
+        if (showCreatedBanner) {
+            snackbarHostState.showSnackbar(reminderCreatedText)
+            onCreatedBannerConsumed()
+        }
+    }
 
     Scaffold(
         containerColor = BackgroundMain,
         topBar = { ChronosTopBar(title = stringResource(R.string.reminders_title)) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCreateReminder,

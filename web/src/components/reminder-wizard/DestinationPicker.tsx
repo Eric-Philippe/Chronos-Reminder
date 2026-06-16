@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Trash2, Plus, MessageCircle, Megaphone, Link2, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -470,308 +470,275 @@ export function DestinationPicker({
             </h4>
           )}
 
-          {/* Discord DM Option */}
-          <Card
-            className={`border-border bg-secondary/20 transition-colors ${
-              hasDiscordIdentity && dmCount < MAX_DM
-                ? "hover:border-accent/50 cursor-pointer"
-                : "opacity-60 cursor-not-allowed"
-            }`}
-            onClick={
-              hasDiscordIdentity && dmCount < MAX_DM
-                ? handleAddDiscordDM
-                : undefined
-            }
-          >
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-4 h-4 text-accent" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("reminderCreation.destinations.discordDM")}
-                  </p>
-                  {!compact && (
-                    <p className="text-xs text-muted-foreground">
-                      {!hasDiscordIdentity
-                        ? t("reminderCreation.destinations.connectDiscordFirst")
-                        : dmCount >= MAX_DM
-                        ? "Limit reached"
-                        : t("reminderCreation.destinations.sendAsDM")}
-                    </p>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
-                  {dmCount}/{MAX_DM}
-                </span>
-              </div>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddDiscordDM();
-                }}
-                variant="outline"
-                size="sm"
-                disabled={!hasDiscordIdentity || dmCount >= MAX_DM}
-                className={`border-accent/50 flex-shrink-0 ${
-                  hasDiscordIdentity && dmCount < MAX_DM
-                    ? "text-accent hover:bg-accent/10"
-                    : "text-muted-foreground opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </Card>
+              {/* Destination options sorted: available first, unavailable last */}
+          {((): { available: boolean; key: string; element: React.ReactNode }[] => {
+            const dmAvailable = hasDiscordIdentity && dmCount < MAX_DM;
+            const channelAvailable = hasDiscordIdentity && channelCount < MAX_CHANNELS;
+            const webhookAvailable = webhookCount < MAX_WEBHOOKS;
+            const emailAvailable = hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence;
+            const pushAvailable = hasAndroidPush && pushCount < MAX_PUSH;
 
-          {/* Discord Guild Option */}
-          <Card
-            className={`border-border bg-secondary/20 transition-colors ${
-              hasDiscordIdentity && channelCount < MAX_CHANNELS
-                ? "hover:border-accent/50 cursor-pointer"
-                : "opacity-60 cursor-not-allowed"
-            }`}
-          >
-            <div
-              onClick={
-                hasDiscordIdentity && channelCount < MAX_CHANNELS
-                  ? handleAddDiscordGuild
-                  : undefined
-              }
-              className="p-3 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <Megaphone className="w-4 h-4 text-accent" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("reminderCreation.destinations.discordGuild")}
-                  </p>
-                  {!compact && (
-                    <p className="text-xs text-muted-foreground">
-                      {!hasDiscordIdentity
-                        ? t("reminderCreation.destinations.connectDiscordFirst")
-                        : channelCount >= MAX_CHANNELS
-                        ? "Limit reached"
-                        : t("reminderCreation.destinations.discordGuildDesc")}
-                    </p>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
-                  {channelCount}/{MAX_CHANNELS}
-                </span>
-              </div>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddDiscordGuild();
-                }}
-                variant="outline"
-                size="sm"
-                disabled={!hasDiscordIdentity || channelCount >= MAX_CHANNELS}
-                className={`border-accent/50 flex-shrink-0 ${
-                  hasDiscordIdentity && channelCount < MAX_CHANNELS
-                    ? "text-accent hover:bg-accent/10"
-                    : "text-muted-foreground opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </Card>
+            const options = [
+              {
+                key: "discord_dm",
+                available: dmAvailable,
+                element: (
+                  <Card
+                    key="discord_dm"
+                    className={`border-border bg-secondary/20 transition-colors ${
+                      dmAvailable ? "hover:border-accent/50 cursor-pointer" : "opacity-60 cursor-not-allowed"
+                    }`}
+                    onClick={dmAvailable ? handleAddDiscordDM : undefined}
+                  >
+                    <div className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="w-4 h-4 text-accent" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("reminderCreation.destinations.discordDM")}
+                          </p>
+                          {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                              {!hasDiscordIdentity
+                                ? t("reminderCreation.destinations.connectDiscordFirst")
+                                : dmCount >= MAX_DM
+                                ? "Limit reached"
+                                : t("reminderCreation.destinations.sendAsDM")}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                          {dmCount}/{MAX_DM}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); handleAddDiscordDM(); }}
+                        variant="outline"
+                        size="sm"
+                        disabled={!dmAvailable}
+                        className={`border-accent/50 flex-shrink-0 ${dmAvailable ? "text-accent hover:bg-accent/10" : "text-muted-foreground opacity-50 cursor-not-allowed"}`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: "discord_channel",
+                available: channelAvailable,
+                element: (
+                  <Card
+                    key="discord_channel"
+                    className={`border-border bg-secondary/20 transition-colors ${
+                      channelAvailable ? "hover:border-accent/50 cursor-pointer" : "opacity-60 cursor-not-allowed"
+                    }`}
+                  >
+                    <div
+                      onClick={channelAvailable ? handleAddDiscordGuild : undefined}
+                      className="p-3 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <Megaphone className="w-4 h-4 text-accent" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("reminderCreation.destinations.discordGuild")}
+                          </p>
+                          {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                              {!hasDiscordIdentity
+                                ? t("reminderCreation.destinations.connectDiscordFirst")
+                                : channelCount >= MAX_CHANNELS
+                                ? "Limit reached"
+                                : t("reminderCreation.destinations.discordGuildDesc")}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                          {channelCount}/{MAX_CHANNELS}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); handleAddDiscordGuild(); }}
+                        variant="outline"
+                        size="sm"
+                        disabled={!channelAvailable}
+                        className={`border-accent/50 flex-shrink-0 ${channelAvailable ? "text-accent hover:bg-accent/10" : "text-muted-foreground opacity-50 cursor-not-allowed"}`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: "webhook",
+                available: webhookAvailable,
+                element: (
+                  <Card key="webhook" className={`border-border bg-secondary/20 ${!webhookAvailable ? "opacity-60" : ""}`}>
+                    <div className="p-3 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="w-4 h-4 text-accent flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">
+                            {t("reminderCreation.destinations.webhook")}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("reminderCreation.destinations.webhookDesc")}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                          {webhookCount}/{MAX_WEBHOOKS}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        <select
+                          value={webhookPlatform}
+                          onChange={(e) => setWebhookPlatform(e.target.value as WebhookPlatform)}
+                          disabled={!webhookAvailable}
+                          className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <option value="generic">{t("reminderCreation.destinations.webhookPlatforms.generic")}</option>
+                          <option value="discord">{t("reminderCreation.destinations.webhookPlatforms.discord")}</option>
+                          <option value="slack">{t("reminderCreation.destinations.webhookPlatforms.slack")}</option>
+                        </select>
+                        <input
+                          type="text"
+                          placeholder={t("reminderCreation.destinations.webhookPlaceholder")}
+                          value={webhookUrl}
+                          onChange={(e) => setWebhookUrl(e.target.value)}
+                          disabled={!webhookAvailable}
+                          className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        {(webhookPlatform === "discord" || webhookPlatform === "slack") && (
+                          <input
+                            type="text"
+                            placeholder={t("reminderCreation.destinations.webhookUsername")}
+                            value={webhookUsername}
+                            onChange={(e) => setWebhookUsername(e.target.value)}
+                            disabled={!webhookAvailable}
+                            className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        )}
+                        <Button
+                          onClick={handleAddWebhook}
+                          variant="outline"
+                          size="sm"
+                          disabled={!webhookUrl.trim() || !webhookAvailable}
+                          className="w-full border-accent/50 text-accent hover:bg-accent/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {t("reminderCreation.destinations.addWebhook")}
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: "email",
+                available: emailAvailable,
+                element: (
+                  <Card
+                    key="email"
+                    className={`border-border bg-secondary/20 transition-colors ${
+                      emailAvailable ? "hover:border-accent/50 cursor-pointer" : "opacity-60 cursor-not-allowed"
+                    }`}
+                    onClick={emailAvailable ? handleAddEmail : undefined}
+                  >
+                    <div className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-4 h-4 text-accent" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("reminderCreation.destinations.email")}
+                          </p>
+                          {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                              {!hasEmail
+                                ? t("reminderCreation.destinations.noEmailConfigured")
+                                : isHourlyRecurrence
+                                ? t("reminderCreation.destinations.emailHourlyDisabled")
+                                : emailCount >= MAX_EMAILS
+                                ? t("reminderCreation.destinations.limitReached")
+                                : userEmail ?? ""}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                          {emailCount}/{MAX_EMAILS}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); handleAddEmail(); }}
+                        variant="outline"
+                        size="sm"
+                        disabled={!emailAvailable}
+                        className={`border-accent/50 flex-shrink-0 ${emailAvailable ? "text-accent hover:bg-accent/10" : "text-muted-foreground opacity-50 cursor-not-allowed"}`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: "android_push",
+                available: pushAvailable,
+                element: (
+                  <Card
+                    key="android_push"
+                    className={`border-border bg-secondary/20 transition-colors ${
+                      pushAvailable ? "hover:border-accent/50 cursor-pointer" : "opacity-60 cursor-not-allowed"
+                    }`}
+                    onClick={pushAvailable ? handleAddPush : undefined}
+                  >
+                    <div className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <Smartphone className="w-4 h-4 text-accent" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("reminderCreation.destinations.androidPush")}
+                          </p>
+                          {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                              {!hasAndroidPush
+                                ? t("reminderCreation.destinations.androidPushNoApp")
+                                : pushCount >= MAX_PUSH
+                                ? t("reminderCreation.destinations.limitReached")
+                                : t("reminderCreation.destinations.androidPushDesc")}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
+                          {pushCount}/{MAX_PUSH}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); handleAddPush(); }}
+                        variant="outline"
+                        size="sm"
+                        disabled={!pushAvailable}
+                        className={`border-accent/50 flex-shrink-0 ${pushAvailable ? "text-accent hover:bg-accent/10" : "text-muted-foreground opacity-50 cursor-not-allowed"}`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ),
+              },
+            ];
 
-          {/* Webhook Option */}
-          <Card className="border-border bg-secondary/20">
-            <div className="p-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-accent flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {t("reminderCreation.destinations.webhook")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("reminderCreation.destinations.webhookDesc")}
-                  </p>
-                </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {webhookCount}/{MAX_WEBHOOKS}
-                </span>
-              </div>
-              <div className="space-y-2">
-                <select
-                  value={webhookPlatform}
-                  onChange={(e) =>
-                    setWebhookPlatform(e.target.value as WebhookPlatform)
-                  }
-                  disabled={webhookCount >= MAX_WEBHOOKS}
-                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="generic">
-                    {t(
-                      "reminderCreation.destinations.webhookPlatforms.generic"
-                    )}
-                  </option>
-                  <option value="discord">
-                    {t(
-                      "reminderCreation.destinations.webhookPlatforms.discord"
-                    )}
-                  </option>
-                  <option value="slack">
-                    {t("reminderCreation.destinations.webhookPlatforms.slack")}
-                  </option>
-                </select>
-                <input
-                  type="text"
-                  placeholder={t(
-                    "reminderCreation.destinations.webhookPlaceholder"
-                  )}
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  disabled={webhookCount >= MAX_WEBHOOKS}
-                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                {(webhookPlatform === "discord" ||
-                  webhookPlatform === "slack") && (
-                  <input
-                    type="text"
-                    placeholder={t(
-                      "reminderCreation.destinations.webhookUsername"
-                    )}
-                    value={webhookUsername}
-                    onChange={(e) => setWebhookUsername(e.target.value)}
-                    disabled={webhookCount >= MAX_WEBHOOKS}
-                    className="w-full px-3 py-2 rounded border border-border bg-background text-foreground text-sm placeholder-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                )}
-                <Button
-                  onClick={handleAddWebhook}
-                  variant="outline"
-                  size="sm"
-                  disabled={!webhookUrl.trim() || webhookCount >= MAX_WEBHOOKS}
-                  className="w-full border-accent/50 text-accent hover:bg-accent/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t("reminderCreation.destinations.addWebhook")}
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Email Option */}
-          <Card
-            className={`border-border bg-secondary/20 transition-colors ${
-              hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
-                ? "hover:border-accent/50 cursor-pointer"
-                : "opacity-60 cursor-not-allowed"
-            }`}
-            onClick={
-              hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
-                ? handleAddEmail
-                : undefined
-            }
-          >
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-4 h-4 text-accent" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("reminderCreation.destinations.email")}
-                  </p>
-                  {!compact && (
-                    <p className="text-xs text-muted-foreground">
-                      {!hasEmail
-                        ? t("reminderCreation.destinations.noEmailConfigured")
-                        : isHourlyRecurrence
-                        ? t("reminderCreation.destinations.emailHourlyDisabled")
-                        : emailCount >= MAX_EMAILS
-                        ? t("reminderCreation.destinations.limitReached")
-                        : userEmail ?? ""}
-                    </p>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
-                  {emailCount}/{MAX_EMAILS}
-                </span>
-              </div>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddEmail();
-                }}
-                variant="outline"
-                size="sm"
-                disabled={
-                  !hasEmail || emailCount >= MAX_EMAILS || isHourlyRecurrence
-                }
-                className={`border-accent/50 flex-shrink-0 ${
-                  hasEmail && emailCount < MAX_EMAILS && !isHourlyRecurrence
-                    ? "text-accent hover:bg-accent/10"
-                    : "text-muted-foreground opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </Card>
-
-          {/* Android Push Option */}
-          <Card
-            className={`border-border bg-secondary/20 transition-colors ${
-              hasAndroidPush && pushCount < MAX_PUSH
-                ? "hover:border-accent/50 cursor-pointer"
-                : "opacity-60 cursor-not-allowed"
-            }`}
-            onClick={
-              hasAndroidPush && pushCount < MAX_PUSH
-                ? handleAddPush
-                : undefined
-            }
-          >
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <Smartphone className="w-4 h-4 text-accent" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("reminderCreation.destinations.androidPush")}
-                  </p>
-                  {!compact && (
-                    <p className="text-xs text-muted-foreground">
-                      {!hasAndroidPush
-                        ? t("reminderCreation.destinations.androidPushNoApp")
-                        : pushCount >= MAX_PUSH
-                        ? t("reminderCreation.destinations.limitReached")
-                        : t("reminderCreation.destinations.androidPushDesc")}
-                    </p>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0 mr-2">
-                  {pushCount}/{MAX_PUSH}
-                </span>
-              </div>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddPush();
-                }}
-                variant="outline"
-                size="sm"
-                disabled={!hasAndroidPush || pushCount >= MAX_PUSH}
-                className={`border-accent/50 flex-shrink-0 ${
-                  hasAndroidPush && pushCount < MAX_PUSH
-                    ? "text-accent hover:bg-accent/10"
-                    : "text-muted-foreground opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </Card>
+            return [...options.filter((o) => o.available), ...options.filter((o) => !o.available)];
+          })().map((o) => o.element)}
         </div>
       )}
 

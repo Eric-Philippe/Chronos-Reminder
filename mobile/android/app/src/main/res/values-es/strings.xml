@@ -240,6 +240,8 @@
     <string name="resend_verification">Reenviar correo de verificación</string>
     <string name="resend_verification_sending">Enviando…</string>
     <string name="resend_verification_sent">Correo de verificación enviado — revisa tu bandeja de entrada</string>
+    <string name="email_not_verified">Por favor verifica tu dirección de correo</string>
+    <string name="email_not_verified_desc">Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.</string>
 
     <!-- API keys -->
     <string name="api_keys_title">Claves API</string>

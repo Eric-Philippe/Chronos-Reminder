@@ -264,6 +264,8 @@
     <string name="resend_verification">Resend Verification Email</string>
     <string name="resend_verification_sending">Sending…</string>
     <string name="resend_verification_sent">Verification email sent — check your inbox</string>
+    <string name="email_not_verified">Please verify your email address</string>
+    <string name="email_not_verified_desc">Check your inbox (and spam folder) and click the link to activate your account.</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">Reminders</string>

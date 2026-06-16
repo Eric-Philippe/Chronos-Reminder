@@ -401,6 +401,9 @@
   "account": {
     "title": "Mon Compte",
     "subtitle": "Gérez les paramètres de votre compte et les préférences de sécurité",
+    "emailNotVerified": "Veuillez vérifier votre adresse e-mail",
+    "emailNotVerifiedDesc": "Un e-mail de vérification a été envoyé à {{email}}. Consultez votre boîte de réception (et les spams) et cliquez sur le lien pour activer votre compte.",
+    "resendVerification": "Renvoyer l'e-mail",
     "accountInfo": "Informations du Compte",
     "username": "Nom d'Utilisateur",
     "email": "Adresse E-mail",

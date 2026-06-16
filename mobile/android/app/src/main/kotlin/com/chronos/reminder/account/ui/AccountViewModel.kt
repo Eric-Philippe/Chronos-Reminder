@@ -6,6 +6,7 @@ import com.chronos.reminder.account.data.AccountDto
 import com.chronos.reminder.account.data.AccountRepository
 import com.chronos.reminder.account.data.ApiKeyDto
 import com.chronos.reminder.account.data.TimezoneDto
+import com.chronos.reminder.auth.data.AuthRepository
 import com.chronos.reminder.core.network.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,11 +28,14 @@ data class AccountUiState(
     // Merge state
     val pendingMergeToken: String? = null,
     val pendingMergeDiscordUsername: String? = null,
+    // Email verification resend
+    val resendingSent: Boolean = false,
 )
 
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val repository: AccountRepository,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountUiState())
@@ -153,6 +157,15 @@ class AccountViewModel @Inject constructor(
     }
 
     fun dismissCreatedKey() = _state.update { it.copy(createdKey = null) }
+
+    fun resendVerificationEmail(email: String, sentMessage: String) {
+        viewModelScope.launch {
+            when (authRepository.resendVerification(email)) {
+                is ApiResult.Success -> _state.update { it.copy(resendingSent = true, successMessage = sentMessage) }
+                else -> _state.update { it.copy(resendingSent = false) }
+            }
+        }
+    }
 
     fun clearMessages() = _state.update { it.copy(error = null, successMessage = null) }
 
