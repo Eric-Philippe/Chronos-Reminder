@@ -33,6 +33,7 @@ class AccountService {
       id: String(account.id || ""),
       email: String(account.email || ""),
       username: String(account.username || ""),
+      email_verified: Boolean(account.email_verified),
       timezone,
       created_at: String(account.created_at || ""),
       identities: Array.isArray(account.identities) ? account.identities : [],
