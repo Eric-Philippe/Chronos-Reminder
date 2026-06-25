@@ -27,6 +27,8 @@
     <string name="continue_with_discord">Continue with Discord</string>
     <string name="forgot_password_link">Forgot password?</string>
     <string name="no_account_sign_up">Don\'t have an account? Sign up</string>
+    <string name="tab_have_account">Have an account</string>
+    <string name="tab_create_account">New here?</string>
     <string name="register_title">Create Account</string>
     <string name="username">Username</string>
     <string name="confirm_password">Confirm password</string>

@@ -240,10 +240,8 @@ fun ChronosNavGraph(
                     LoginScreen(
                         uiState = uiState,
                         onLogin = authViewModel::loginWithEmail,
-                        onNavigateRegister = {
-                            authViewModel.clearFlags()
-                            navController.navigate(Screen.Register)
-                        },
+                        onRegister = authViewModel::register,
+                        onLoadTimezones = authViewModel::loadTimezones,
                         onNavigateForgotPassword = {
                             authViewModel.clearFlags()
                             navController.navigate(Screen.ForgotPassword)

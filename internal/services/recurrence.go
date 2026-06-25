@@ -336,13 +336,8 @@ func GetNextOccurrence(from time.Time, recurrenceState int, ianaLocation string)
 		return time.Time{}, fmt.Errorf("failed to load timezone %s: %w", ianaLocation, err)
 	}
 
-	// Interpret 'from' as a local time in the user's timezone
-	// from is stored with UTC location, but represents local time
-	fromLocal := time.Date(
-		from.Year(), from.Month(), from.Day(),
-		from.Hour(), from.Minute(), from.Second(), from.Nanosecond(),
-		loc,
-	)
+	// Convert the UTC instant to the user's local timezone
+	fromLocal := from.In(loc)
 
 	recurrence := Recurrences[GetRecurrenceTypeName(recurrenceType)]
 	if recurrence == nil {
