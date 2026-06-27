@@ -38,6 +38,11 @@ import {
   type DFMNote,
   type DFMItem,
 } from "@/services";
+import {
+  formatPartsInTimezone,
+  parseDateStrLocal,
+  zonedTimeToUtc,
+} from "@/lib/timezone";
 
 const RECURRENCE_OPTIONS = [
   "DAILY",
@@ -48,53 +53,73 @@ const RECURRENCE_OPTIONS = [
   "WEEKEND",
 ];
 
+/** Formats a Date's local calendar components back into a YYYY-MM-DD string. */
+function toDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Advances a YYYY-MM-DD calendar date by one recurrence step. This is pure
+ * calendar arithmetic (no time-of-day, no timezone offset involved), so it's
+ * safe regardless of the account's configured timezone.
+ */
+function advanceDateStr(dateStr: string, recurrence: string): string {
+  const next = parseDateStrLocal(dateStr);
+  switch (recurrence) {
+    case "WEEKLY":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "MONTHLY":
+      next.setMonth(next.getMonth() + 1);
+      break;
+    case "YEARLY":
+      next.setFullYear(next.getFullYear() + 1);
+      break;
+    case "WORKDAYS":
+      do {
+        next.setDate(next.getDate() + 1);
+      } while (next.getDay() === 0 || next.getDay() === 6);
+      break;
+    case "WEEKEND":
+      do {
+        next.setDate(next.getDate() + 1);
+      } while (next.getDay() !== 0 && next.getDay() !== 6);
+      break;
+    default:
+      next.setDate(next.getDate() + 1);
+  }
+  return toDateStr(next);
+}
+
 /**
  * Client-side preview of the next delivery, based on the selected start date,
- * time and recurrence. The backend does the authoritative computation; this
- * mirrors it in the browser's local time so the user sees the result live.
+ * time and recurrence, interpreted in the account's configured timezone. The
+ * backend does the authoritative computation; this mirrors it in the browser
+ * so the user sees the result live.
  */
 function computeNextDelivery(
   dateStr: string,
   timeStr: string,
   recurrence: string,
+  timeZone: string,
 ): Date | null {
   const [hours, minutes] = timeStr.split(":").map(Number);
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
 
-  const next = dateStr ? new Date(`${dateStr}T00:00:00`) : new Date();
-  if (Number.isNaN(next.getTime())) return null;
-  next.setHours(hours, minutes, 0, 0);
-
-  const advance = () => {
-    switch (recurrence) {
-      case "WEEKLY":
-        next.setDate(next.getDate() + 7);
-        break;
-      case "MONTHLY":
-        next.setMonth(next.getMonth() + 1);
-        break;
-      case "YEARLY":
-        next.setFullYear(next.getFullYear() + 1);
-        break;
-      case "WORKDAYS":
-        do {
-          next.setDate(next.getDate() + 1);
-        } while (next.getDay() === 0 || next.getDay() === 6);
-        break;
-      case "WEEKEND":
-        do {
-          next.setDate(next.getDate() + 1);
-        } while (next.getDay() !== 0 && next.getDay() !== 6);
-        break;
-      default:
-        next.setDate(next.getDate() + 1);
-    }
-  };
+  let currentDateStr = dateStr || formatPartsInTimezone(new Date(), timeZone).dateStr;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(currentDateStr)) return null;
 
   const now = new Date();
+  let candidate = zonedTimeToUtc(currentDateStr, timeStr, timeZone);
   let guard = 0;
-  while (next <= now && guard++ < 1000) advance();
-  return next;
+  while (candidate <= now && guard++ < 1000) {
+    currentDateStr = advanceDateStr(currentDateStr, recurrence);
+    candidate = zonedTimeToUtc(currentDateStr, timeStr, timeZone);
+  }
+  return candidate;
 }
 
 export function DontForgetMePage() {
@@ -117,12 +142,24 @@ export function DontForgetMePage() {
   const [hasDiscord, setHasDiscord] = useState(true);
   const [hasEmail, setHasEmail] = useState(true);
   const [isSavingReminder, setIsSavingReminder] = useState(false);
+  // Default to the browser's timezone until the account's configured
+  // timezone has loaded.
+  const [timeZone, setTimeZone] = useState<string>(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  );
 
   const refreshNote = useCallback(async () => {
     const [fetchedNote, fetchedAccount] = await Promise.all([
       dfmService.getNote(),
       accountService.getAccount(),
     ]);
+    const accountTimeZone =
+      fetchedAccount?.timezone ||
+      Intl.DateTimeFormat().resolvedOptions().timeZone ||
+      "UTC";
+    if (fetchedAccount?.timezone) {
+      setTimeZone(fetchedAccount.timezone);
+    }
     if (fetchedNote) {
       setNote(fetchedNote);
       if (fetchedNote.has_reminder) {
@@ -130,12 +167,11 @@ export function DontForgetMePage() {
           setReminderRecurrence(fetchedNote.recurrence_type);
         }
         if (fetchedNote.remind_at_utc) {
-          const localTime = new Date(fetchedNote.remind_at_utc);
-          setReminderTime(
-            `${String(localTime.getHours()).padStart(2, "0")}:${String(
-              localTime.getMinutes(),
-            ).padStart(2, "0")}`,
+          const { timeStr } = formatPartsInTimezone(
+            new Date(fetchedNote.remind_at_utc),
+            accountTimeZone,
           );
+          setReminderTime(timeStr);
         }
         setDestDiscord(fetchedNote.destinations.includes("discord_dm"));
         setDestEmail(fetchedNote.destinations.includes("email"));
@@ -296,6 +332,7 @@ export function DontForgetMePage() {
     reminderDate,
     reminderTime,
     reminderRecurrence,
+    timeZone,
   );
 
   return (
@@ -476,7 +513,9 @@ export function DontForgetMePage() {
                       </p>
                       <p className="text-muted-foreground mt-1">
                         {t("dfm.nextDelivery")}:{" "}
-                        {new Date(note.next_fire_utc).toLocaleString()}
+                        {new Date(note.next_fire_utc).toLocaleString(undefined, {
+                          timeZone,
+                        })}
                       </p>
                       <p className="text-muted-foreground mt-1">
                         {t("dfm.destinationLabel")}:{" "}
@@ -521,7 +560,7 @@ export function DontForgetMePage() {
                     <Input
                       type="date"
                       value={reminderDate}
-                      min={new Date().toISOString().split("T")[0]}
+                      min={formatPartsInTimezone(new Date(), timeZone).dateStr}
                       onChange={(e) => setReminderDate(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
@@ -600,6 +639,7 @@ export function DontForgetMePage() {
                         {t("dfm.nextPreview")}{" "}
                         <span className="text-foreground font-medium">
                           {nextDeliveryPreview.toLocaleString(undefined, {
+                            timeZone,
                             weekday: "long",
                             year: "numeric",
                             month: "short",

@@ -5,6 +5,7 @@ import com.chronos.reminder.account.data.AccountDto
 import com.chronos.reminder.account.data.AccountRepository
 import com.chronos.reminder.account.data.IdentityDto
 import com.chronos.reminder.core.network.ApiResult
+import com.chronos.reminder.core.storage.DestinationPreferencesStore
 import com.chronos.reminder.reminders.data.DiscordApi
 import com.chronos.reminder.reminders.data.RemindersRepository
 import com.chronos.reminder.reminders.domain.Destination
@@ -32,11 +33,12 @@ class CreateReminderViewModelTest {
     private val repository: RemindersRepository = mockk()
     private val accountRepository: AccountRepository = mockk()
     private val discordApi: DiscordApi = mockk()
+    private val destinationPrefs: DestinationPreferencesStore = mockk()
 
     private val account = AccountDto(
         id = "acc-1",
+        email = "me@example.com",
         identities = listOf(
-            IdentityDto(provider = "app", externalId = "me@example.com", username = "me"),
             IdentityDto(provider = "discord", externalId = "disc-42", username = "me#1234"),
         ),
     )
@@ -47,7 +49,9 @@ class CreateReminderViewModelTest {
     fun setUp() {
         every { accountRepository.account } returns MutableStateFlow(account)
         every { accountRepository.userTimezone } returns "Europe/Paris"
-        viewModel = CreateReminderViewModel(repository, accountRepository, discordApi)
+        every { destinationPrefs.getLast() } returns emptyList()
+        every { destinationPrefs.save(any()) } returns Unit
+        viewModel = CreateReminderViewModel(repository, accountRepository, discordApi, destinationPrefs)
     }
 
     @Test

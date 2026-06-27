@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -16,17 +16,21 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ReminderDetailsStep } from "@/components/reminder-wizard/ReminderDetailsStep";
 import { DestinationsStep } from "@/components/reminder-wizard/DestinationsStep";
-import { remindersService } from "@/services";
+import { accountService, remindersService } from "@/services";
 import {
   getRecurrenceTypeI18nKeyFromString,
   RecurrenceOnceStr,
 } from "@/lib/recurrenceUtils";
-import { isDateTimeInPast } from "@/lib/utils";
+import {
+  getDefaultDateTime,
+  isDateTimeInPast,
+  parseDateStrLocal,
+} from "@/lib/timezone";
 
 export type ReminderStep = "details" | "destinations" | "review";
 
 export interface ReminderFormData {
-  date: Date | null;
+  date: string; // YYYY-MM-DD format, in the account's timezone
   time: string; // HH:mm format
   message: string;
   recurrence: string; // Uppercase string (e.g., "DAILY", "WEEKLY")
@@ -36,39 +40,61 @@ export interface ReminderFormData {
   }>;
 }
 
+const getInitialFormData = (timeZone: string): ReminderFormData => {
+  const { dateStr, timeStr } = getDefaultDateTime(timeZone, 10);
+
+  return {
+    date: dateStr,
+    time: timeStr,
+    message: "",
+    recurrence: RecurrenceOnceStr,
+    destinations: [],
+  };
+};
+
 export function CreateReminderPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<ReminderStep>("details");
 
-  // Initialize with current date and time + 10 minutes
-  const getInitialFormData = (): ReminderFormData => {
-    const now = new Date();
-    const futureTime = new Date(now.getTime() + 10 * 60 * 1000); // Add 10 minutes
-    const hours = String(futureTime.getHours()).padStart(2, "0");
-    const minutes = String(futureTime.getMinutes()).padStart(2, "0");
+  // Default to the browser's timezone until the account's configured
+  // timezone has loaded, then re-derive the suggested date/time from it.
+  const [timeZone, setTimeZone] = useState<string>(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+  );
 
-    return {
-      date: futureTime,
-      time: `${hours}:${minutes}`,
-      message: "",
-      recurrence: RecurrenceOnceStr,
-      destinations: [],
-    };
-  };
-
-  const [formData, setFormData] = useState<ReminderFormData>(
-    getInitialFormData()
+  const [formData, setFormData] = useState<ReminderFormData>(() =>
+    getInitialFormData(timeZone)
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    accountService
+      .getAccount()
+      .then((account) => {
+        if (!account?.timezone || account.timezone === timeZone) return;
+        setTimeZone(account.timezone);
+        // Only refresh the suggested date/time if the user hasn't started
+        // editing the form yet, so we don't override their input.
+        setFormData((prev) =>
+          prev.message === "" && prev.destinations.length === 0
+            ? getInitialFormData(account.timezone)
+            : prev
+        );
+      })
+      .catch(() => {
+        // Keep the browser-timezone fallback if the account can't be loaded
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNext = () => {
     if (currentStep === "details") {
       if (!formData.date || !formData.message.trim()) {
         return; // Validation will be handled in the step component
       }
-      if (isDateTimeInPast(formData.date, formData.time)) {
+      if (isDateTimeInPast(formData.date, formData.time, timeZone)) {
         setError(t("reminderCreation.errors.selectFutureDateTime"));
         return;
       }
@@ -97,20 +123,16 @@ export function CreateReminderPage() {
         return;
       }
 
-      if (isDateTimeInPast(formData.date, formData.time)) {
+      if (isDateTimeInPast(formData.date, formData.time, timeZone)) {
         setError(t("reminderCreation.errors.selectFutureDateTime"));
         setIsLoading(false);
         return;
       }
 
-      // Convert the Date object to local date string (YYYY-MM-DD)
-      // This ensures we get the date in the user's local timezone
-      const dateStr = formData.date.toLocaleDateString("en-CA"); // "en-CA" gives YYYY-MM-DD format
-
-      // Call API to create reminder
-      // The backend will parse this date and time using the user's timezone
+      // formData.date is already a YYYY-MM-DD string in the account's
+      // timezone; the backend parses date+time using that same timezone.
       const result = await remindersService.createReminder({
-        date: dateStr,
+        date: formData.date,
         time: formData.time,
         message: formData.message,
         recurrence: formData.recurrence,
@@ -122,9 +144,9 @@ export function CreateReminderPage() {
         toast.success("Reminder created successfully!", {
           description: `"${
             formData.message
-          }" will remind you on ${formData.date?.toLocaleDateString()} at ${
-            formData.time
-          }`,
+          }" will remind you on ${parseDateStrLocal(
+            formData.date
+          ).toLocaleDateString()} at ${formData.time}`,
           duration: 3000,
         });
 
@@ -222,6 +244,7 @@ export function CreateReminderPage() {
               <ReminderDetailsStep
                 formData={formData}
                 onFormChange={setFormData}
+                timeZone={timeZone}
               />
             )}
 
@@ -245,7 +268,10 @@ export function CreateReminderPage() {
                         {t("reminderCreation.review.dateTime")}
                       </p>
                       <p className="text-foreground font-semibold">
-                        {formData.date?.toLocaleDateString()} at {formData.time}
+                        {formData.date
+                          ? parseDateStrLocal(formData.date).toLocaleDateString()
+                          : ""}{" "}
+                        at {formData.time}
                       </p>
                     </div>
 

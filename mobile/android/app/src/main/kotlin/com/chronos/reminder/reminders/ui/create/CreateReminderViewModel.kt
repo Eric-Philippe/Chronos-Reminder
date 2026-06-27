@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -73,6 +75,7 @@ class CreateReminderViewModel @Inject constructor(
             val hasDiscord = discord != null
             val hasEmail = account?.email != null
             val email = account?.email
+            val resolvedTimezone = accountRepository.userTimezone
 
             _uiState.update {
                 it.copy(
@@ -81,8 +84,22 @@ class CreateReminderViewModel @Inject constructor(
                     accountEmail = email,
                     discordUserId = discord?.externalId,
                     accountId = account?.id,
-                    userTimezone = accountRepository.userTimezone,
+                    userTimezone = resolvedTimezone,
                 )
+            }
+
+            // The initial date/time were suggested using the device's
+            // timezone (before the account's was known). Re-derive them
+            // from the account's configured timezone now, but only if the
+            // user hasn't started filling out the form yet.
+            val zone = runCatching { ZoneId.of(resolvedTimezone) }.getOrDefault(ZoneId.systemDefault())
+            val suggested = ZonedDateTime.now(zone).plusMinutes(10).truncatedTo(ChronoUnit.MINUTES)
+            updateForm { form ->
+                if (form.message.isEmpty() && form.destinations.isEmpty()) {
+                    form.copy(date = suggested.toLocalDate(), time = suggested.toLocalTime())
+                } else {
+                    form
+                }
             }
 
             // Pre-select the last destinations the user picked, if still available

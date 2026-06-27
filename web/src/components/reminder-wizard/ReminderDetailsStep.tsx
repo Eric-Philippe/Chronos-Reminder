@@ -13,23 +13,23 @@ import {
   RecurrenceYearlyStr,
   getRecurrenceTypeI18nKeyFromString,
 } from "@/lib/recurrenceUtils";
-import { isDateTimeInPast } from "@/lib/utils";
+import { isDateTimeInPast } from "@/lib/timezone";
 
 interface ReminderDetailsStepProps {
   formData: ReminderFormData;
   onFormChange: (data: ReminderFormData) => void;
+  timeZone: string;
 }
 
 export function ReminderDetailsStep({
   formData,
   onFormChange,
+  timeZone,
 }: ReminderDetailsStepProps) {
   const { t } = useTranslation();
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateStr = e.target.value;
-    const date = dateStr ? new Date(dateStr) : null;
-    onFormChange({ ...formData, date });
+    onFormChange({ ...formData, date: e.target.value });
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,9 +103,7 @@ export function ReminderDetailsStep({
           </div>
           <input
             type="date"
-            value={
-              formData.date ? formData.date.toISOString().split("T")[0] : ""
-            }
+            value={formData.date}
             onChange={handleDateChange}
             className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
           />
@@ -129,7 +127,8 @@ export function ReminderDetailsStep({
             onChange={handleTimeChange}
             className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
           />
-          {formData.date && isDateTimeInPast(formData.date, formData.time) && (
+          {formData.date &&
+            isDateTimeInPast(formData.date, formData.time, timeZone) && (
             <p className="text-xs text-red-500 mt-2">
               {t("reminderCreation.errors.dateTimeInPast")}
             </p>

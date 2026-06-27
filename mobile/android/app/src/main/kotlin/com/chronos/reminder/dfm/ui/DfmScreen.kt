@@ -70,6 +70,7 @@ import com.chronos.reminder.reminders.ui.create.WhenStep
 import com.chronos.reminder.reminders.ui.create.ReminderForm
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -257,6 +258,7 @@ fun DfmScreen(viewModel: DfmViewModel = hiltViewModel()) {
             DfmReminderSheetContent(
                 hasDiscordIdentity = state.hasDiscordIdentity,
                 hasEmailIdentity = state.hasEmailIdentity,
+                userTimezone = state.userTimezone,
                 onConfirm = { date, time, recurrence, destinations ->
                     viewModel.setReminder(date, time, recurrence, destinations)
                     showReminderSheet = false
@@ -329,11 +331,17 @@ private fun DfmItemRow(
 private fun DfmReminderSheetContent(
     hasDiscordIdentity: Boolean,
     hasEmailIdentity: Boolean,
+    userTimezone: String,
     onConfirm: (LocalDate, LocalTime, String, List<String>) -> Unit,
 ) {
+    // "Today" must be read in the account's configured timezone, not the
+    // device's, since the backend interprets the picked date in that zone.
+    val zone = remember(userTimezone) {
+        runCatching { ZoneId.of(userTimezone) }.getOrDefault(ZoneId.systemDefault())
+    }
     var form by remember {
         mutableStateOf(
-            ReminderForm(date = LocalDate.now(), time = LocalTime.of(9, 0), recurrence = RecurrenceType.DAILY),
+            ReminderForm(date = LocalDate.now(zone), time = LocalTime.of(9, 0), recurrence = RecurrenceType.DAILY),
         )
     }
     var sendDiscordDm by rememberSaveable { mutableStateOf(hasDiscordIdentity) }
@@ -375,7 +383,7 @@ private fun DfmReminderSheetContent(
                     if (sendDiscordDm) add(Destination.TYPE_DISCORD_DM)
                     if (sendEmail) add(Destination.TYPE_EMAIL)
                 }
-                onConfirm(form.date ?: LocalDate.now(), form.time ?: LocalTime.of(9, 0), form.recurrence.apiString, destinations)
+                onConfirm(form.date ?: LocalDate.now(zone), form.time ?: LocalTime.of(9, 0), form.recurrence.apiString, destinations)
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = (sendDiscordDm || sendEmail) && form.date != null && form.time != null,
